@@ -69,6 +69,20 @@ module.exports = [
         val: config.get('showHP', true),
     },
     {
+        name: 'Remove Discord button from HomePage',
+        id: 'removeDiscordBtn',
+        category: 'Game',
+        type: 'checkbox',
+        val: config.get('removeDiscordBtn', false),
+    },
+    {
+        name: 'Use BetterInventory by KirkaClient',
+        id: 'useBetterInv',
+        category: 'Game',
+        type: 'checkbox',
+        val: config.get('useBetterInv', true),
+    },
+    {
         name: 'Prevent Ctrl+W from closing client',
         id: 'controlW',
         category: 'Game',

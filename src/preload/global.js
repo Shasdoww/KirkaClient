@@ -167,6 +167,11 @@ function doOnLoad() {
             };
         }
 
+        if (config.get('removeDiscordBtn', false)) {
+            const elem = document.querySelector('#app > div.interface.text-2 > div.right-interface > div.settings-and-socicons > div.card-cont.soc-group');
+            if (elem)
+                elem.remove();
+        }
         break;
     case 'game':
         addSettingsButton();
@@ -233,11 +238,12 @@ async function setUsername() {
     config.set('user', user);
     config.set('userID', userID);
 
-    makeInventory();
+    if (config.get('useBetterInv', true))
+        makeInventory();
 }
 
 async function makeInventory() {
-    invData = await ipcRenderer.invoke('sendInvData', localStorage.getItem('token'));
+    invData = await ipcRenderer.invoke('sendInvData', localStorage.getItem('token')); // needs caching asap
     const invBtn = document.querySelector('#app > div.interface.text-2 > div.right-interface > div.right-icons > div.card-cont.text-1.inventory-card');
     invBtn.addEventListener('click', createBetterInventory);
     queueTabHandler();
