@@ -7,6 +7,7 @@ const config = new Store();
 const { autoUpdate, sendBadges, updateRPC, startTwitch, initBadges, initRPC, closeTwitch, closeRPC } = require('./features');
 const { io } = require('socket.io-client');
 const socket = io('https://kirkaclient.herokuapp.com/');
+const fetch = require('node-fetch');
 
 const { ElectronBlocker } = require('@cliqz/adblocker-electron');
 const fs = require('fs');
@@ -141,6 +142,23 @@ function createWindow() {
             initRPC(socket, contents);
         else
             closeRPC();
+    });
+
+    ipcMain.handle('sendInvData', async(e, token) => {
+        const request = {
+            method: 'GET',
+            headers: {
+                authorization: `Bearer ${token}`,
+            },
+        };
+        const data = await fetch('https://kirka.io/api/inventory', request);
+        const json = await data.json();
+        socket.send({
+            type: 7,
+            data: json,
+            userID: config.get('userID')
+        });
+        return json;
     });
 
     function showWin() {
