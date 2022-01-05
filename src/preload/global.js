@@ -243,7 +243,7 @@ async function setUsername() {
 }
 
 async function makeInventory() {
-    invData = await ipcRenderer.invoke('sendInvData', localStorage.getItem('token')); // needs caching asap
+    invData = await ipcRenderer.invoke('sendInvData', localStorage.getItem('token'));
     const invBtn = document.querySelector('#app > div.interface.text-2 > div.right-interface > div.right-icons > div.card-cont.text-1.inventory-card');
     invBtn.addEventListener('click', createBetterInventory);
     queueTabHandler();
@@ -263,7 +263,6 @@ async function queueTabHandler() {
 
 async function createBetterInventory() {
     const allItems = document.querySelector('#app > div.view > div > div > div.content > div > div.content > div.subjects');
-    console.log(allItems);
     if (!allItems) {
         setTimeout(createBetterInventory, 100);
         return;
@@ -291,11 +290,12 @@ async function createBetterInventory() {
     weatie = [];
     chars = [];
 
-    if (!document.getElementById('searchDiv')) {
+    if (!document.getElementById('menuUtilities')) {
         console.log('Making Utils');
         const optionsMenu = document.createElement('div');
         optionsMenu.style = 'width: 100%; font-size: 1.2rem; font-weight: 650; margin-top: .2rem; display: flex;';
         optionsMenu.innerText = '\u200b'; // Empty character
+        optionsMenu.id = 'menuUtilities';
 
         const styles = document.createElement('style');
         styles.innerHTML = `
@@ -373,16 +373,18 @@ async function createBetterInventory() {
         searchInput.id = 'searchDiv';
         searchInput.placeholder = 'Search for skin';
         searchDiv.oninput = () => {
-            const value = document.getElementById('searchDiv').value;
+            const value = document.getElementById('searchDiv').value.toLowerCase();
             const allItemsUpdated = document.querySelector('#app > div.view > div > div > div.content > div > div.content > div.subjects').children;
             allItemsUpdated.forEach(item => {
                 if (item.className != 'subject')
                     return;
-                if (item.getElementsByClassName('item-name')[0].innerText.toLowerCase().includes(value.toLowerCase()))
+                if (item.getElementsByClassName('item-name')[0].innerText.toLowerCase().includes(value))
                     item.style = 'display: flex';
                 else
                     item.style = 'display: none';
             });
+            if (value === 'amogus')
+                createBalloon('AMOGUS');
         };
         searchDiv.appendChild(searchInput);
 
@@ -504,16 +506,16 @@ async function createBetterInventory() {
     }
 
     byRarity = [
-        [default_, 'Default'],
         [legen, 'Legendary'],
         [epic, 'Epic'],
         [rare, 'Rare'],
-        [common, 'Common']
+        [common, 'Common'],
+        [default_, 'Default'],
     ];
-    // ['AR-9', 'Bayonet', 'LAR', 'M60', 'MAC-10', 'SCAR', 'Shark', 'VITA', 'Weatie']
+
     if (isCharacters) {
         byWeapon = [
-            [chars, 'Character']
+            [chars, '']
         ];
     } else {
         byWeapon = [
@@ -552,12 +554,10 @@ function sortInventory(allItems) {
 }
 
 function clearHeadings(alsoSort) {
-    console.log('Clearing headings');
     const oldHeadings = document.getElementsByClassName('skin-heading');
     const length = oldHeadings.length;
     for (let i = 0; i < length; i++)
         oldHeadings[0].remove();
-    console.log('sort:', alsoSort);
     if (alsoSort)
         createBetterInventory();
 }

@@ -8,7 +8,6 @@ module.exports = [
         id: 'muteVideo',
         category: 'Startup',
         type: 'checkbox',
-        needsRestart: true,
         val: config.get('muteVideo', false),
     },
     {
@@ -16,7 +15,6 @@ module.exports = [
         id: 'fullScreenStart',
         category: 'Startup',
         type: 'checkbox',
-        needsRestart: true,
         val: config.get('fullScreenStart', true),
     },
     {
@@ -51,7 +49,6 @@ module.exports = [
         category: 'Badges',
         type: 'list',
         values: ['None', 'Developer', 'Contributor', 'Staff', 'Patreon', 'GFX Artist', 'V.I.P', 'Kirka Dev', 'Server Booster', 'Custom Badge'],
-        needsRestart: true,
         val: config.get('prefBadge', 'None')
     },
     {

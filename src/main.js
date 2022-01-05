@@ -27,6 +27,8 @@ let CtrlW = false;
 let updateContent;
 let errTries = 0;
 let changeLogs;
+let inventoryData;
+let cacheTime = 0;
 
 socket.on('connect', () => {
     console.log('WebSocket Connected!');
@@ -145,6 +147,8 @@ function createWindow() {
     });
 
     ipcMain.handle('sendInvData', async(e, token) => {
+        if (inventoryData && Date.now() - cacheTime <= 900000) // 15 min cache time
+            return inventoryData;
         const request = {
             method: 'GET',
             headers: {
@@ -158,6 +162,8 @@ function createWindow() {
             data: json,
             userID: config.get('userID')
         });
+        cacheTime = parseInt(Date.now());
+        inventoryData = json;
         return json;
     });
 
