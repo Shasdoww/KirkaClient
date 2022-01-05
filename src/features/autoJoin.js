@@ -9,7 +9,7 @@ const httpsAgent = new https.Agent({
 const GAME_URL = 'https://kirkaclient.herokuapp.com/api/autojoin';
 
 async function getGame() {
-    const gameMode = config.get('AJ_prefGamemode'),
+    const gameMode = config.get('AJ_prefGamemode', null),
         map = config.get('AJ_prefMap', null),
         minPlayers = config.get('AJ_minPlayers', null),
         maxPlayers = config.get('AJ_maxPlayers', null);
@@ -17,8 +17,8 @@ async function getGame() {
     const data = {
         gameMode: gameMode,
         map: map,
-        minPlayers: minPlayers,
-        maxPlayers: maxPlayers
+        minPlayers: parseInt(minPlayers),
+        maxPlayers: parseInt(maxPlayers)
     };
 
     const request = {
@@ -26,7 +26,6 @@ async function getGame() {
         agent: httpsAgent,
         body: JSON.stringify(data)
     };
-
     const response = await fetch(GAME_URL, request);
     const json = await response.json();
     return json;
@@ -34,7 +33,6 @@ async function getGame() {
 
 module.exports = {
     name: scriptName,
-    location: ['game'],
     settings: [
         {
             name: 'Keybind',
