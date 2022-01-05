@@ -210,7 +210,6 @@ function showChangeLogs() {
         }
     });
     changeLogsWin.removeMenu();
-    // <button data-v-02c36fca="" data-v-b427fee8="" class="button right-btn rectangle" style="background-color: var(--secondary-5); --hover-color:#5C688F; --top:#5C688F; --bottom:#252E4B;"><div data-v-02c36fca="" class="triangle"></div><div data-v-02c36fca="" class="text"><svg data-v-b8de1e14="" data-v-b427fee8="" xmlns="http://www.w3.org/2000/svg" class="icon-settings svg-icon svg-icon--settings" data-v-02c36fca=""><!----><use data-v-b8de1e14="" xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="/img/icons.3c1a58be.svg#settings"></use></svg></div><div data-v-02c36fca="" class="borders"><div data-v-02c36fca="" class="border-top border"></div><div data-v-02c36fca="" class="border-bottom border"></div></div></button>
 
     let html = '';
     const versions = Object.keys(changeLogs);
@@ -230,14 +229,13 @@ function showChangeLogs() {
     changeLogsWin.loadFile(`${__dirname}/changelogs/index.html`);
 
     changeLogsWin.on('ready-to-show', () => {
-        console.log('cl ready to show');
         changeLogsWin.show();
     });
 
-    ipcMain.on('get-html', () => {
-        changeLogsWin.webContents.send('html', html);
+    ipcMain.handle('get-html', () => {
+        config.set('update', false);
+        return html;
     });
-    config.set('update', false);
 }
 
 function createShortcutKeys() {
