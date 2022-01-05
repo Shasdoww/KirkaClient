@@ -64,9 +64,6 @@ socket.on('message', (data) => {
     }
 });
 
-if (require('electron-squirrel-startup'))
-    app.quit();
-
 if (config.get('unlimitedFPS', true))
     app.commandLine.appendSwitch('disable-frame-rate-limit');
 
