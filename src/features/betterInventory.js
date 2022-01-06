@@ -22,11 +22,16 @@ let default_ = [],
     weatie = [],
     chars = [];
 
+const noSkinsHide = 'width: 100%; font-size: 1.5rem; font-weight: 450; margin-top: .15rem; display: none;';
+const noSkinsShow = 'width: 100%; font-size: 1.5rem; font-weight: 450; margin-top: .15rem; display: block;';
+
 async function makeInventory() {
     invData = await ipcRenderer.invoke('sendInvData', localStorage.getItem('token'));
     const invBtn = document.querySelector('#app > div.interface.text-2 > div.right-interface > div.right-icons > div.card-cont.text-1.inventory-card');
-    invBtn.addEventListener('click', createBetterInventory);
-    queueTabHandler();
+    invBtn.addEventListener('click', () => {
+        queueTabHandler();
+        createBetterInventory();
+    });
 }
 
 async function queueTabHandler() {
@@ -110,8 +115,8 @@ async function createBetterInventory() {
                 cursor: pointer;
                 background-color: #333;
                 transition: 0.4s;
-                width: 2.4vw;
-                height: 2vh;
+                width: 35px;
+                height: 20px;
             }
             
             .slider:before {
@@ -151,18 +156,7 @@ async function createBetterInventory() {
         searchInput.innerText = '';
         searchInput.id = 'searchDiv';
         searchInput.placeholder = 'Search for skin';
-        searchDiv.oninput = () => {
-            const value = document.getElementById('searchDiv').value.toLowerCase();
-            const allItemsUpdated = document.querySelector('#app > div.view > div > div > div.content > div > div.content > div.subjects').children;
-            allItemsUpdated.forEach(item => {
-                if (item.className != 'subject')
-                    return;
-                if (item.getElementsByClassName('item-name')[0].innerText.toLowerCase().includes(value))
-                    item.style = 'display: flex';
-                else
-                    item.style = 'display: none';
-            });
-        };
+        searchDiv.oninput = organizeHeadings;
         searchDiv.appendChild(searchInput);
 
         const toggleDiv = document.createElement('label');
@@ -173,6 +167,11 @@ async function createBetterInventory() {
         label1.style = 'padding-right: 4px;';
         toggleDiv.appendChild(label1);
 
+        const noItems = document.createElement('div');
+        noItems.style = noSkinsHide;
+        noItems.innerText = 'No skins found..';
+        noItems.id = 'noSkinsFound';
+
         const span1 = document.createElement('span');
         span1.className = 'check';
         toggleDiv.appendChild(span1);
@@ -182,7 +181,7 @@ async function createBetterInventory() {
         toggleInput.id = 'sortMode';
         toggleInput.checked = false;
         toggleInput.onchange = () => {
-            if (document.getElementById('sortMode').disabled)
+            if (document.getElementsByClassName('tab active')[0].getElementsByClassName('name')[0].innerText === 'CHESTS')
                 return;
             sortInventory(allItems);
         };
@@ -201,17 +200,15 @@ async function createBetterInventory() {
         optionsMenu.appendChild(toggleDiv);
         allItems.appendChild(styles);
         allItems.appendChild(optionsMenu);
+        allItems.appendChild(noItems);
     }
 
     const active = document.getElementsByClassName('tab active')[0];
     const state = active.getElementsByClassName('name')[0].innerText;
     let isCharacters = false;
     console.log(state);
-    if (state == 'CHESTS') {
-        document.getElementById('sortMode').selected = false;
-        document.getElementById('sortMode').disabled = true;
-    } else
-        document.getElementById('sortMode').disabled = false;
+    if (state == 'CHESTS')
+        return;
 
     if (state == 'CHARACTERS')
         isCharacters = true;
@@ -315,6 +312,7 @@ function sortInventory(allItems) {
     clearHeadings(false);
     const lineBreak = document.createElement('div');
     lineBreak.style = 'width: 100%';
+    lineBreak.className = 'newLine';
     const toDisplay = document.getElementById('sortMode').checked ? byWeapon : byRarity;
     toDisplay.forEach(parent => {
         const title = document.createElement('div');
@@ -327,6 +325,52 @@ function sortInventory(allItems) {
             allItems.appendChild(element);
         });
         allItems.appendChild(lineBreak.cloneNode());
+    });
+    organizeHeadings();
+}
+
+function organizeHeadings() {
+    console.log('organizeHeadings fired!');
+    let itemsFound = false;
+    const value = document.getElementById('searchDiv').value.toLowerCase();
+    const allItemsUpdated = document.querySelector('#app > div.view > div > div > div.content > div > div.content > div.subjects').children;
+    allItemsUpdated.forEach(item => {
+        if (item.className != 'subject')
+            return;
+        if (item.getElementsByClassName('item-name')[0].innerText.toLowerCase().includes(value)) {
+            item.style = 'display: flex;';
+            itemsFound = true;
+        } else
+            item.style = 'display: none;';
+    });
+    if (itemsFound)
+        document.getElementById('noSkinsFound').style = noSkinsHide;
+    else
+        document.getElementById('noSkinsFound').style = noSkinsShow;
+
+    const headings = document.getElementsByClassName('skin-heading');
+    headings.forEach(heading => {
+        console.log('H:', heading);
+        if (!itemsFound) { /* Pseudo Caching */
+            heading.style.display = 'none';
+            return;
+        }
+        let sibling = heading.nextSibling;
+        // eslint-disable-next-line no-constant-condition
+        while (true) {
+            if (!sibling) {
+                heading.style.display = 'none';
+                break;
+            }
+            if (sibling.style.display != 'none' && sibling.className != 'newLine') {
+                if (sibling.className != 'subject')
+                    heading.style.display = 'none';
+                else
+                    heading.style.display = 'block';
+                break;
+            }
+            sibling = sibling.nextSibling;
+        }
     });
 }
 
