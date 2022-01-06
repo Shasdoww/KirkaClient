@@ -78,7 +78,7 @@ async function createBetterInventory() {
     if (!document.getElementById('menuUtilities')) {
         console.log('Making Utils');
         const optionsMenu = document.createElement('div');
-        optionsMenu.style = 'width: 100%; font-size: 1.2rem; font-weight: 650; margin-top: .2rem; display: flex;';
+        optionsMenu.style = 'width: 100%; font-size: 1.2rem; font-weight: 650; margin-top: 8px; display: flex;';
         optionsMenu.innerText = '\u200b'; // Empty character
         optionsMenu.id = 'menuUtilities';
 
@@ -136,15 +136,15 @@ async function createBetterInventory() {
             }
             
             input:checked + .slider:before {
-                transform: translateX(11px);
+                transform: translateX(15px);
             }
             
             .slider.round {
                 border-radius: 20px;
-                margin-top: 0.3rem;
             }
             .slider.round::before {
                 border-radius: 20px;
+                margin-top: 3px;
             }`;
 
         const searchDiv = document.createElement('label');
