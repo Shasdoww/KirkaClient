@@ -52,13 +52,6 @@ module.exports = [
         val: config.get('prefBadge', 'None')
     },
     {
-        name: 'Show FPS',
-        id: 'showFPS',
-        category: 'Game',
-        type: 'checkbox',
-        val: config.get('showFPS', true),
-    },
-    {
         name: 'Show HP',
         id: 'showHP',
         category: 'Game',
@@ -80,7 +73,7 @@ module.exports = [
         val: config.get('controlW', true),
     },
     {
-        name: 'Prevent M4 and M5 to go back and forward',
+        name: 'Prevent M4 and M5 default actions',
         id: 'preventM4andM5',
         category: 'Game',
         type: 'checkbox',

@@ -2,6 +2,7 @@
 /* eslint-disable no-case-declarations */
 const allSettings = require('../features/customSettings');
 const autoJoin = require('../features/autoJoin');
+const betterInventory = require('../features/betterInventory');
 const { ipcRenderer } = require('electron');
 
 ipcRenderer.on('make-settings', () => {
@@ -12,18 +13,46 @@ window.addEventListener('DOMContentLoaded', () => {
     const check = document.getElementsByClassName('about-wrapper');
     if (check.length > 0)
         return;
+
+    const mainDIV = document.createElement('div');
+    mainDIV.id = 'optionsHolder';
+    mainDIV.style.marginTop = '65px';
+
     const table = document.getElementsByTagName('table')[0];
+    const label = document.createElement('label');
+    label.id = 'name';
+    label.innerText = 'Search for a setting:';
+    label.style.marginRight = '3px';
+
+    const input = document.createElement('input');
+    input.type = 'input';
+    input.innerText = '';
+    input.id = 'searchBar';
+    input.placeholder = 'Search Bar';
+    input.value = '';
+    input.oninput = () => {
+        const newTable = document.getElementsByTagName('table')[0];
+        newTable.innerHTML = '';
+        makeSettings(newTable);
+    };
+    allSettings.push(...autoJoin.settings);
+    allSettings.push(...betterInventory.settings);
+    mainDIV.appendChild(label);
+    mainDIV.appendChild(input);
+    table.before(mainDIV);
     makeSettings(table);
 });
 
 function makeSettings(table) {
-    allSettings.push(...autoJoin.settings);
     const doneCategories = [];
+    const searchFilter = document.getElementById('searchBar').value;
 
     for (let i = 0; i < allSettings.length; i++) {
         const option = allSettings[i];
-        if (doneCategories.includes(option.category)) continue;
-
+        if (!(option.name.toLowerCase().includes(searchFilter.toLowerCase()) || option.category.toLowerCase().includes(searchFilter.toLowerCase())))
+            continue;
+        if (doneCategories.includes(option.category))
+            continue;
         const mainDiv = document.createElement('div');
         const category = document.createElement('label');
 
@@ -41,11 +70,13 @@ function makeSettings(table) {
 
     for (let i = 0; i < allSettings.length; i++) {
         const option = allSettings[i];
+        if (!(option.name.toLowerCase().includes(searchFilter.toLowerCase()) || option.category.toLowerCase().includes(searchFilter.toLowerCase())))
+            continue;
         const tableRow = document.createElement('tr');
         const mainDIV = document.createElement('div');
 
         const tdName = document.createElement('td');
-        tdName.width = '350vw';
+        tdName.style.width = '65vw';
         const optName = document.createElement('label');
         optName.innerText = option.name;
         optName.id = 'name';
@@ -92,7 +123,7 @@ function makeSettings(table) {
             input.id = option.id;
             option.placeholder ? input.placeholder = option.placeholder : '';
             input.value = option.val;
-            input.onchange = () => inputbox(option);
+            input.oninput = () => inputbox(option);
 
             tdValue.appendChild(input);
             mainDIV.appendChild(tdValue);

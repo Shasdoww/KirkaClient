@@ -92,7 +92,7 @@ input:checked + .slider:before {
 
 table {
     border: 0px solid black;
-    padding-top: 10%;
+    margin-top: 5px;
   }
 
 th td {

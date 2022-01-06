@@ -165,9 +165,6 @@ function doOnLoad() {
     if (state != 'game')
         return;
 
-    if (config.get('showFPS', true))
-        refreshLoop();
-
     if (config.get('showHP', true))
         observeHp();
 
@@ -359,37 +356,6 @@ window.addEventListener('keydown', function(event) {
 ipcRenderer.on('updateChat', () => {
     updateChatState();
 });
-
-const times = [];
-let fps = 0;
-
-function refreshLoop() {
-    updateFPS(fps);
-
-    window.requestAnimationFrame(() => {
-        const now = performance.now();
-        while (times.length > 0 && times[0] <= now - 1000)
-            times.shift();
-
-        times.push(now);
-        fps = times.length;
-
-        refreshLoop();
-    });
-}
-
-function updateFPS(_fps) {
-    leftIcons = document.querySelector('.state-cont');
-    if (leftIcons === null) return;
-    if (FPSdiv === null) {
-        FPSdiv = document.createElement('div');
-        leftIcons.appendChild(FPSdiv);
-    }
-    if (!config.get('showFPS', true))
-        FPSdiv.innerText = '';
-    else
-        FPSdiv.innerText = `FPS: ${_fps}`;
-}
 
 if (config.get('preventM4andM5', true)) {
     window.addEventListener('mouseup', (e) => {
