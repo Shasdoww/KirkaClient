@@ -156,7 +156,7 @@ async function createBetterInventory() {
         searchInput.innerText = '';
         searchInput.id = 'searchDiv';
         searchInput.placeholder = 'Search for skin';
-        searchDiv.oninput = organizeHeadings;
+        searchDiv.oninput = () => { setInterval(organizeHeadings, 50); };
         searchDiv.appendChild(searchInput);
 
         const toggleDiv = document.createElement('label');
@@ -333,6 +333,7 @@ function organizeHeadings() {
     console.log('organizeHeadings fired!');
     let itemsFound = false;
     const value = document.getElementById('searchDiv').value.toLowerCase();
+    console.log(value);
     const allItemsUpdated = document.querySelector('#app > div.view > div > div > div.content > div > div.content > div.subjects').children;
     allItemsUpdated.forEach(item => {
         if (item.className != 'subject')
@@ -350,7 +351,7 @@ function organizeHeadings() {
 
     const headings = document.getElementsByClassName('skin-heading');
     headings.forEach(heading => {
-        console.log('H:', heading);
+        console.log('H:', heading.innerText);
         if (!itemsFound) { /* Pseudo Caching */
             heading.style.display = 'none';
             return;
@@ -358,16 +359,16 @@ function organizeHeadings() {
         let sibling = heading.nextSibling;
         // eslint-disable-next-line no-constant-condition
         while (true) {
-            if (!sibling) {
+            if (!sibling || !sibling.style) {
                 heading.style.display = 'none';
-                break;
+                return;
             }
             if (sibling.style.display != 'none' && sibling.className != 'newLine') {
                 if (sibling.className != 'subject')
                     heading.style.display = 'none';
                 else
                     heading.style.display = 'block';
-                break;
+                return;
             }
             sibling = sibling.nextSibling;
         }
