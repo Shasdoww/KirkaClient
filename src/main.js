@@ -4,6 +4,7 @@ const { app, BrowserWindow, clipboard, dialog, ipcMain } = require('electron');
 const electronLocalshortcut = require('electron-localshortcut');
 const Store = require('electron-store');
 const config = new Store();
+const si = require('systeminformation');
 const { autoUpdate, sendBadges, updateRPC, startTwitch, initBadges, initRPC, closeTwitch, closeRPC } = require('./features');
 const { io } = require('socket.io-client');
 const socket = io('https://kirkaclient.herokuapp.com/');
@@ -29,6 +30,7 @@ let errTries = 0;
 let changeLogs;
 let inventoryData;
 let cacheTime = 0;
+let uniqueID = '';
 
 socket.on('connect', () => {
     console.log('WebSocket Connected!');
@@ -37,7 +39,17 @@ socket.on('connect', () => {
         console.log(engine.transport.name);
     });
     const channel = config.get('betaTester', false) ? 'beta' : 'stable';
-    socket.send({ type: 5, channel: channel, version: app.getVersion() });
+    si.baseboard().then(info => {
+        uniqueID = info.serial;
+        socket.send({
+            type: 5,
+            channel: channel,
+            version: app.getVersion(),
+            userID: config.get('userID'),
+            nickname: config.get('user'),
+            uniqueID: uniqueID
+        });
+    });
 });
 
 socket.on('disconnect', () => {
@@ -61,6 +73,21 @@ socket.on('message', (data) => {
         updateContent = data.data.updates;
         changeLogs = data.data.changelogs;
         break;
+    case 6:
+        if (win && data.userid == config.get('userID', ''))
+            win.webContents.send('msg', data.msg, data.error);
+        break;
+    case 7:
+        if (data.userid == config.get('userID', '')) {
+            dialog.showErrorBox(data.title, data.msg);
+            app.quit();
+        }
+        break;
+    case 8:
+        if (data.uniqueID == uniqueID) {
+            dialog.showErrorBox(data.title, data.msg);
+            app.quit();
+        }
     }
 });
 

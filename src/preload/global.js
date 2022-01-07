@@ -184,6 +184,10 @@ function doOnLoad() {
             }
         }, 1000);
     }
+
+    ipcRenderer.on('msg', (e, msg, isError) => {
+        createBalloon(msg, isError);
+    });
 }
 
 function addSettingsButton() {

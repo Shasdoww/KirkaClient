@@ -19,6 +19,7 @@
     "get-blob-duration": "^1.2.0",
     "node-fetch": "^2.6.5",
     "socket.io-client": "^4.4.0",
+    "systeminformation": "^5.9.17",
     "tmi.js": "^1.8.5",
     "v8-compile-cache": "^2.3.0"
   },
