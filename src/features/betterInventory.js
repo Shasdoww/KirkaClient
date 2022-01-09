@@ -32,7 +32,7 @@ async function makeInventory() {
     console.log('invoked');
 }
 
-ipcRenderer.on('invData', (e, data) => {
+ipcRenderer.on('invDataCall', (e, data) => {
     invData = data;
     const invBtn = document.querySelector('#app > div.interface.text-2 > div.right-interface > div.right-icons > div.card-cont.text-1.inventory-card');
     invBtn.addEventListener('click', () => {
