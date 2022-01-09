@@ -26,7 +26,10 @@ const noSkinsHide = 'width: 100%; font-size: 1.5rem; font-weight: 450; margin-to
 const noSkinsShow = 'width: 100%; font-size: 1.5rem; font-weight: 450; margin-top: .15rem; display: block;';
 
 async function makeInventory() {
+    console.log('making inv');
+    console.log('invoking');
     invData = await ipcRenderer.invoke('sendInvData', localStorage.getItem('token'));
+    console.log('invoked');
     const invBtn = document.querySelector('#app > div.interface.text-2 > div.right-interface > div.right-icons > div.card-cont.text-1.inventory-card');
     invBtn.addEventListener('click', () => {
         queueTabHandler();
