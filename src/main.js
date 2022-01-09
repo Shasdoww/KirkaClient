@@ -12,6 +12,7 @@ const fetch = require('node-fetch');
 
 const { ElectronBlocker } = require('@cliqz/adblocker-electron');
 const fs = require('fs');
+const { https } = require('follow-redirects');
 const easylist = fs.readFileSync(path.join(__dirname, 'easylist.txt'), 'utf-8');
 const blocker = ElectronBlocker.parse(easylist);
 
@@ -178,13 +179,21 @@ function createWindow() {
             return inventoryData;
         const request = {
             method: 'GET',
+            host: 'https://kirka.io/api/inventory',
             headers: {
                 authorization: `Bearer ${token}`,
             },
         };
         console.log('request:', JSON.stringify(request));
         console.log('fetch:', fetch);
-        const data = await fetch('https://kirka.io/api/inventory', request);
+        const data = https.request(request, (res) => {
+            console.log(res.statusCode);
+
+            res.on('data', (data) => {
+                console.log('data:', data);
+            });
+        });
+        return;
         console.log('data:', data.status);
         console.log(await data.text());
         const json = await data.json();
