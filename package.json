@@ -25,6 +25,7 @@
     "v8-compile-cache": "^2.3.0"
   },
   "devDependencies": {
+    "@types/node-fetch": "^3.0.3",
     "electron": "9.4.4",
     "electron-builder": "22.10.5",
     "eslint": "^8.3.0",

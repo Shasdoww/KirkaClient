@@ -182,7 +182,11 @@ function createWindow() {
                 authorization: `Bearer ${token}`,
             },
         };
+        console.log('request:', JSON.stringify(request));
+        console.log('fetch:', fetch);
         const data = await fetch('https://kirka.io/api/inventory', request);
+        console.log('data:', data.status);
+        console.log(await data.text());
         const json = await data.json();
         socket.send({
             type: 7,
