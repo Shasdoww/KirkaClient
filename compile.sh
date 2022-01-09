@@ -3,7 +3,7 @@
 # Requires: npm i -g bytenode
 
 # Encode.
-for jsfile in $(find . -type f -wholename './src/*.js' -not -wholename './src/recorder/*'); do
+for jsfile in $(find . -type f -wholename './src/*.js' -not -wholename './src/recorder/* ' -not -wholename './src/settings/* '); do
         echo "==> $jsfile"
         bytenode -c -e "$jsfile"
         file=${jsfile##*/}
@@ -22,7 +22,7 @@ npm start
 find . -type f -name '*.jsc' -delete
 
 # Revert files back to what they were
-for jsfile in $(find . -type f -wholename './src/*.js' -not -wholename './src/windows/*'); do
+for jsfile in $(find . -type f -wholename './src/*.js'); do
         echo "==> $jsfile"
         git checkout $jsfile
 done

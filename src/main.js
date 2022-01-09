@@ -255,6 +255,7 @@ function showChangeLogs() {
 
     changeLogsWin.on('ready-to-show', () => {
         changeLogsWin.show();
+        changeLogsWin.webContents.openDevTools();
     });
 
     ipcMain.handle('get-html', () => {
