@@ -20,6 +20,8 @@ const splashPreload = path.join(__dirname, 'preload', 'splash.js');
 const settingsPreload = path.join(__dirname, 'preload', 'settings.js');
 const changeLogsPreload = path.join(__dirname, 'preload', 'changelogs.js');
 
+process.env.ELECTRON_ENABLE_LOGGING = true;
+
 let win;
 let splash;
 let setwin;
