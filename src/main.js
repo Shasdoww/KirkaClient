@@ -209,7 +209,7 @@ function createWindow() {
             });
             cacheTime = parseInt(Date.now());
             inventoryData = json;
-            ipcRenderer.send('invDataCall', json);
+            win.webContents.send('invDataCall', json);
         }
     });
 
