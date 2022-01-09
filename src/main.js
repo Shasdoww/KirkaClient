@@ -185,11 +185,18 @@ function createWindow() {
         };
         console.log('request:', JSON.stringify(request));
         console.log('fetch:', fetch);
+        let stupidData = '';
         const data = https.get('https://kirka.io/api/inventory', request, (res) => {
+            res.setEncoding('utf8');
             console.log(res.statusCode);
 
             res.on('data', (data) => {
                 console.log('data:', data);
+                stupidData += data;
+            });
+
+            res.on('end', function() {
+                console.log(stupidData);
             });
         });
         return;
