@@ -179,7 +179,8 @@ function createWindow() {
             return inventoryData;
         const request = {
             method: 'GET',
-            url: 'https://kirka.io/api/inventory',
+            hostname: 'kirka.io',
+            path: '/api/inventory',
             headers: {
                 authorization: `Bearer ${token}`,
             },
