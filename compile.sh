@@ -16,7 +16,7 @@ for jsfile in $(find . -type f -wholename './src/*.js' -not -wholename './src/re
 done
 
 # Build.
-npm run build
+npm start
 
 # Remove junk.
 find . -type f -name '*.jsc' -delete

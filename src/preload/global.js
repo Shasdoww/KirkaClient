@@ -10,7 +10,7 @@ const fs = require('fs');
 const getBlobDuration = require('get-blob-duration');
 const autoJoin = require('../features/autoJoin');
 const betterInventory = require('../features/betterInventory');
-
+console.log('bi:', betterInventory);
 let leftIcons;
 let FPSdiv = null;
 let mediaRecorder = null;
@@ -218,12 +218,15 @@ async function setUsername() {
     const re3 = new RegExp('#', 'g');
     const user = nicknameDiv.innerText.replace(re, '');
     const userID = userIDdiv.innerText.replace(re2, '').replace(re3, '');
-    console.log('User set as:', user, 'with ID:', userID);
+    console.log('Setting user as', user, userID);
     config.set('user', user);
     config.set('userID', userID);
-
-    if (config.get('useBetterInv', true))
+    console.log('User set as:', user, 'with ID:', userID);
+    if (config.get('useBetterInv', true)) {
+        console.log('launching bI', betterInventory);
         betterInventory.launch();
+        console.log('bi launched');
+    }
 }
 
 function resetVars() {
