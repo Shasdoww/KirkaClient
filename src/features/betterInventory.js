@@ -28,14 +28,18 @@ const noSkinsShow = 'width: 100%; font-size: 1.5rem; font-weight: 450; margin-to
 async function makeInventory() {
     console.log('making inv');
     console.log('invoking');
-    invData = await ipcRenderer.invoke('sendInvData', localStorage.getItem('token'));
+    ipcRenderer.send('sendInvData', localStorage.getItem('token'));
     console.log('invoked');
+}
+
+ipcRenderer.on('invData', (e, data) => {
+    invData = data;
     const invBtn = document.querySelector('#app > div.interface.text-2 > div.right-interface > div.right-icons > div.card-cont.text-1.inventory-card');
     invBtn.addEventListener('click', () => {
         queueTabHandler();
         createBetterInventory();
     });
-}
+});
 
 async function queueTabHandler() {
     const allTabs = document.getElementsByClassName('tab');

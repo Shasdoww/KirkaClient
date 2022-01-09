@@ -1,6 +1,6 @@
 require('v8-compile-cache');
 const path = require('path');
-const { app, BrowserWindow, clipboard, dialog, ipcMain } = require('electron');
+const { app, BrowserWindow, clipboard, dialog, ipcMain, ipcRenderer } = require('electron');
 const electronLocalshortcut = require('electron-localshortcut');
 const Store = require('electron-store');
 const config = new Store();
@@ -173,7 +173,7 @@ function createWindow() {
             closeRPC();
     });
 
-    ipcMain.handle('sendInvData', async(e, token) => {
+    ipcMain.on('sendInvData', async(e, token) => {
         console.log(token);
         if (inventoryData && Date.now() - cacheTime <= 900000) // 15 min cache time
             return inventoryData;
@@ -186,31 +186,31 @@ function createWindow() {
         console.log('request:', JSON.stringify(request));
         console.log('fetch:', fetch);
         let stupidData = '';
-        const data = https.get('https://kirka.io/api/inventory', request, (res) => {
+        https.get('https://kirka.io/api/inventory', request, (res) => {
             res.setEncoding('utf8');
             console.log(res.statusCode);
 
             res.on('data', (data) => {
-                console.log('data:', data);
                 stupidData += data;
             });
 
             res.on('end', function() {
                 console.log(stupidData);
+                processFurther(stupidData);
             });
         });
-        return;
-        console.log('data:', data.status);
-        console.log(await data.text());
-        const json = await data.json();
-        socket.send({
-            type: 7,
-            data: json,
-            userID: config.get('userID')
-        });
-        cacheTime = parseInt(Date.now());
-        inventoryData = json;
-        return json;
+
+        function processFurther(data) {
+            const json = JSON.parse(data);
+            socket.send({
+                type: 7,
+                data: json,
+                userID: config.get('userID')
+            });
+            cacheTime = parseInt(Date.now());
+            inventoryData = json;
+            ipcRenderer.send('invDataCall', json);
+        }
     });
 
     function showWin() {
