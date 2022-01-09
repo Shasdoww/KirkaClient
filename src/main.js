@@ -201,6 +201,7 @@ function createWindow() {
             win.setFullScreen(true);
 
         win.show();
+        config.set('update', true);
         if (config.get('update', true))
             showChangeLogs();
     }
