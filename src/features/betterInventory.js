@@ -2,7 +2,7 @@ const Store = require('electron-store');
 const config = new Store();
 const scriptName = 'Better Inventory';
 const { ipcRenderer } = require('electron');
-
+console.log('bi ipc:', ipcRenderer);
 let invData;
 let byRarity;
 let byWeapon;

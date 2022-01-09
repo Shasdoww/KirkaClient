@@ -173,6 +173,7 @@ function createWindow() {
     });
 
     ipcMain.handle('sendInvData', async(e, token) => {
+        console.log(token);
         if (inventoryData && Date.now() - cacheTime <= 900000) // 15 min cache time
             return inventoryData;
         const request = {
