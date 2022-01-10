@@ -5,7 +5,7 @@
   "main": "src/main.js",
   "scripts": {
     "start": "set ELECTRON_ENABLE_LOGGING=true && electron .",
-    "build": "electron-builder"
+    "build": "electron-builder -w"
   },
   "author": "AwesomeSam",
   "license": "ISC",

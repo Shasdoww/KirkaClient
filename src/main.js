@@ -7,7 +7,7 @@ const config = new Store();
 const si = require('systeminformation');
 const { autoUpdate, sendBadges, updateRPC, startTwitch, initBadges, initRPC, closeTwitch, closeRPC } = require('./features');
 const { io } = require('socket.io-client');
-const socket = io('http://127.0.0.1:5000/');
+const socket = io('https://kirkaclient.herokuapp.com/');
 const fetch = require('node-fetch');
 
 const { ElectronBlocker } = require('@cliqz/adblocker-electron');
