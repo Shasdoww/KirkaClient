@@ -184,11 +184,11 @@ function doOnLoad() {
             }
         }, 1000);
     }
-
-    ipcRenderer.on('msg', (e, msg, isError) => {
-        createBalloon(msg, isError);
-    });
 }
+
+ipcRenderer.on('msg', (e, msg, isError) => {
+    createBalloon(msg, isError);
+});
 
 function addSettingsButton() {
     const canvas = document.querySelector('#app > div.game-interface > div.esc-interface > div.right-container > div.head > div.head-right');

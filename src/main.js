@@ -1,13 +1,13 @@
 require('v8-compile-cache');
 const path = require('path');
-const { app, BrowserWindow, clipboard, dialog, ipcMain, ipcRenderer } = require('electron');
+const { app, BrowserWindow, clipboard, dialog, ipcMain } = require('electron');
 const electronLocalshortcut = require('electron-localshortcut');
 const Store = require('electron-store');
 const config = new Store();
 const si = require('systeminformation');
 const { autoUpdate, sendBadges, updateRPC, startTwitch, initBadges, initRPC, closeTwitch, closeRPC } = require('./features');
 const { io } = require('socket.io-client');
-const socket = io('https://kirkaclient.herokuapp.com/');
+const socket = io('http://127.0.0.1:5000/');
 const fetch = require('node-fetch');
 
 const { ElectronBlocker } = require('@cliqz/adblocker-electron');
@@ -195,7 +195,6 @@ function createWindow() {
             });
 
             res.on('end', function() {
-                console.log(stupidData);
                 processFurther(stupidData);
             });
         });
