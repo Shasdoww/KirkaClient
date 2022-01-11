@@ -111,7 +111,7 @@ app.commandLine.appendSwitch('high-dpi-support', 1);
 app.commandLine.appendSwitch('disable-2d-canvas-clip-aa');
 app.commandLine.appendSwitch('disable-bundled-ppapi-flash');
 app.commandLine.appendSwitch('disable-logging');
-app.commandLine.appendSwitch('disable-web-security');
+// app.commandLine.appendSwitch('disable-web-security');
 
 function createWindow() {
     win = new BrowserWindow({
@@ -127,7 +127,7 @@ function createWindow() {
             preload: gamePreload,
             enableRemoteModule: true,
             contextIsolation: false,
-            nodeIntegration: true
+            nodeIntegration: false
         },
     });
     win.removeMenu();
@@ -175,7 +175,7 @@ function createWindow() {
 
     ipcMain.on('sendInvData', async(e, token) => {
         console.log(token);
-        if (inventoryData && Date.now() - cacheTime <= 900000) // 15 min cache time
+        if (inventoryData && Date.now() - cacheTime <= 900000)
             return inventoryData;
         const request = {
             method: 'GET',
