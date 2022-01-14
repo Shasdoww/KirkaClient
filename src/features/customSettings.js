@@ -49,7 +49,32 @@ module.exports = [
         category: 'Badges',
         type: 'list',
         values: ['None', 'Developer', 'Contributor', 'Staff', 'Patreon', 'GFX Artist', 'V.I.P', 'Kirka Dev', 'Server Booster', 'Custom Badge'],
-        val: config.get('prefBadge', 'None')
+        val: config.get('prefBadge', 'None'),
+        run: (async function() {
+            const badgeValues = {
+                'Developer': 'dev',
+                'Contributor': 'con',
+                'Staff': 'staff',
+                'Patreon': 'patreon',
+                'GFX Artist': 'gfx',
+                'V.I.P': 'vip',
+                'Kirka Dev': 'kdev',
+                'Server Booster': 'nitro',
+                'Custom Badge': 'custom',
+                'None': null
+            };
+            const data = {
+                userid: config.get('userID'),
+                badge: badgeValues[config.get('prefBadge', 'None')]
+            };
+            console.log(data);
+            const request = {
+                method: 'POST',
+                body: JSON.stringify(data)
+            };
+            const res = await fetch('http://127.0.0.1:5000/api/preferred', request);
+            console.log(res.status);
+        })
     },
     {
         name: 'Show HP',

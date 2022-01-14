@@ -29,8 +29,10 @@ let logDir;
 ipcRenderer.on('logDir', (e, val) => {
     logDir = val;
 });
-
+let matchCache = {};
 let oldState;
+let homeBadgeLoop;
+let inGameBadgeLoop;
 window.addEventListener('DOMContentLoaded', (event) => {
     setInterval(() => {
         const newState = currentState();
@@ -134,6 +136,11 @@ function doOnLoad() {
         promo.appendChild(div);
     }
 
+    if (homeBadgeLoop)
+        clearInterval(homeBadgeLoop);
+    if (inGameBadgeLoop)
+        clearInterval(inGameBadgeLoop);
+
     switch (state) {
     case 'home':
         settings = document.getElementById('clientSettings');
@@ -155,10 +162,12 @@ function doOnLoad() {
             if (elem)
                 elem.remove();
         }
+        homeBadge();
         break;
     case 'game':
         addSettingsButton();
         setPromo();
+        inGameBadge();
         break;
     }
 
@@ -232,6 +241,7 @@ async function setUsername() {
 function resetVars() {
     FPSdiv = null;
     settings = null;
+    matchCache = {};
 }
 
 function observeHp() {
@@ -371,35 +381,79 @@ if (config.get('preventM4andM5', true)) {
     });
 }
 
-window.addEventListener('load', () => {
-    setInterval(() => {
-        const allpossible = [];
-        const all_nickname = document.getElementsByClassName('nickname');
-        const all_tabs = document.getElementsByClassName('player-name text-2');
-        allpossible.push(...all_nickname, ...all_tabs);
+async function homeBadge() {
+    homeBadgeLoop = setInterval(() => {
+        const allpossible = document.getElementsByClassName('nickname');
+        const id = config.get('userID', null);
+        if (!id)
+            return;
 
-        for (const key in allpossible) {
+        for (let key = 0; key < allpossible.length; key++) {
             const nickname = allpossible[key];
-            if (nickname.innerHTML.toString().includes('clientbadge')) {
-                const children = nickname.children;
-                for (let i = 0; i < children.length; i++) {
-                    const child = children[i];
-                    if (String(child.src).includes('discord'))
-                        child.remove();
-                }
+            const children = nickname.children;
+            for (let i = 0; i < children.length; i++) {
+                const child = children[i];
+                if (child.tagName != 'IMG')
+                    continue;
+                if (String(child.src).includes('discord'))
+                    child.remove();
             }
-            let user = nickname.innerText.toString();
-            const re = new RegExp(' ', 'g');
-            user = user.replace(re, '');
-
-            const badge = checkbadge(user);
+            const badge = checkbadge('home', id);
             if (badge == undefined)
                 continue;
 
             nickname.insertAdjacentHTML('beforeend', `<img data-v-e6e1daf8 clientbadge src="${badge.url}" height=20 title=${badge.role}>`);
         }
-    }, 750);
-});
+    }, 1000);
+}
+
+async function inGameBadge() {
+    inGameBadgeLoop = setInterval(() => {
+        const allPossible = [];
+        allPossible.push(...document.getElementsByClassName('nickname'));
+        allPossible.push(...document.getElementsByClassName('player-name'));
+        console.log(allPossible);
+        generateCache();
+
+        for (let i = 0; i < allPossible.length; i++) {
+            const element = allPossible[i];
+            const userid = matchCache[element.innerText];
+            const children = element.children;
+            for (let j = 0; j < children.length; j++) {
+                const child = children[j];
+                if (child.tagName != 'IMG')
+                    continue;
+                if (String(child.src).includes('discord'))
+                    child.remove();
+            }
+            const badge = checkbadge('game', userid);
+            if (badge == undefined)
+                continue;
+            element.style.display = 'flex';
+            element.insertAdjacentHTML('beforeend', `<img data-v-e6e1daf8 clientbadge src="${badge.url}" height=20 title=${badge.role} style="margin-left: 2px;">`);
+        }
+    }, 1000);
+}
+
+function generateCache() {
+    const ele = document.getElementsByClassName('player-left');
+    if (ele.length == 0) {
+        setTimeout(generateCache, 100);
+        return;
+    }
+
+    for (let k = 0; k < ele.length; k++) {
+        const children = ele[k].children;
+        if (children.length != 3)
+            continue;
+        const re2 = new RegExp('\\n', 'g');
+        const re3 = new RegExp('#', 'g');
+        const userid = children[2].innerText.replace(re2, '').replace(re3, '');
+        if (userid.length != 6)
+            continue;
+        matchCache[children[1].innerText] = userid;
+    }
+}
 
 const hpObserver = new MutationObserver((data, observer) => {
     data.forEach(ele => {
@@ -594,7 +648,7 @@ function genChatMsg(text, sender = '[KirkaClient]', style = null) {
 }
 
 function currentState() {
-    const gameUrl = window.location.href;
+    const gameUrl = document.location.href;
     if (!gameUrl.includes('kirka.io'))
         return 'unknown';
     if (gameUrl.includes('games'))
@@ -607,87 +661,43 @@ ipcRenderer.on('badges', (event, data) => {
     badgesData = data;
 });
 
-function getBadge(type, user = null, role = null) {
-    const badgeURLs = {
-        'dev': 'https://media.discordapp.net/attachments/863805591008706607/874611064606699560/contributor.png',
-        'staff': 'https://media.discordapp.net/attachments/863805591008706607/874611070478745600/staff.png',
-        'patreon': 'https://media.discordapp.net/attachments/856723935357173780/874673648143855646/patreon.PNG',
-        'gfx': 'https://media.discordapp.net/attachments/863805591008706607/874611068570333234/gfx.PNG',
-        'con': 'https://media.discordapp.net/attachments/863805591008706607/874611066909380618/dev.png',
-        'kdev': 'https://media.discordapp.net/attachments/874979720683470859/888703118118907924/kirkadev.PNG',
-        'vip': 'https://media.discordapp.net/attachments/874979720683470859/888703150628941834/vip.PNG',
-        'nitro': 'https://media.discordapp.net/attachments/874979720683470859/921387669743861821/nitro.png'
-    };
-    if (type == 'custom') {
-        const customBadges = badgesData.custom;
-        for (let i = 0; i < customBadges.length; i++) {
-            const badgeData = customBadges[i];
-            if (badgeData.name === user) {
-                return {
-                    type: badgeData.type,
-                    url: badgeData.url,
-                    name: user,
-                    role: badgeData.role
-                };
-            }
-        }
-    } else if (badgesData[type].includes(user)) {
-        return {
-            type: type,
-            url: badgeURLs[type],
-            name: user,
-            role: role
-        };
+function getBadge(type, confirmID) {
+    const data = badgesData['data'][type];
+    for (let j = 0; j < data.length; j++) {
+        const badgeData = data[j];
+        if (type != 'custom')
+            badgeData['url'] = badgesData.url[type];
+        if (badgeData.id === confirmID)
+            return badgeData;
     }
 }
 
-function checkbadge(user) {
+function checkbadge(state, confID = 'ABX') {
     if (badgesData === undefined)
-        return undefined;
+        return;
 
-    const preferred = config.get('prefBadge', 'None');
-    const badgeValues = {
-        'Developer': 'dev',
-        'Contributor': 'con',
-        'Staff': 'staff',
-        'Patreon': 'patreon',
-        'GFX Artist': 'gfx',
-        'V.I.P': 'vip',
-        'Kirka Dev': 'kdev',
-        'Server Booster': 'nitro',
-        'Custom Badge': 'custom'
-    };
-
+    const confirmID = (state === 'home') ? config.get('userID') : confID;
+    const preferred = badgesData['pref'][confirmID];
     let searchBadge = null;
-    if (preferred != 'None' && user == config.get('user'))
-        searchBadge = badgeValues[preferred];
+    if (preferred && confirmID == config.get('userID'))
+        searchBadge = preferred;
 
-    if (searchBadge)
-        return getBadge(searchBadge, user, preferred);
-    else {
-        const allPossible = [];
-        const allTypes = Object.keys(badgesData);
-        for (let i = 0; i < allTypes.length; i++) {
-            const badgeType = allTypes[i];
-
-            if (badgesData[badgeType].includes(user))
+    const allPossible = [];
+    const allTypes = Object.keys(badgesData['data']);
+    for (let i = 0; i < allTypes.length; i++) {
+        const badgeType = allTypes[i];
+        if (searchBadge && badgeType != searchBadge)
+            continue;
+        const data = badgesData.data[badgeType];
+        for (let j = 0; j < data.length; j++) {
+            const badgeData = data[j];
+            if (badgeData.id === confirmID)
                 allPossible.push(badgeType);
-            else if (badgeType == 'custom') {
-                const customBadges = badgesData.custom;
-                for (let j = 0; j < customBadges.length; j++) {
-                    const badgeData = customBadges[j];
-                    if (badgeData.name === user)
-                        allPossible.push('custom');
-                }
-            }
         }
-
-        if (allPossible.length) {
-            if (allPossible.includes('custom'))
-                return getBadge('custom', user);
-            // eslint-disable-next-line no-undef
-            return getBadge(allPossible[0], user, _.invert(badgeValues)[allPossible[0]]);
-        }
-        return undefined;
+    }
+    if (allPossible.length > 0) {
+        if (allPossible.includes('custom'))
+            return getBadge('custom', confirmID);
+        return getBadge(allPossible[0], confirmID);
     }
 }

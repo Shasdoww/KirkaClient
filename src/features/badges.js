@@ -49,6 +49,7 @@ function getBadge(type, user = null) {
 }
 
 function checkBadge(user) {
+    return undefined;
     if (badgesData === undefined)
         return undefined;
 
