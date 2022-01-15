@@ -22,14 +22,6 @@ You can download the client from our [website](https://kirkaclient.herokuapp.com
 
 <br>
 
-# Contribution
-
-To contribute to the client, fork the repo and create a PR to `canary` branch.
-
-__Note:__ No PR to `master` or `beta` directly will be accepted!
-
-<br>
-
 # Building the client
 
 `npm run build`
