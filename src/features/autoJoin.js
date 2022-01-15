@@ -6,7 +6,7 @@ const https = require('https');
 const httpsAgent = new https.Agent({
     rejectUnauthorized: false
 });
-const GAME_URL = 'https://kirkaclient.herokuapp.com/api/autojoin';
+const GAME_URL = 'http://127.0.0.1:5000/api/autojoin';
 
 async function getGame() {
     const gameMode = config.get('AJ_prefGamemode', null),
@@ -18,13 +18,16 @@ async function getGame() {
         gameMode: gameMode,
         map: map,
         minPlayers: parseInt(minPlayers),
-        maxPlayers: parseInt(maxPlayers)
+        maxPlayers: parseInt(maxPlayers),
+        region: localStorage.getItem('region', 'NA')
     };
 
     const request = {
         method: 'POST',
-        agent: httpsAgent,
-        body: JSON.stringify(data)
+        body: JSON.stringify(data),
+        headers: {
+            'Content-Type': 'application/json'
+        }
     };
     const response = await fetch(GAME_URL, request);
     const json = await response.json();

@@ -2,7 +2,6 @@ const Store = require('electron-store');
 const config = new Store();
 const scriptName = 'Better Inventory';
 const { ipcRenderer } = require('electron');
-console.log('bi ipc:', ipcRenderer);
 let invData;
 let byRarity;
 let byWeapon;
@@ -26,10 +25,7 @@ const noSkinsHide = 'width: 100%; font-size: 1.5rem; font-weight: 450; margin-to
 const noSkinsShow = 'width: 100%; font-size: 1.5rem; font-weight: 450; margin-top: .15rem; display: block;';
 
 async function makeInventory() {
-    console.log('making inv');
-    console.log('invoking');
     ipcRenderer.send('sendInvData', localStorage.getItem('token'));
-    console.log('invoked');
 }
 
 ipcRenderer.on('invDataCall', (e, data) => {
@@ -340,7 +336,6 @@ function organizeHeadings() {
     console.log('organizeHeadings fired!');
     let itemsFound = false;
     const value = document.getElementById('searchDiv').value.toLowerCase();
-    console.log(value);
     const allItemsUpdated = document.querySelector('#app > div.view > div > div > div.content > div > div.content > div.subjects').children;
     allItemsUpdated.forEach(item => {
         if (item.className != 'subject')
@@ -358,7 +353,6 @@ function organizeHeadings() {
 
     const headings = document.getElementsByClassName('skin-heading');
     headings.forEach(heading => {
-        console.log('H:', heading.innerText);
         if (!itemsFound) { /* Pseudo Caching */
             heading.style.display = 'none';
             return;

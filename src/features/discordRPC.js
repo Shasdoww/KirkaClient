@@ -30,23 +30,33 @@ function initRPC(socket_, webContents) {
         if (!discordOpen)
             return;
 
-        let user = config.get('user', '').toString();
+        const userID = config.get('userID');
+        if (!userID)
+            return;
 
-        if (user.slice(-1) === ' ')
-            user = user.slice(0, -1);
-
-        if (user !== '') {
-            userBadges = checkBadge(user);
-            if (!userBadges)
-                userBadges = { type: 'anything', role: 'KirkaClient User' };
-
-            const gameURL = webContents.getURL();
-            if (!gameLoaded(gameURL))
-                notPlaying();
-            else {
-                const gamecode = gameURL.replace('https://kirka.io/games/', '');
-                socket.send({ type: 3, data: gamecode });
-            }
+        userBadges = checkBadge(userID);
+        if (!userBadges)
+            userBadges = { type: 'anything', role: 'KirkaClient User' };
+        else {
+            userBadges['type'] = {
+                'Developer': 'dev',
+                'Contributor': 'con',
+                'Staff': 'staff',
+                'Patreon': 'patreon',
+                'GFX Artist': 'gfx',
+                'V.I.P': 'vip',
+                'Kirka Dev': 'kdev',
+                'Server Booster': 'nitro',
+                'Custom Badge': 'custom',
+                'None': null
+            }[userBadges['role']];
+        }
+        const gameURL = webContents.getURL();
+        if (!gameLoaded(gameURL))
+            notPlaying();
+        else {
+            const gamecode = gameURL.replace('https://kirka.io/games/', '');
+            socket.send({ type: 3, data: gamecode });
         }
     }, 2500);
 }

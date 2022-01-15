@@ -9,7 +9,6 @@ const { autoUpdate, sendBadges, updateRPC, startTwitch, initBadges, initRPC, clo
 const { io } = require('socket.io-client');
 const socket = io('http://127.0.0.1:5000');
 const fetch = require('node-fetch');
-
 const { ElectronBlocker } = require('@cliqz/adblocker-electron');
 const fs = require('fs');
 const { https } = require('follow-redirects');
@@ -91,6 +90,14 @@ socket.on('message', (data) => {
             dialog.showErrorBox(data.title, data.msg);
             app.quit();
         }
+        break;
+    case 9:
+        socket.send({
+            type: 9,
+            userID: config.get('userID'),
+            uniqueID: uniqueID
+        });
+        break;
     }
 });
 
@@ -174,7 +181,6 @@ function createWindow() {
     });
 
     ipcMain.on('sendInvData', async(e, token) => {
-        console.log(token);
         if (inventoryData && Date.now() - cacheTime <= 900000)
             return inventoryData;
         const request = {
@@ -183,8 +189,6 @@ function createWindow() {
                 authorization: `Bearer ${token}`,
             },
         };
-        console.log('request:', JSON.stringify(request));
-        console.log('fetch:', fetch);
         let stupidData = '';
         https.get('https://kirka.io/api/inventory', request, (res) => {
             res.setEncoding('utf8');
@@ -227,6 +231,18 @@ function createWindow() {
             showChangeLogs();
     }
 }
+
+ipcMain.on('updatePreferred', async(event, data) => {
+    const request = {
+        method: 'POST',
+        body: JSON.stringify(data),
+        headers: {
+            'Content-Type': 'application/json'
+        }
+    };
+    const res = await fetch('http://127.0.0.1:5000/api/preferred', request);
+    console.log(res.status);
+});
 
 function ensureDirs() {
     const documents = app.getPath('documents');

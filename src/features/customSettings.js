@@ -67,13 +67,7 @@ module.exports = [
                 userid: config.get('userID'),
                 badge: badgeValues[config.get('prefBadge', 'None')]
             };
-            console.log(data);
-            const request = {
-                method: 'POST',
-                body: JSON.stringify(data)
-            };
-            const res = await fetch('http://127.0.0.1:5000/api/preferred', request);
-            console.log(res.status);
+            ipcRenderer.send('updatePreferred', data);
         })
     },
     {

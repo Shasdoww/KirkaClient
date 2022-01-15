@@ -10,7 +10,7 @@ const fs = require('fs');
 const getBlobDuration = require('get-blob-duration');
 const autoJoin = require('../features/autoJoin');
 const betterInventory = require('../features/betterInventory');
-console.log('bi:', betterInventory);
+
 let leftIcons;
 let FPSdiv = null;
 let mediaRecorder = null;
@@ -33,6 +33,8 @@ let matchCache = {};
 let oldState;
 let homeBadgeLoop;
 let inGameBadgeLoop;
+let regionLoop;
+
 window.addEventListener('DOMContentLoaded', (event) => {
     setInterval(() => {
         const newState = currentState();
@@ -136,11 +138,6 @@ function doOnLoad() {
         promo.appendChild(div);
     }
 
-    if (homeBadgeLoop)
-        clearInterval(homeBadgeLoop);
-    if (inGameBadgeLoop)
-        clearInterval(inGameBadgeLoop);
-
     switch (state) {
     case 'home':
         settings = document.getElementById('clientSettings');
@@ -162,6 +159,7 @@ function doOnLoad() {
             if (elem)
                 elem.remove();
         }
+        regionLoop = setInterval(setRegion, 500);
         homeBadge();
         break;
     case 'game':
@@ -199,6 +197,17 @@ ipcRenderer.on('msg', (e, msg, isError) => {
     createBalloon(msg, isError);
 });
 
+function setRegion() {
+    const region = document.querySelector('#app > div.interface.text-2 > div.play > div > div.select-region');
+    if (!region || region.innerText.length == 0) {
+        setTimeout(setRegion, 100);
+        return;
+    }
+    const re = new RegExp(' ', 'g');
+    const finalRegion = region.innerText.replace(re, '');
+    localStorage.setItem('region', finalRegion);
+}
+
 function addSettingsButton() {
     const canvas = document.querySelector('#app > div.game-interface > div.esc-interface > div.right-container > div.head > div.head-right');
     if (canvas) {
@@ -217,11 +226,15 @@ async function setUsername() {
     const nicknameDiv = document.querySelector('#app > div.interface.text-2 > div.team-section > div.player > div > div.head-right > div.nickname');
     const userIDdiv = document.querySelector('#auth-user > div > div.card-cont.avatar-info > div.username');
 
-    if (nicknameDiv === null || nicknameDiv.innerText == 'Newbie' || userIDdiv === null) {
+    if (nicknameDiv === null || userIDdiv === null) {
         setTimeout(setUsername, 100);
         return;
     }
-
+    if (nicknameDiv.innerText == 'Newbie') {
+        config.delete('userID');
+        config.delete('user');
+        console.log('Guest Account');
+    }
     const re = new RegExp(' ', 'g');
     const re2 = new RegExp('\\n', 'g');
     const re3 = new RegExp('#', 'g');
@@ -231,17 +244,20 @@ async function setUsername() {
     config.set('user', user);
     config.set('userID', userID);
     console.log('User set as:', user, 'with ID:', userID);
-    if (config.get('useBetterInv', true)) {
-        console.log('launching bI', betterInventory);
+    if (config.get('useBetterInv', true))
         betterInventory.launch();
-        console.log('bi launched');
-    }
 }
 
 function resetVars() {
     FPSdiv = null;
     settings = null;
     matchCache = {};
+    if (homeBadgeLoop)
+        clearInterval(homeBadgeLoop);
+    if (inGameBadgeLoop)
+        clearInterval(inGameBadgeLoop);
+    if (regionLoop)
+        clearInterval(regionLoop);
 }
 
 function observeHp() {
@@ -412,7 +428,6 @@ async function inGameBadge() {
         const allPossible = [];
         allPossible.push(...document.getElementsByClassName('nickname'));
         allPossible.push(...document.getElementsByClassName('player-name'));
-        console.log(allPossible);
         generateCache();
 
         for (let i = 0; i < allPossible.length; i++) {
@@ -673,7 +688,7 @@ function getBadge(type, confirmID) {
 }
 
 function checkbadge(state, confID = 'ABX') {
-    if (badgesData === undefined)
+    if (!badgesData)
         return;
 
     const confirmID = (state === 'home') ? config.get('userID') : confID;
