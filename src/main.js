@@ -7,7 +7,7 @@ const config = new Store();
 const si = require('systeminformation');
 const { autoUpdate, sendBadges, updateRPC, startTwitch, initBadges, initRPC, closeTwitch, closeRPC } = require('./features');
 const { io } = require('socket.io-client');
-const socket = io('http://127.0.0.1:5000');
+const socket = io('https://kirkaclient.herokuapp.com');
 const fetch = require('node-fetch');
 const { ElectronBlocker } = require('@cliqz/adblocker-electron');
 const fs = require('fs');
@@ -240,7 +240,7 @@ ipcMain.on('updatePreferred', async(event, data) => {
             'Content-Type': 'application/json'
         }
     };
-    const res = await fetch('http://127.0.0.1:5000/api/preferred', request);
+    const res = await fetch('https://kirkaclient.herokuapp.com/api/preferred', request);
     console.log(res.status);
 });
 
@@ -313,6 +313,10 @@ function createShortcutKeys() {
     if (config.get('controlW', true))
         electronLocalshortcut.register(win, 'Control+W', () => { CtrlW = true; });
 }
+
+ipcMain.on('joinLink', () => {
+    checkkirka();
+});
 
 function checkkirka() {
     const urld = clipboard.readText();

@@ -159,6 +159,7 @@ function doOnLoad() {
             if (elem)
                 elem.remove();
         }
+        addButton();
         regionLoop = setInterval(setRegion, 500);
         homeBadge();
         break;
@@ -196,6 +197,36 @@ function doOnLoad() {
 ipcRenderer.on('msg', (e, msg, isError) => {
     createBalloon(msg, isError);
 });
+
+async function addButton() {
+    const addbtn = document.createElement('button');
+    addbtn.innerText = 'Join using URL';
+    addbtn.className = 'button play-btn animation';
+    addbtn.style.display = 'flex';
+    addbtn.style.alignSelf = 'center';
+    addbtn.style.fontSize = '1.4rem';
+    addbtn.style.border = 'none';
+    addbtn.style.borderRadius = '5px';
+    addbtn.style.padding = '5px';
+    addbtn.style.cursor = 'pointer';
+    addbtn.style.transition = 'background-color .3s';
+    addbtn.style.transition = 'color .3s';
+    addbtn.style.transitionTimingFunction = 'linear';
+    addbtn.onclick = () => {
+        ipcRenderer.send('joinLink');
+    };
+    addbtn.onmouseover = () => {
+        addbtn.style.backgroundColor = 'white';
+        addbtn.style.color = 'black';
+    };
+    addbtn.onmouseleave = () => {
+        addbtn.style.backgroundColor = '#ffb914';
+        addbtn.style.color = 'white';
+    };
+    addbtn.onmouseleave();
+    const play = document.getElementsByClassName('play')[0];
+    play.insertBefore(addbtn, play.firstChild);
+}
 
 function setRegion() {
     const region = document.querySelector('#app > div.interface.text-2 > div.play > div > div.select-region');
@@ -432,7 +463,8 @@ async function inGameBadge() {
 
         for (let i = 0; i < allPossible.length; i++) {
             const element = allPossible[i];
-            const userid = matchCache[element.innerText];
+            const re = new RegExp(' ', 'g');
+            const userid = matchCache[element.innerText.replace(re, '')];
             const children = element.children;
             for (let j = 0; j < children.length; j++) {
                 const child = children[j];
@@ -461,12 +493,13 @@ function generateCache() {
         const children = ele[k].children;
         if (children.length != 3)
             continue;
+        const re = new RegExp(' ', 'g');
         const re2 = new RegExp('\\n', 'g');
         const re3 = new RegExp('#', 'g');
         const userid = children[2].innerText.replace(re2, '').replace(re3, '');
         if (userid.length != 6)
             continue;
-        matchCache[children[1].innerText] = userid;
+        matchCache[children[1].innerText.replace(re, '')] = userid;
     }
 }
 

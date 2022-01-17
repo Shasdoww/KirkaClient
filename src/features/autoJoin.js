@@ -2,11 +2,7 @@ const Store = require('electron-store');
 const config = new Store();
 const scriptName = 'Auto Joiner';
 const fetch = require('node-fetch');
-const https = require('https');
-const httpsAgent = new https.Agent({
-    rejectUnauthorized: false
-});
-const GAME_URL = 'http://127.0.0.1:5000/api/autojoin';
+const GAME_URL = 'https://kirkaclient.herokuapp.com/api/autojoin';
 
 async function getGame() {
     const gameMode = config.get('AJ_prefGamemode', null),
