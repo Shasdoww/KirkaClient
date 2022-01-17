@@ -9,9 +9,9 @@ for jsfile in $(find . -type f -wholename './src/*.js' -not -wholename './src/re
         file=${jsfile##*/}
         file=${file::-3}
         if [[ "$jsfile" == *"src/features"* ]]; then
-                printf "require('bytenode');\nmodule.exports = require('./${file}.jsc');" > $jsfile
+                printf "require('bytenode');\nmodule.exports = require('./${file}.jsc');\n" > $jsfile
         else
-                printf "require('bytenode');\nrequire('./${file}.jsc');" > $jsfile
+                printf "require('bytenode');\nrequire('./${file}.jsc');\n" > $jsfile
         fi
 done
 
