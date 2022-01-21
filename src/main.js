@@ -374,8 +374,8 @@ async function initAutoUpdater(webContents) {
             if (errTries >= 40) {
                 dialog.showErrorBox('Websocket Error', 'Client is experiencing issues connecting to the WebSocket. ' +
                 'Check your internet connection.\nIf your connection seems good, please report this issue to the support server.');
-                app.quit();
-                return;
+                createWindow();
+                canDestroy = true;
             }
             initAutoUpdater(webContents);
         }, 500);
