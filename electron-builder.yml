@@ -6,6 +6,10 @@ win:
       arch:
         - x64
         - ia32
+    - target: portable
+      arch:
+        - x64
+        - ia32
 linux:
   artifactName: ${productName}-portable-${os}-${arch}.${ext}
   target:
@@ -14,6 +18,12 @@ linux:
         - x64
         - ia32
   category: game
+mac:
+  artifactName: ${productName}-portable-${os}-${arch}.${ext}
+  target:
+    - target: dmg
+      arch:
+        - x64
 nsis:
   artifactName: ${productName}-setup-${os}-${arch}-v${version}.${ext}
   oneClick: false
