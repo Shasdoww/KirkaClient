@@ -10,6 +10,7 @@ const fs = require('fs');
 const getBlobDuration = require('get-blob-duration');
 const autoJoin = require('../features/autoJoin');
 const betterInventory = require('../features/betterInventory');
+const altManager = require('../features/altManager');
 
 let leftIcons;
 let FPSdiv = null;
@@ -277,6 +278,7 @@ async function setUsername() {
     console.log('User set as:', user, 'with ID:', userID);
     if (config.get('useBetterInv', true))
         betterInventory.launch();
+    altManager.launch();
 }
 
 function resetVars() {
