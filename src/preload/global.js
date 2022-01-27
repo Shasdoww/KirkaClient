@@ -148,7 +148,8 @@ function doOnLoad() {
         // eslint-disable-next-line no-case-declarations
         const canvas = document.getElementById('left-icons');
         if (canvas) {
-            canvas.insertAdjacentHTML('beforeend', '<div data-v-6be9607e="" id="clientSettings" class="icon-btn text-1" style="--i:3;" data-v-45658db6=""><div data-v-45658db6="" class="wrapper"><img data-v-b8de1e14="" data-v-4f66c13e="" src="https://media.discordapp.net/attachments/912303941449039932/913787350738407434/client_icon.png" width="90%" height="auto"><div data-v-4f66c13e="" class="text-icon">CLIENT</div></div></div>');
+            canvas.style.top = '15%';
+            canvas.insertAdjacentHTML('beforeend', '<div data-v-ae524044="" id="clientSettings" class="icon-btn text-1" style="--i:3;" data-v-45658db6=""><div data-v-45658db6="" class="wrapper"><img data-v-b8de1e14="" data-v-4f66c13e="" src="https://media.discordapp.net/attachments/912303941449039932/913787350738407434/client_icon.png" width="90%" height="auto"><div data-v-4f66c13e="" class="text-icon">CLIENT</div></div></div>');
             settings = document.getElementById('clientSettings');
             settings.onclick = () => {
                 ipcRenderer.send('show-settings');
@@ -278,7 +279,7 @@ async function setUsername() {
     console.log('User set as:', user, 'with ID:', userID);
     if (config.get('useBetterInv', true))
         betterInventory.launch();
-    altManager.launch();
+    // altManager.launch();
 }
 
 function resetVars() {
