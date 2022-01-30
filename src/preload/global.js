@@ -10,7 +10,6 @@ const fs = require('fs');
 const getBlobDuration = require('get-blob-duration');
 const autoJoin = require('../features/autoJoin');
 const betterInventory = require('../features/betterInventory');
-const altManager = require('../features/altManager');
 
 let leftIcons;
 let FPSdiv = null;
@@ -145,16 +144,7 @@ function doOnLoad() {
         setUsername();
         promo = document.getElementsByClassName('left-interface')[0];
         promo.appendChild(div);
-        // eslint-disable-next-line no-case-declarations
-        const canvas = document.getElementById('left-icons');
-        if (canvas) {
-            canvas.style.top = '15%';
-            canvas.insertAdjacentHTML('beforeend', '<div data-v-ae524044="" id="clientSettings" class="icon-btn text-1" style="--i:3;" data-v-45658db6=""><div data-v-45658db6="" class="wrapper"><img data-v-b8de1e14="" data-v-4f66c13e="" src="https://media.discordapp.net/attachments/912303941449039932/913787350738407434/client_icon.png" width="90%" height="auto"><div data-v-4f66c13e="" class="text-icon">CLIENT</div></div></div>');
-            settings = document.getElementById('clientSettings');
-            settings.onclick = () => {
-                ipcRenderer.send('show-settings');
-            };
-        }
+        createHomePageSettings();
 
         if (config.get('removeDiscordBtn', false)) {
             const elem = document.querySelector('#app > div.interface.text-2 > div.right-interface > div.settings-and-socicons > div.card-cont.soc-group');
@@ -179,26 +169,22 @@ function doOnLoad() {
         observeHp();
 
     updateChatState();
-
-    const url = config.get('customScope');
-    if (url) {
-        setInterval(function() {
-            const x = document.getElementsByClassName('sniper-mwNMW')[0];
-            if (x) {
-                if (x.src != url) {
-                    x.src = url;
-                    x.width = config.get('scopeSize', 200);
-                    x.height = config.get('scopeSize', 200);
-                    x.removeAttribute('class');
-                }
-            }
-        }, 1000);
-    }
 }
 
 ipcRenderer.on('msg', (e, msg, isError) => {
     createBalloon(msg, isError);
 });
+
+function createHomePageSettings() {
+    const downloadBtn = document.querySelector('#right-interface > div.settings-and-socicons > div:nth-child(2)');
+    const settingsBtn = downloadBtn.cloneNode(true);
+    settingsBtn.childNodes[0].childNodes[1].innerText = 'SETTINGS';
+    settingsBtn.onclick = () => {
+        ipcRenderer.send('show-settings');
+    };
+    settingsBtn.childNodes[1].outerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="42" height="42" viewBox="0 0 24 24" fill="none" stroke="#000000" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="14" rx="2" ry="2"></rect><line x1="8" y1="21" x2="16" y2="21"></line><line x1="12" y1="17" x2="12" y2="21"></line></svg>';
+    downloadBtn.parentNode.replaceChild(settingsBtn, downloadBtn);
+}
 
 async function addButton() {
     const addbtn = document.createElement('button');
@@ -223,7 +209,7 @@ async function addButton() {
     };
     addbtn.onmouseleave = () => {
         addbtn.style.backgroundColor = '#ffb914';
-        addbtn.style.color = 'white';
+        addbtn.style.color = 'black';
     };
     addbtn.onmouseleave();
     const play = document.getElementsByClassName('play')[0];
@@ -279,7 +265,6 @@ async function setUsername() {
     console.log('User set as:', user, 'with ID:', userID);
     if (config.get('useBetterInv', true))
         betterInventory.launch();
-    // altManager.launch();
 }
 
 function resetVars() {
@@ -440,6 +425,8 @@ async function homeBadge() {
 
         for (let key = 0; key < allpossible.length; key++) {
             const nickname = allpossible[key];
+            if (nickname.innerText.replace(new RegExp(' ', 'g'), '') != config.get('user'))
+                continue;
             const children = nickname.children;
             for (let i = 0; i < children.length; i++) {
                 const child = children[i];
