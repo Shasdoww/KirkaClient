@@ -130,7 +130,6 @@ function makeSettings(table) {
             break;
         case 'list':
             const optionValues = option.values;
-            console.log('optVal:', optionValues);
 
             const select = document.createElement('select');
             select.id = option.id;
