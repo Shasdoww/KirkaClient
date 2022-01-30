@@ -182,7 +182,7 @@ function createHomePageSettings() {
     settingsBtn.onclick = () => {
         ipcRenderer.send('show-settings');
     };
-    settingsBtn.childNodes[1].outerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="42" height="42" viewBox="0 0 24 24" fill="none" stroke="#000000" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="14" rx="2" ry="2"></rect><line x1="8" y1="21" x2="16" y2="21"></line><line x1="12" y1="17" x2="12" y2="21"></line></svg>';
+    settingsBtn.childNodes[1].outerHTML = '<svg xmlns="http://www.w3.org/2000/svg" height="48px" viewBox="0 0 24 24" width="48px" fill="#FFFFFF"><path d="M0 0h24v24H0V0z" fill="none"/><path d="M23 2H1v16h9v2H8v2h8v-2h-2v-2h9V2zm-2 14H3V4h18v12z"/></svg>';
     downloadBtn.parentNode.replaceChild(settingsBtn, downloadBtn);
 }
 
