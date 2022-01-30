@@ -60,6 +60,7 @@ async function downloadUpdate(contents, updateData) {
                         fs.writeFileSync(downloadDestination, a, 'binary');
                         resolve();
                     } catch (e) {
+                        console.log(e);
                         dialog.showErrorBox('Permission Error!',
                             'Please start client as Administrator.\nThis can be done by Right Click > Run as Administrator.');
                         app.quit();

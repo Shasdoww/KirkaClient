@@ -8,7 +8,6 @@ const si = require('systeminformation');
 const { autoUpdate, sendBadges, updateRPC, startTwitch, initBadges, initRPC, closeTwitch, closeRPC } = require('./features');
 const { io } = require('socket.io-client');
 const socket = io('https://kirkaclient.herokuapp.com');
-const fetch = require('node-fetch');
 const { ElectronBlocker } = require('@cliqz/adblocker-electron');
 const fs = require('fs');
 const { https } = require('follow-redirects');
@@ -168,9 +167,7 @@ function createWindow() {
     });
 
     ipcMain.on('getContents', () => {
-        console.log('asking contents');
         setwin.webContents.send('contentsID', win.id);
-        console.log('sent:', win.id);
     });
 
     ipcMain.on('toggleRPC', () => {
@@ -234,19 +231,22 @@ function createWindow() {
 }
 
 ipcMain.on('updatePreferred', async(event, data) => {
-    console.log('Updating Pref');
-    console.log(JSON.stringify(data));
     const request = {
         method: 'POST',
-        body: JSON.stringify(data),
+        hostname: 'kirkaclient.herokuapp.com',
+        path: '/api/preferred',
         headers: {
             'Content-Type': 'application/json'
-        }
+        },
     };
-    console.log('fetching');
-    const res = await fetch('https://kirkaclient.herokuapp.com/api/preferred', request);
-    console.log(res.status);
-    console.log(await res.text());
+    const req = https.request(request, res => {
+        console.log(res.statusCode);
+    });
+    req.on('error', error => {
+        console.error(error);
+    });
+    req.write(JSON.stringify(data));
+    req.end();
 });
 
 function ensureDirs() {

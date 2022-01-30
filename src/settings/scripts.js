@@ -16,16 +16,12 @@ function checkbox(option) {
 
 ipcRenderer.on('contentsID', (event, id) => {
     const window = remote.BrowserWindow.fromId(id);
-    console.log(window);
-    console.log('running');
     globalOption.run(window.webContents);
-    console.log('ran');
 });
 
 function inputbox(option) {
     const customID = option.id;
     const val = document.getElementById(customID).value;
-    console.log(val);
     config.set(customID, val);
     if (option.run) {
         globalOption = option;
