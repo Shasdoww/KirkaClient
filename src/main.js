@@ -242,6 +242,7 @@ ipcMain.on('updatePreferred', async(event, data) => {
     };
     const res = await fetch('https://kirkaclient.herokuapp.com/api/preferred', request);
     console.log(res.status);
+    console.log(await res.text());
 });
 
 function ensureDirs() {
