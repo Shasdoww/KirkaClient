@@ -10,7 +10,7 @@ function checkbox(option) {
     config.set(customID, val);
     if (option.run) {
         globalOption = option;
-        const id = ipcRenderer.send('getContents');
+        ipcRenderer.send('getContents');
     }
 }
 
@@ -25,11 +25,11 @@ ipcRenderer.on('contentsID', (event, id) => {
 function inputbox(option) {
     const customID = option.id;
     const val = document.getElementById(customID).value;
+    console.log(val);
     config.set(customID, val);
     if (option.run) {
-        const id = ipcRenderer.sendSync('getContents');
-        const window = remote.BrowserWindow.fromId(id);
-        option.run(window.webContents);
+        globalOption = option;
+        ipcRenderer.send('getContents');
     }
 }
 
@@ -39,8 +39,7 @@ function sliderVal(option) {
     document.getElementById(`${customID}-label`).innerText = slider.value;
     config.set(customID, slider.value);
     if (option.run) {
-        const id = ipcRenderer.sendSync('getContents');
-        const window = remote.BrowserWindow.fromId(id);
-        option.run(window.webContents);
+        globalOption = option;
+        ipcRenderer.send('getContents');
     }
 }
