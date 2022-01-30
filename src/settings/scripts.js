@@ -18,7 +18,7 @@ ipcRenderer.on('contentsID', (event, id) => {
     console.log('got contents:', id);
     console.log(globalOption);
     const window = remote.BrowserWindow.fromId(id);
-    console.log(window)
+    console.log(window);
     globalOption.run(window.webContents);
 });
 
