@@ -167,9 +167,10 @@ function createWindow() {
         ensureDirs();
     });
 
-    ipcMain.on('getContents', (event) => {
+    ipcMain.on('getContents', () => {
         console.log('asking contents');
         setwin.webContents.send('contentsID', win.id);
+        console.log('sent:', win.id);
     });
 
     ipcMain.on('toggleRPC', () => {

@@ -17,9 +17,9 @@ function checkbox(option) {
 ipcRenderer.on('contentsID', (event, id) => {
     console.log('got contents:', id);
     console.log(globalOption);
-    const window = remote.BrowserWindow.fromId(id);
-    console.log(window);
-    globalOption.run(window.webContents);
+    // const window = remote.BrowserWindow.fromId(id);
+    // console.log(window);
+    // globalOption.run(window.webContents);
 });
 
 function inputbox(option) {
