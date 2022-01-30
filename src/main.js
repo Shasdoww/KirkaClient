@@ -234,6 +234,8 @@ function createWindow() {
 }
 
 ipcMain.on('updatePreferred', async(event, data) => {
+    console.log('Updating Pref');
+    console.log(JSON.stringify(data));
     const request = {
         method: 'POST',
         body: JSON.stringify(data),
@@ -241,6 +243,7 @@ ipcMain.on('updatePreferred', async(event, data) => {
             'Content-Type': 'application/json'
         }
     };
+    console.log('fetching');
     const res = await fetch('https://kirkaclient.herokuapp.com/api/preferred', request);
     console.log(res.status);
     console.log(await res.text());
