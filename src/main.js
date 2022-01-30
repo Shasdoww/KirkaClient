@@ -169,7 +169,7 @@ function createWindow() {
 
     ipcMain.on('getContents', (event) => {
         console.log('asking contents');
-        event.returnValue = win.id;
+        setwin.webContents.send('contentsID', win.id);
     });
 
     ipcMain.on('toggleRPC', () => {
