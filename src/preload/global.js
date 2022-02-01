@@ -246,20 +246,16 @@ async function setUsername() {
     const userIDdiv = document.querySelector('#auth-user > div > div.card-cont.avatar-info > div.username');
 
     if (nicknameDiv === null || userIDdiv === null) {
+        config.set('userID', '000000');
+        config.set('user', 'Newbie');
         setTimeout(setUsername, 100);
         return;
-    }
-    if (nicknameDiv.innerText == 'Newbie') {
-        config.delete('userID');
-        config.delete('user');
-        console.log('Guest Account');
     }
     const re = new RegExp(' ', 'g');
     const re2 = new RegExp('\\n', 'g');
     const re3 = new RegExp('#', 'g');
     const user = nicknameDiv.innerText.replace(re, '');
     const userID = userIDdiv.innerText.replace(re2, '').replace(re3, '');
-    console.log('Setting user as', user, userID);
     config.set('user', user);
     config.set('userID', userID);
     console.log('User set as:', user, 'with ID:', userID);

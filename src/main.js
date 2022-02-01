@@ -1,6 +1,7 @@
 require('v8-compile-cache');
 const path = require('path');
-const { app, BrowserWindow, clipboard, dialog, ipcMain } = require('electron');
+const { app, BrowserWindow, clipboard, dialog, ipcMain, protocol, session } = require('electron');
+const url = require('url');
 const electronLocalshortcut = require('electron-localshortcut');
 const Store = require('electron-store');
 const config = new Store();
@@ -117,7 +118,7 @@ app.commandLine.appendSwitch('high-dpi-support', 1);
 app.commandLine.appendSwitch('disable-2d-canvas-clip-aa');
 app.commandLine.appendSwitch('disable-bundled-ppapi-flash');
 app.commandLine.appendSwitch('disable-logging');
-// app.commandLine.appendSwitch('disable-web-security');
+app.commandLine.appendSwitch('disable-web-security');
 
 function createWindow() {
     win = new BrowserWindow({
@@ -133,7 +134,7 @@ function createWindow() {
             preload: gamePreload,
             enableRemoteModule: true,
             contextIsolation: false,
-            nodeIntegration: false
+            webSecurity: false
         },
     });
     win.removeMenu();
@@ -150,9 +151,9 @@ function createWindow() {
         app.exit();
     });
 
-    win.webContents.on('new-window', function(event, url) {
+    win.webContents.on('new-window', function(event, url_) {
         event.preventDefault();
-        win.loadURL(url);
+        win.loadURL(url_);
     });
 
     const contents = win.webContents;
@@ -338,8 +339,6 @@ if (process.platform === 'linux')
 else
     icon = path.join(__dirname, 'media', 'icon.ico');
 
-app.whenReady().then(() => createSplashWindow());
-
 app.on('window-all-closed', () => {
     if (process.platform !== 'darwin') {
         socket.disconnect();
@@ -440,3 +439,56 @@ function createSettings() {
         setwin = null;
     });
 }
+
+
+const initResourceSwapper = () => {
+    const SWAP_FOLDER = path.join(app.getPath('documents'), '/KirkaSwapper');
+    try {
+        fs.mkdirSync(SWAP_FOLDER, { recursive: true });
+    } catch (e) {
+        console.error(e);
+    }
+    const swap = {
+        filter: {
+            urls: []
+        },
+        files: {}
+    };
+    const allFilesSync = (dir) => {
+        fs.readdirSync(dir).forEach(file => {
+            const filePath = path.join(dir, file);
+            const useAssets = !(/KirkaSwapper\\(css|docs|img|libs|pkg|sound)/.test(dir));
+            console.log('ASSET: ', dir);
+            if (fs.statSync(filePath).isDirectory())
+                allFilesSync(filePath);
+            else {
+                const kirk = '*://' + (useAssets ? 'kirka.io' : '') + filePath.replace(SWAP_FOLDER, '').replace(/\\/g, '/') + '*';
+                swap.filter.urls.push(kirk);
+                swap.files[kirk.replace(/\*/g, '')] = url.format({
+                    pathname: filePath,
+                    protocol: '',
+                    slashes: false
+                });
+            }
+        });
+    };
+    allFilesSync(SWAP_FOLDER);
+    if (swap.filter.urls.length) {
+        session.defaultSession.webRequest.onBeforeRequest(swap.filter, (details, callback) => {
+            const redirect = swap.files[details.url.replace(/https|http|(\?.*)|(#.*)/gi, '')] || details.url;
+            callback({ cancel: false, redirectURL: redirect });
+            console.log('Redirecting', details.url, 'to', redirect);
+        });
+    }
+};
+
+app.once('ready', () => {
+    // Initialize protocol to access files
+    protocol.registerFileProtocol('file', (request, callback) => {
+        const pathname = decodeURIComponent(request.url.replace('file:///', ''));
+        callback(pathname);
+    });
+    // Init resource swapper
+    initResourceSwapper();
+    createSplashWindow();
+});
