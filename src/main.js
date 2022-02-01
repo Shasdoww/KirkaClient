@@ -433,7 +433,7 @@ function createSettings() {
 
     setwin.once('ready-to-show', () => {
         setwin.show();
-        setwin.webContents.openDevTools();
+        // setwin.webContents.openDevTools();
     });
 
     setwin.on('close', () => {
