@@ -36,6 +36,13 @@ module.exports = [
         })
     },
     {
+        name: 'Comma Format Numbers',
+        id: 'commaFormat',
+        category: 'Game',
+        type: 'checkbox',
+        val: config.get('commaFormat', true),
+    },
+    {
         name: 'Client Badges',
         id: 'clientBadges',
         category: 'Badges',

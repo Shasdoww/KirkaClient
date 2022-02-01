@@ -42,6 +42,7 @@ window.addEventListener('DOMContentLoaded', (event) => {
             oldState = newState;
             doOnLoad();
         }
+        commaFormat();
     }, 1000);
 });
 
@@ -174,6 +175,135 @@ function doOnLoad() {
 ipcRenderer.on('msg', (e, msg, isError) => {
     createBalloon(msg, isError);
 });
+
+function commaFormat() {
+    if (!config.get('commaFormat', true))
+        return;
+    const href = window.location.href;
+
+    if (href == 'https://kirka.io/hub/clans/my-clan') {
+        // Clan Page formatter: war score
+        let elem = document.getElementsByClassName('champions-score');
+        if (elem.length > 0) {
+            elem = document.getElementsByClassName('champions-score')[0];
+            elem = document.getElementsByClassName('champions-score')[0].innerText;
+            const elem2 = new Intl.NumberFormat().format(elem);
+            if (!elem2.includes(','))
+                return;
+            if (!document.getElementsByClassName('champions-score')[0].innerText.includes('.'))
+                document.getElementsByClassName('champions-score')[0].innerText = elem2;
+        }
+        // Clan Page formatter: full score
+        elem = document.getElementsByClassName('all-scores-value');
+        if (elem) {
+            elem = document.getElementsByClassName('all-scores-value')[0];
+            if (elem) {
+                elem = document.getElementsByClassName('all-scores-value')[0].innerText;
+                const elem2 = new Intl.NumberFormat().format(elem);
+                if (!elem2.includes(','))
+                    return;
+                if (!document.getElementsByClassName('all-scores-value')[0].innerText.includes('.'))
+                    document.getElementsByClassName('all-scores-value')[0].innerText = elem2;
+            }
+        }
+        // Clan Page formatter: user scores
+        for (let i = 0; i < 2000; i++) {
+            elem = document.getElementsByClassName('stat');
+            if (elem.length > 0) {
+                elem = document.getElementsByClassName('stat')[i];
+                elem = document.getElementsByClassName('stat')[i].innerText;
+                const elem2 = new Intl.NumberFormat().format(elem);
+                if (!elem2.includes(','))
+                    continue;
+                if (!document.getElementsByClassName('stat')[i].innerText.includes('.'))
+                    document.getElementsByClassName('stat')[i].innerText = elem2;
+            }
+        }
+    } else if (href == 'https://kirka.io/hub/clans/champions-league') {
+        // ClanWar Number formatter
+        for (let i = 0; i < 73; i++) {
+            let elem = document.getElementsByClassName('stat');
+            if (elem.length > 0) {
+                elem = document.getElementsByClassName('stat')[i];
+                if (elem) {
+                    elem = document.getElementsByClassName('stat')[i].innerText;
+                    const elem2 = new Intl.NumberFormat().format(elem);
+                    if (!elem2.includes(','))
+                        continue;
+                    if (!document.getElementsByClassName('stat')[i].innerText.includes('.')) {
+                        if (document.getElementsByClassName('stat')[i].innerText.length > 3)
+                            document.getElementsByClassName('stat')[i].innerText = elem2;
+                    }
+                }
+            }
+        }
+    } else if (href.includes('https://kirka.io/profile')) {
+        // Profile page number formatter: stats
+        for (let i = 0; i < 7; i++) {
+            let elem = document.getElementsByClassName('stat-value text-2');
+            if (elem.length > 0) {
+                elem = document.getElementsByClassName('stat-value text-2')[i].innerText;
+                console.log(elem);
+                const elem2 = new Intl.NumberFormat().format(elem);
+                console.log(elem2);
+                if (!elem2.includes(','))
+                    continue;
+                if (!document.getElementsByClassName('stat-value text-2')[i].innerText.includes('.'))
+                    document.getElementsByClassName('stat-value text-2')[i].innerText = elem2;
+            }
+        }
+        let elem = document.getElementsByClassName('progress-exp text-2');
+        if (elem.length > 0) {
+            elem = document.getElementsByClassName('progress-exp text-2')[0].innerText;
+            const numbers = elem.split(' / ');
+            const nubmer1form = new Intl.NumberFormat().format(numbers[0]);
+            const nubmer2form = new Intl.NumberFormat().format(numbers[1]);
+            if (!nubmer1form.includes(',') || !nubmer2form.includes(','))
+                return;
+            const numberoutput = nubmer1form + ' / ' + nubmer2form;
+            if (!elem.includes('.'))
+                document.getElementsByClassName('progress-exp text-2')[0].innerText = numberoutput;
+        }
+    } else if (href == 'https://kirka.io/hub/leaderboard') {
+        // DailyWar number formatter
+        for (let i = 0; i < 40; i++) {
+            let elem = document.getElementsByClassName('value');
+            if (elem.length > 0) {
+                elem = document.getElementsByClassName('value')[i].innerText;
+                const elem2 = new Intl.NumberFormat().format(elem);
+                if (!elem2.includes(','))
+                    continue;
+                if (!document.getElementsByClassName('value')[i].innerText.includes('.'))
+                    document.getElementsByClassName('value')[i].innerText = elem2;
+            }
+        }
+    } else if (href == 'https://kirka.io/') {
+        let elem = document.getElementsByClassName('exp-values');
+        if (elem.length > 0) {
+            elem = document.getElementsByClassName('exp-values')[0].innerText;
+            const numbers = elem.split(' / ');
+            const nubmer1form = new Intl.NumberFormat().format(numbers[0]);
+            const nubmer2form = new Intl.NumberFormat().format(numbers[1]);
+            if (!nubmer1form.includes(',') || !nubmer2form.includes(','))
+                return;
+            const numberoutput = nubmer1form + ' / ' + nubmer2form;
+            if (!elem.includes('.'))
+                document.getElementsByClassName('exp-values')[0].innerText = numberoutput;
+        }
+        elem = document.getElementsByClassName('card-cont money');
+        if (elem.length > 0) {
+            for (let count = 0; count < 2; count += 1) {
+                elem = document.getElementsByClassName('card-cont money')[count].childNodes[1].textContent;
+                console.log(elem);
+                const elem2 = new Intl.NumberFormat().format(elem);
+                console.log(elem2);
+                if (!elem2.includes(','))
+                    continue;
+                document.getElementsByClassName('card-cont money')[count].childNodes[1].textContent = elem2;
+            }
+        }
+    }
+}
 
 function createHomePageSettings() {
     const downloadBtn = document.querySelector('#right-interface > div.settings-and-socicons > div:nth-child(2)');
@@ -642,10 +772,13 @@ function saveRecording(blob) {
             blob.arrayBuffer().then(buf => {
                 const buffer = Buffer.from(buf);
                 console.log('Filepath:', filepath);
-                if (filepath !== '') fs.writeFileSync(filepath, buffer);
-                if (shouldSave) createBalloon('Recording Saved!');
-                else createBalloon('Recording Cancelled', true);
-                console.log('Saved!');
+                if (filepath !== '')
+                    fs.writeFileSync(filepath, buffer);
+                if (shouldSave)
+                    createBalloon('Recording Saved!');
+                else
+                    createBalloon('Recording Cancelled', true);
+                console.log('Completed!');
             });
         }
     }).catch(err => {

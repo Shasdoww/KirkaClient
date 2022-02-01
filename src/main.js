@@ -380,6 +380,7 @@ async function initAutoUpdater(webContents) {
                 'Check your internet connection.\nIf your connection seems good, please report this issue to the support server.');
                 createWindow();
                 canDestroy = true;
+                return;
             }
             initAutoUpdater(webContents);
         }, 500);
