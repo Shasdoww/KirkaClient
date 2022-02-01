@@ -458,7 +458,7 @@ const initResourceSwapper = () => {
     const allFilesSync = (dir) => {
         fs.readdirSync(dir).forEach(file => {
             const filePath = path.join(dir, file);
-            const useAssets = !(/KirkaSwapper\\(css|docs|img|libs|pkg|sound)/.test(dir));
+            const useAssets = !(/KirkaSwapper\\(css|sound)/.test(dir));
             console.log('ASSET: ', dir);
             if (fs.statSync(filePath).isDirectory())
                 allFilesSync(filePath);
