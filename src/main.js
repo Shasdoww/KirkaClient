@@ -445,7 +445,7 @@ function createSettings() {
 const initResourceSwapper = () => {
     const SWAP_FOLDER = path.join(app.getPath('documents'), '/KirkaSwapper');
     try {
-        fs.mkdirSync(SWAP_FOLDER, { recursive: true });
+        fs.mkdirSync(path.join(SWAP_FOLDER, '/assets'), { recursive: true });
     } catch (e) {
         console.error(e);
     }
@@ -458,12 +458,14 @@ const initResourceSwapper = () => {
     const allFilesSync = (dir) => {
         fs.readdirSync(dir).forEach(file => {
             const filePath = path.join(dir, file);
-            const useAssets = !(/KirkaSwapper\\(css|sound)/.test(dir));
-            console.log('ASSET: ', dir);
+            console.log(`[RSC] filePath: ${filePath}`);
+            const useAssets = !(/KirkaSwapper\/(css|sound)/.test(dir));
+            console.log('[RSC] asset:', useAssets);
             if (fs.statSync(filePath).isDirectory())
                 allFilesSync(filePath);
             else {
                 const kirk = '*://' + (useAssets ? 'kirka.io' : '') + filePath.replace(SWAP_FOLDER, '').replace(/\\/g, '/') + '*';
+                console.log(`[RSC] kirk: ${kirk}`);
                 swap.filter.urls.push(kirk);
                 swap.files[kirk.replace(/\*/g, '')] = url.format({
                     pathname: filePath,
@@ -472,6 +474,7 @@ const initResourceSwapper = () => {
                 });
             }
         });
+        console.log(JSON.stringify(swap, null, 2));
     };
     allFilesSync(SWAP_FOLDER);
     if (swap.filter.urls.length) {
