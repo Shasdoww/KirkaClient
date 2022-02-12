@@ -18,6 +18,13 @@ module.exports = [
         val: config.get('fullScreenStart', true),
     },
     {
+        name: 'Enable Resource Swapper',
+        id: 'resourceSwapper',
+        category: 'Startup',
+        type: 'checkbox',
+        val: config.get('resourceSwapper', true),
+    },
+    {
         name: 'Unlimited FPS',
         id: 'unlimitedFPS',
         category: 'Performance',
