@@ -1,10 +1,11 @@
 {
   "name": "KirkaClient",
-  "version": "2.3.4",
+  "version": "2.3.5",
   "description": "The most advanced client for the game kirka.io! Official Website: https://kirkaclient.herokuapp.com",
   "main": "src/main.js",
   "scripts": {
-    "start": "set ELECTRON_ENABLE_LOGGING=true && electron .",
+    "start": "electron .",
+    "dev": "set ELECTRON_ENABLE_LOGGING=true && electon .",
     "dist": "electron-builder"
   },
   "author": "AwesomeSam",
@@ -14,6 +15,7 @@
     "bytenode": "^1.3.4",
     "discord-rpc": "^4.0.1",
     "electron-localshortcut": "^3.2.1",
+    "electron-log": "^4.4.6",
     "electron-prompt": "^1.6.2",
     "electron-store": "^8.0.0",
     "follow-redirects": "^1.14.1",

@@ -161,7 +161,7 @@ async function createBetterInventory() {
         searchInput.innerText = '';
         searchInput.id = 'searchDiv';
         searchInput.placeholder = 'Search for skin';
-        searchDiv.oninput = () => { setInterval(organizeHeadings, 50); };
+        searchDiv.oninput = () => { setTimeout(organizeHeadings, 50); };
         searchDiv.appendChild(searchInput);
 
         const toggleDiv = document.createElement('label');
@@ -344,6 +344,8 @@ function sortInventory(allItems) {
 function organizeHeadings() {
     console.log('organizeHeadings fired!');
     let itemsFound = false;
+    if (!document.getElementById('searchDiv'))
+        return;
     const value = document.getElementById('searchDiv').value.toLowerCase();
     const allItemsUpdated = document.querySelector('#app > div.view > div > div > div.content > div > div.content > div.subjects').children;
     allItemsUpdated.forEach(item => {

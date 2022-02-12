@@ -14,13 +14,24 @@ const fs = require('fs');
 const { https } = require('follow-redirects');
 const easylist = fs.readFileSync(path.join(__dirname, 'easylist.txt'), 'utf-8');
 const blocker = ElectronBlocker.parse(easylist);
+const log = require('electron-log');
 
 const gamePreload = path.join(__dirname, 'preload', 'global.js');
 const splashPreload = path.join(__dirname, 'preload', 'splash.js');
 const settingsPreload = path.join(__dirname, 'preload', 'settings.js');
 const changeLogsPreload = path.join(__dirname, 'preload', 'changelogs.js');
 
-process.env.ELECTRON_ENABLE_LOGGING = true;
+// process.env.ELECTRON_ENABLE_LOGGING = true;
+
+log.info(`
+------------------------------------------
+Starting KirkaClient ${app.getVersion()}.
+
+Epoch Time: ${Date.now()}
+User: ${config.get('user')}
+UserID: ${config.get('userID')}
+
+`);
 
 let win;
 let splash;
@@ -35,10 +46,10 @@ let cacheTime = 0;
 let uniqueID = '';
 
 socket.on('connect', () => {
-    console.log('WebSocket Connected!');
+    log.info('WebSocket Connected!');
     const engine = socket.io.engine;
     engine.once('upgrade', () => {
-        console.log(engine.transport.name);
+        log.info(engine.transport.name);
     });
     const channel = config.get('betaTester', false) ? 'beta' : 'stable';
     si.baseboard().then(info => {
@@ -55,10 +66,11 @@ socket.on('connect', () => {
 });
 
 socket.on('disconnect', () => {
-    console.log('WebSocket Disconnected!');
+    log.info('WebSocket Disconnected!');
 });
 
 socket.on('message', (data) => {
+    log.info(`WS > ${data}`);
     switch (data.type) {
     case 1:
         socket.send({ type: 1, data: 'pong' });
@@ -181,7 +193,7 @@ function createWindow() {
 
     ipcMain.on('sendInvData', async(e, token) => {
         if (inventoryData && Date.now() - cacheTime <= 900000)
-            return inventoryData;
+            win.webContents.send('invDataCall', inventoryData);
         const request = {
             method: 'GET',
             headers: {
@@ -191,13 +203,13 @@ function createWindow() {
         let stupidData = '';
         https.get('https://kirka.io/api/inventory', request, (res) => {
             res.setEncoding('utf8');
-            console.log(res.statusCode);
+            log.info(`Inventory Request: ${res.statusCode}`);
 
             res.on('data', (data) => {
                 stupidData += data;
             });
 
-            res.on('end', function() {
+            res.on('end', () => {
                 processFurther(stupidData);
             });
         });
@@ -241,10 +253,10 @@ ipcMain.on('updatePreferred', async(event, data) => {
         },
     };
     const req = https.request(request, res => {
-        console.log(res.statusCode);
+        log.info(`Preferred Badge POST: ${res.statusCode} with payload ${data}`);
     });
     req.on('error', error => {
-        console.error(error);
+        log.error(`Preferred Badge Error: ${error}`);
     });
     req.write(JSON.stringify(data));
     req.end();
@@ -263,6 +275,8 @@ function ensureDirs() {
 }
 
 function showChangeLogs() {
+    if (!changeLogs)
+        return;
     const changeLogsWin = new BrowserWindow({
         width: 700,
         height: 700,
@@ -313,20 +327,18 @@ function createShortcutKeys() {
     electronLocalshortcut.register(win, 'F4', () => clipboard.writeText(contents.getURL()));
     electronLocalshortcut.register(win, 'F5', () => contents.reload());
     electronLocalshortcut.register(win, 'Shift+F5', () => contents.reloadIgnoringCache());
-    electronLocalshortcut.register(win, 'F6', () => checkkirka());
+    electronLocalshortcut.register(win, 'F6', () => joinByURL());
     electronLocalshortcut.register(win, 'F11', () => win.setFullScreen(!win.isFullScreen()));
     electronLocalshortcut.register(win, 'F12', () => win.webContents.openDevTools());
     if (config.get('controlW', true))
         electronLocalshortcut.register(win, 'Control+W', () => { CtrlW = true; });
 }
 
-ipcMain.on('joinLink', () => {
-    checkkirka();
-});
+ipcMain.on('joinLink', joinByURL);
 
-function checkkirka() {
+function joinByURL() {
     const urld = clipboard.readText();
-    if (urld.includes('https://kirka.io/games/'))
+    if (urld.includes('kirka.io/games/'))
         win.loadURL(urld);
 }
 
@@ -376,6 +388,7 @@ async function initAutoUpdater(webContents) {
             if (!socket.connected)
                 errTries = errTries + 1;
             if (errTries >= 40) {
+                log.error('WebSocket connection failed.');
                 dialog.showErrorBox('Websocket Error', 'Client is experiencing issues connecting to the WebSocket. ' +
                 'Check your internet connection.\nIf your connection seems good, please report this issue to the support server.');
                 createWindow();
@@ -399,7 +412,7 @@ async function initAutoUpdater(webContents) {
     } else {
         const wait = ms => new Promise(resolve => setTimeout(resolve, ms));
         createWindow();
-        await wait(5000);
+        await wait(2500);
         canDestroy = true;
     }
 }
@@ -447,7 +460,7 @@ const initResourceSwapper = () => {
     try {
         fs.mkdirSync(path.join(SWAP_FOLDER, '/assets'), { recursive: true });
     } catch (e) {
-        console.error(e);
+        log.error(`ResourceSwapper Error: ${e}`);
     }
     const swap = {
         filter: {
@@ -459,12 +472,12 @@ const initResourceSwapper = () => {
         fs.readdirSync(dir).forEach(file => {
             const filePath = path.join(dir, file);
             const useAssets = !(/KirkaSwapper\\(css|media)/.test(dir));
-            console.log('ASSET: ', useAssets);
+            log.info('ASSET: ', useAssets);
             if (fs.statSync(filePath).isDirectory())
                 allFilesSync(filePath);
             else {
                 const kirk = '*://' + (useAssets ? 'kirka.io' : '') + filePath.replace(SWAP_FOLDER, '').replace(/\\/g, '/') + '*';
-                console.log(`[RSC] kirk: ${kirk}`);
+                log.info(`[RSC] kirk: ${kirk}`);
                 swap.filter.urls.push(kirk);
                 swap.files[kirk.replace(/\*/g, '')] = url.format({
                     pathname: filePath,
@@ -473,14 +486,14 @@ const initResourceSwapper = () => {
                 });
             }
         });
-        console.log(JSON.stringify(swap, null, 2));
+        log.info(JSON.stringify(swap, null, 2));
     };
     allFilesSync(SWAP_FOLDER);
     if (swap.filter.urls.length) {
         session.defaultSession.webRequest.onBeforeRequest(swap.filter, (details, callback) => {
             const redirect = swap.files[details.url.replace(/https|http|(\?.*)|(#.*)/gi, '')] || details.url;
             callback({ cancel: false, redirectURL: redirect });
-            console.log('Redirecting', details.url, 'to', redirect);
+            log.info('Redirecting', details.url, 'to', redirect);
         });
     }
 };
