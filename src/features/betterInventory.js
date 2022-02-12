@@ -19,7 +19,8 @@ let default_ = [],
     shark = [],
     vita = [],
     weatie = [],
-    chars = [];
+    chars = [],
+    listed = [];
 
 const noSkinsHide = 'width: 100%; font-size: 1.5rem; font-weight: 450; margin-top: .15rem; display: none;';
 const noSkinsShow = 'width: 100%; font-size: 1.5rem; font-weight: 450; margin-top: .15rem; display: block;';
@@ -50,7 +51,7 @@ async function queueTabHandler() {
 }
 
 async function createBetterInventory() {
-    const allItems = document.querySelector('#app > div.view > div > div > div.content > div > div.content > div.subjects');
+    const allItems = document.getElementsByClassName('subjects')[0];
     if (!allItems) {
         setTimeout(createBetterInventory, 100);
         return;
@@ -63,6 +64,7 @@ async function createBetterInventory() {
     }
 
     default_ = [];
+    listed = [];
     common = [];
     rare = [];
     epic = [];
@@ -220,7 +222,12 @@ async function createBetterInventory() {
         const child = allSkins[i];
         if (child.className != 'subject')
             continue;
-        const name = child.getElementsByClassName('item-name')[0].innerText;
+        const test = child.getElementsByClassName('item-name');
+        if (test.length == 0) {
+            listed.push(child);
+            continue;
+        }
+        const name = test[0].innerText;
         const rarity = getRarityByName(name);
         switch (rarity) {
         case 'DEFAULT':
@@ -283,6 +290,7 @@ async function createBetterInventory() {
     }
 
     byRarity = [
+        [listed, 'Listed'],
         [legen, 'Legendary'],
         [epic, 'Epic'],
         [rare, 'Rare'],
@@ -296,6 +304,7 @@ async function createBetterInventory() {
         ];
     } else {
         byWeapon = [
+            [listed, 'Listed'],
             [ar9, 'AR-9'],
             [bayonet, 'Bayonet'],
             [lar, 'LAR'],
@@ -340,6 +349,10 @@ function organizeHeadings() {
     allItemsUpdated.forEach(item => {
         if (item.className != 'subject')
             return;
+        if (item.getElementsByClassName('item-name').length == 0) {
+            item.style = value === '' ? 'display: flex;' : 'display: none;';
+            return;
+        }
         if (item.getElementsByClassName('item-name')[0].innerText.toLowerCase().includes(value)) {
             item.style = 'display: flex;';
             itemsFound = true;

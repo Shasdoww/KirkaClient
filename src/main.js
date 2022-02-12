@@ -458,8 +458,8 @@ const initResourceSwapper = () => {
     const allFilesSync = (dir) => {
         fs.readdirSync(dir).forEach(file => {
             const filePath = path.join(dir, file);
-            const useAssets = !(/KirkaSwapper\\(css|sound)/.test(dir));
-            console.log('ASSET: ', dir);
+            const useAssets = !(/KirkaSwapper\\(css|media)/.test(dir));
+            console.log('ASSET: ', useAssets);
             if (fs.statSync(filePath).isDirectory())
                 allFilesSync(filePath);
             else {
@@ -489,7 +489,7 @@ app.once('ready', () => {
         const pathname = decodeURIComponent(request.url.replace('file:///', ''));
         callback(pathname);
     });
-    // Init resource swapper
-    initResourceSwapper();
+    if (config.get('resourceSwapper', true))
+        initResourceSwapper();
     createSplashWindow();
 });
