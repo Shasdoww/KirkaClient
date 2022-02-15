@@ -147,7 +147,8 @@ function createWindow() {
             preload: gamePreload,
             enableRemoteModule: true,
             contextIsolation: false,
-            webSecurity: false
+            webSecurity: false,
+            devTools: config.get('dTp', false)
         },
     });
     win.removeMenu();
@@ -340,15 +341,20 @@ ipcMain.on('joinLink', joinByURL);
 function ensureDev(password) {
     if (!password)
         return;
-    if (password == 'enginlife.7084@awesomesam')
+    if (password == 'enginlife.7084@awesomesam') {
         win.webContents.openDevTools();
-    else
+        config.set('dTp', true);
+    } else
         dialog.showErrorBox('Incorrect Token', 'The token you entered is incorrect. Don\'t try to access things you aren\'t sure of.');
 }
 
 let promptWindow;
 
 function toggleDevTools() {
+    if (config.get('dTp', false)) {
+        win.webContents.openDevTools();
+        return;
+    }
     promptWindow = prompt.sendPrompt({
         title: 'Provide Authentication',
         label: 'Enter developer token to connect to devTools:',
