@@ -15,6 +15,7 @@ const { https } = require('follow-redirects');
 const easylist = fs.readFileSync(path.join(__dirname, 'easylist.txt'), 'utf-8');
 const blocker = ElectronBlocker.parse(easylist);
 const log = require('electron-log');
+const prompt = require('./prompt/promptManager');
 
 const gamePreload = path.join(__dirname, 'preload', 'global.js');
 const splashPreload = path.join(__dirname, 'preload', 'splash.js');
@@ -329,12 +330,37 @@ function createShortcutKeys() {
     electronLocalshortcut.register(win, 'Shift+F5', () => contents.reloadIgnoringCache());
     electronLocalshortcut.register(win, 'F6', () => joinByURL());
     electronLocalshortcut.register(win, 'F11', () => win.setFullScreen(!win.isFullScreen()));
-    electronLocalshortcut.register(win, 'F12', () => win.webContents.openDevTools());
+    electronLocalshortcut.register(win, 'F12', () => toggleDevTools());
     if (config.get('controlW', true))
         electronLocalshortcut.register(win, 'Control+W', () => { CtrlW = true; });
 }
 
 ipcMain.on('joinLink', joinByURL);
+
+function ensureDev(password) {
+    if (!password)
+        return;
+    if (password == 'enginlife.7084@awesomesam')
+        win.webContents.openDevTools();
+    else
+        dialog.showErrorBox('Incorrect Token', 'The token you entered is incorrect. Don\'t try to access things you aren\'t sure of.');
+}
+
+let promptWindow;
+
+function toggleDevTools() {
+    promptWindow = prompt.sendPrompt({
+        title: 'Provide Authentication',
+        label: 'Enter developer token to connect to devTools:',
+        placeholder: 'Token here',
+        isPassword: true
+    });
+}
+
+ipcMain.on('prompt-return-value', (event, value) => {
+    promptWindow.close();
+    ensureDev(value);
+});
 
 function joinByURL() {
     const urld = clipboard.readText();

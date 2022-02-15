@@ -125,23 +125,6 @@ module.exports = [
         })
     },
     {
-        name: 'Custom Sniper Scope',
-        id: 'customScope',
-        category: 'Game',
-        type: 'input',
-        val: config.get('customScope', ''),
-        placeholder: 'Scope url'
-    },
-    {
-        name: 'Scope Size',
-        id: 'scopeSize',
-        category: 'Game',
-        type: 'slider',
-        min: 10,
-        max: 1000,
-        val: config.get('scopeSize', 400)
-    },
-    {
         name: 'Custom CSS',
         id: 'css',
         category: 'Game',
