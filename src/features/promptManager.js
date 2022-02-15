@@ -18,10 +18,10 @@ function sendPrompt(args) {
         title: title,
         webPreferences: {
             nodeIntegration: true,
-            preload: path.join(__dirname, './prompt.js')
+            preload: path.join(__dirname, '../prompt/prompt.js')
         }
     });
-    const promptPath = path.join(__dirname, './prompt.html');
+    const promptPath = path.join(__dirname, '../prompt/prompt.html');
 
     promptWindow.loadURL(promptPath);
 

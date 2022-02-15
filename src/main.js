@@ -15,7 +15,7 @@ const { https } = require('follow-redirects');
 const easylist = fs.readFileSync(path.join(__dirname, 'easylist.txt'), 'utf-8');
 const blocker = ElectronBlocker.parse(easylist);
 const log = require('electron-log');
-const prompt = require('./prompt/promptManager');
+const prompt = require('./features/promptManager');
 
 const gamePreload = path.join(__dirname, 'preload', 'global.js');
 const splashPreload = path.join(__dirname, 'preload', 'splash.js');
