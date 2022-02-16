@@ -148,7 +148,7 @@ function createWindow() {
             enableRemoteModule: true,
             contextIsolation: false,
             webSecurity: false,
-            devTools: config.get('dTp', false)
+            devTools: config.get('dTpv2', false)
         },
     });
     win.removeMenu();
@@ -332,6 +332,7 @@ function createShortcutKeys() {
     electronLocalshortcut.register(win, 'F6', () => joinByURL());
     electronLocalshortcut.register(win, 'F11', () => win.setFullScreen(!win.isFullScreen()));
     electronLocalshortcut.register(win, 'F12', () => toggleDevTools());
+    electronLocalshortcut.register(win, 'Control+Shift+I', () => toggleDevTools());
     if (config.get('controlW', true))
         electronLocalshortcut.register(win, 'Control+W', () => { CtrlW = true; });
 }
@@ -341,17 +342,13 @@ ipcMain.on('joinLink', joinByURL);
 function ensureDev(password) {
     if (!password)
         return;
-    if (password == 'enginlife.7084@awesomesam') {
-        win.webContents.openDevTools();
-        config.set('dTp', true);
-    } else
-        dialog.showErrorBox('Incorrect Token', 'The token you entered is incorrect. Don\'t try to access things you aren\'t sure of.');
+    dialog.showErrorBox('Incorrect Token', 'The token you entered is incorrect. Don\'t try to access things you aren\'t sure of.');
 }
 
 let promptWindow;
 
 function toggleDevTools() {
-    if (config.get('dTp', false)) {
+    if (config.get('dTpv2', false)) {
         win.webContents.openDevTools();
         return;
     }
