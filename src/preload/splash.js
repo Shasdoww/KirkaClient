@@ -8,14 +8,12 @@ const tips = [
     'Use F11 to toggle fullscreen mode',
     'We have a built in Screen Recorder! Make sure to try that',
     'You can toggle Discord Rich Presence in Client Settings',
-    'Make sure to try out our custom sniper scope feature!',
-    'Try out our accurate FPS Counter!',
     'Turn on Unlimited FPS for better play experience',
     'A streamer? Make sure to check out Twitch Integration!',
     'Press F7 to hop into any game!',
     'Make sure to check out our Auto-Joiner in settings!',
     'We now support Windows 32-bit OS!',
-    'Merry Christmas!',
+    'Make sure to checkout our Better-Inventory feature!',
 ];
 
 window.addEventListener('DOMContentLoaded', () => {

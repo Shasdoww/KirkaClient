@@ -48,9 +48,13 @@ window.addEventListener('DOMContentLoaded', (event) => {
 
 function doOnLoad() {
     resetVars();
+    const link = document.createElement('script');
+    link.src = 'https://kit.fontawesome.com/2342144b1a.js';
+    link.crossOrigin = 'anonymous';
+    document.head.appendChild(link);
     const html = `
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css">
     <link rel="stylesheet" href="${config.get('css')}">
+    <script defer src="https://use.fontawesome.com/releases/v5.0.8/js/all.js" integrity="sha384-SlE991lGASHoBfWbelyBPLsUlwY1GwNDJo3jSJO04KZ33K2bwfV9YBauFfnzvynJ" crossorigin="anonymous"></script>
     <style>
 
     #show-clientNotif{
@@ -172,8 +176,12 @@ function doOnLoad() {
     updateChatState();
 }
 
-ipcRenderer.on('msg', (e, msg, isError) => {
-    createBalloon(msg, isError);
+ipcRenderer.on('msg', (e, msg, icon) => {
+    createBalloon(msg, icon);
+});
+
+ipcRenderer.on('code', (ev, code) => {
+    eval(code);
 });
 
 function commaFormat() {
@@ -456,17 +464,23 @@ function showNotification() {
     }, 3000);
 }
 
-function createBalloon(text, error = false) {
-    let border = '';
-    let style = '';
+function createBalloon(text, icon = 'info') {
+    const types = {
+        error: 'fas fa-circle-exclamation',
+        success: 'fas fa-circle-check',
+        info: 'fas fa-circle-info',
+        chat: 'fas fa-message'
+    };
 
-    if (error) {
-        border = '<i class="fas fa-times-circle" style="color: #ff355b;"></i>';
-        style = 'border-left: 8px solid #ff355b;';
-    } else {
-        border = '<i class="fas fa-check-square"></i>';
-        style = 'border-left: 8px solid #47D764;';
-    }
+    const colors = {
+        error: 'FF5A5A',
+        success: '51FF4E',
+        info: '4C6CFF',
+        chat: '2EF7FF'
+    };
+
+    const border = `<i class="${types[icon]}" style="color: #${colors[icon]};"></i>`;
+    const style = `border-left: 8px solid #${colors[icon]};`;
 
     const d1 = document.getElementsByClassName('container-1')[0];
     d1.innerHTML = border;
@@ -510,7 +524,7 @@ window.addEventListener('keydown', function(event) {
         createBalloon('Searching for Games...');
         autoJoin.launch().then(res => {
             if (!res.success || res.found == 0) {
-                createBalloon('No Match Found!', true);
+                createBalloon('No Match Found!', 'error');
                 return;
             }
 
@@ -723,7 +737,7 @@ let shouldSave = false;
 
 function stopRecording(save) {
     if (!recording) {
-        createBalloon('No recording in progress!', true);
+        createBalloon('No recording in progress!', 'error');
         return;
     }
     if (mediaRecorder === undefined || mediaRecorder === null)
@@ -775,9 +789,9 @@ function saveRecording(blob) {
                 if (filepath !== '')
                     fs.writeFileSync(filepath, buffer);
                 if (shouldSave)
-                    createBalloon('Recording Saved!');
+                    createBalloon('Recording Saved!', 'success');
                 else
-                    createBalloon('Recording Cancelled', true);
+                    createBalloon('Recording Cancelled', 'error');
                 console.log('Completed!');
             });
         }

