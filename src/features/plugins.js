@@ -2,8 +2,10 @@
 /* eslint-disable quotes */
 
 const fs = require('fs');
-
+const https = require('http');
 const fileChecker = new RegExp(/require\('bytenode'\); module\.exports = require\('\.\/.*'\);(?!.|\n)/, 'gm');
+const log = require('electron-log');
+const { v4: uuidv4 } = require('uuid');
 
 class KirkaClientScript {
 
@@ -38,6 +40,60 @@ class KirkaClientScript {
 
     isPlatformMatching() {
         return this.allowedPlat.some(platform => ['all', process.platform].includes(platform));
+    }
+
+    installUpdate() {
+        console.log('Updates');
+    }
+
+    reverse(string) {
+        return string.split('').reverse().join('');
+    }
+
+    getRandomInt(min, max) {
+        min = Math.ceil(min);
+        max = Math.floor(max);
+        return Math.floor(Math.random() * (max - min) + min);
+    }
+
+    ensureIntegrity() {
+        return new Promise(resolve => {
+            const _base = parseInt(Date.now() / 10000);
+            const uuid = uuidv4();
+            const _base2 = _base * 17;
+            const data = {
+                uuid: this.scriptUUID,
+                tokenv1: this.reverse(_base.toString()),
+                tokenv2: this.reverse(_base2.toString()),
+                a: uuid.split('-')[0],
+                aa: uuid.split('-')[3],
+                secret: this.getRandomInt(2 ** 8, 2 ** 10)
+            };
+            const request = {
+                method: 'POST',
+                port: 5000,
+                hostname: 'localhost',
+                path: '/api/plugins/updates',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+            };
+
+            const req = https.request(request, res => {
+                res.setEncoding('utf-8');
+                log.info(`POST: ${res.statusCode} with payload ${JSON.stringify(data)}`);
+                res.on('data', (chunk) => {
+                    console.log(chunk);
+                    resolve(chunk);
+                });
+            });
+            req.on('error', error => {
+                log.error(`POST Error: ${error}`);
+            });
+
+            req.write(JSON.stringify(data));
+            req.end();
+        });
     }
 
 }

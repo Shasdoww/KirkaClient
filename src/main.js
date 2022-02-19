@@ -537,9 +537,11 @@ function ensureIntegrity() {
 
     fs.readdirSync(fileDir)
         .filter(filename => path.extname(filename).toLowerCase() == '.js')
-        .forEach(filename => {
+        .forEach((filename) => {
             try {
                 const scriptPath = path.join(fileDir, filename);
+                if (!allowedScripts.includes(scriptPath))
+                    return;
                 const statusCode = pluginChecker(scriptPath, 'token');
 
                 if (statusCode != 200) {
@@ -580,7 +582,7 @@ async function initPlugins() {
 
     fs.readdirSync(fileDir)
         .filter(filename => path.extname(filename).toLowerCase() == '.js')
-        .forEach(filename => {
+        .forEach(async(filename) => {
             try {
                 const scriptPath = path.join(fileDir, filename);
                 const statusCode = pluginChecker(scriptPath, 'token');
@@ -600,6 +602,8 @@ async function initPlugins() {
                 );
 
                 const script = pluginLoader(newPath);
+                const data = await script.ensureIntegrity();
+                console.log(data);
 
                 if (!script.isPlatformMatching())
                     log.info(`Script ignored, platform not matching: ${script.scriptName}`);

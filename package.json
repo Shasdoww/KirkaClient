@@ -24,6 +24,7 @@
     "socket.io-client": "^4.4.0",
     "systeminformation": "^5.10.7",
     "tmi.js": "^1.8.5",
+    "uuid": "^8.3.2",
     "v8-compile-cache": "^2.3.0"
   },
   "devDependencies": {
