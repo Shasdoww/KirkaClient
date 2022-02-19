@@ -2,7 +2,6 @@
 /* eslint-disable no-case-declarations */
 const allSettings = require('../features/customSettings');
 const autoJoin = require('../features/autoJoin');
-const betterInventory = require('../features/betterInventory');
 const { ipcRenderer } = require('electron');
 
 ipcRenderer.on('make-settings', () => {
@@ -36,7 +35,6 @@ window.addEventListener('DOMContentLoaded', () => {
         makeSettings(newTable);
     };
     allSettings.push(...autoJoin.settings);
-    allSettings.push(...betterInventory.settings);
     mainDIV.appendChild(label);
     mainDIV.appendChild(input);
     table.before(mainDIV);

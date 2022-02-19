@@ -5,7 +5,7 @@
   "main": "src/main.js",
   "scripts": {
     "start": "electron .",
-    "dev": "set ELECTRON_ENABLE_LOGGING=true && electon .",
+    "dev": "set ELECTRON_ENABLE_LOGGING=true && set DEV_MODE=true && electron .",
     "dist": "electron-builder"
   },
   "author": "AwesomeSam",

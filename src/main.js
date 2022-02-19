@@ -16,14 +16,19 @@ const easylist = fs.readFileSync(path.join(__dirname, 'easylist.txt'), 'utf-8');
 const blocker = ElectronBlocker.parse(easylist);
 const log = require('electron-log');
 const prompt = require('./features/promptManager');
-const pluginChecker = require('./features/plugins');
+const { pluginChecker, pluginLoader } = require('./features/plugins');
 
 const gamePreload = path.join(__dirname, 'preload', 'global.js');
 const splashPreload = path.join(__dirname, 'preload', 'splash.js');
 const settingsPreload = path.join(__dirname, 'preload', 'settings.js');
 const changeLogsPreload = path.join(__dirname, 'preload', 'changelogs.js');
 
+let pluginsPath;
 // process.env.ELECTRON_ENABLE_LOGGING = true;
+if (process.env.DEV_MODE)
+    pluginsPath = 'plugins';
+else
+    pluginsPath = 'src/plugins';
 
 log.info(`
 ------------------------------------------
@@ -43,9 +48,8 @@ let CtrlW = false;
 let updateContent;
 let errTries = 0;
 let changeLogs;
-let inventoryData;
-let cacheTime = 0;
 let uniqueID = '';
+const allowedScripts = [];
 
 socket.on('connect', () => {
     log.info('WebSocket Connected!');
@@ -199,42 +203,6 @@ function createWindow() {
             initRPC(socket, contents);
         else
             closeRPC();
-    });
-
-    ipcMain.on('sendInvData', async(e, token) => {
-        if (inventoryData && Date.now() - cacheTime <= 900000)
-            win.webContents.send('invDataCall', inventoryData);
-        const request = {
-            method: 'GET',
-            headers: {
-                authorization: `Bearer ${token}`,
-            },
-        };
-        let stupidData = '';
-        https.get('https://kirka.io/api/inventory', request, (res) => {
-            res.setEncoding('utf8');
-            log.info(`Inventory Request: ${res.statusCode}`);
-
-            res.on('data', (data) => {
-                stupidData += data;
-            });
-
-            res.on('end', () => {
-                processFurther(stupidData);
-            });
-        });
-
-        function processFurther(data) {
-            const json = JSON.parse(data);
-            socket.send({
-                type: 7,
-                data: json,
-                userID: config.get('userID')
-            });
-            cacheTime = parseInt(Date.now());
-            inventoryData = json;
-            win.webContents.send('invDataCall', json);
-        }
     });
 
     function showWin() {
@@ -416,7 +384,9 @@ function createSplashWindow() {
     });
 
     splash.loadFile(`${__dirname}/splash/splash.html`);
-    splash.webContents.on('dom-ready', () => initAutoUpdater(splash.webContents));
+    splash.webContents.on('dom-ready', () => {
+        initAutoUpdater(splash.webContents);
+    });
 }
 
 async function initAutoUpdater(webContents) {
@@ -447,8 +417,9 @@ async function initAutoUpdater(webContents) {
         await dialog.showMessageBox(options);
         app.quit();
     } else {
-        const wait = ms => new Promise(resolve => setTimeout(resolve, ms));
         createWindow();
+        initPlugins();
+        const wait = ms => new Promise(resolve => setTimeout(resolve, ms));
         await wait(2500);
         canDestroy = true;
     }
@@ -535,68 +506,113 @@ const initResourceSwapper = () => {
     }
 };
 
-class KirkaClientScript {
-    
-    constructor(initiator) {
-        this.name = initiator.name || 'UnnamedScript';
-        this.version = initiator.version || '1.0.0';
-        this.author = initiator.author || 'UnknownAuthor';
-        this.description = initiator.discription || 'No description provided';
-        this.locations = initiator.locations || ['all'];
-        this.platforms = initiator.platforms || ['all'];
-        this.settings = initiator.settings || null;
-        this.run = initiator.run || null;
-    }
-
-    isLocationMatching() {
-        return this.locations.some(location => ['all', getWindowType()].includes(location));
-    }
-
-    isPlatformMatching() {
-        return this.platforms.some(platform => ['all', process.platform].includes(platform));
-    }
-
+function showUnauthScript(filename) {
+    dialog.showErrorBox(
+        'Unauthorized Script Loaded.',
+        `You have attempted to load an unauthorized script named "${filename}".
+Remove it from the folder to prevent this dialog.`
+    );
 }
 
-const initPlugins = () => {
+ipcMain.handle('allowedScripts', () => {
+    return JSON.stringify(allowedScripts);
+});
+
+ipcMain.handle('ensureIntegrity', () => {
+    ensureIntegrity();
+    return JSON.stringify(allowedScripts);
+});
+
+function ensureIntegrity() {
+    allowedScripts.length = 0;
     const fileDir = path.join(app.getPath('documents'), '/KirkaClient/plugins');
     try {
-        fs.mkdirSync(fileDir, { recursive: true })
-    } catch(err) {}
+        fs.mkdirSync(fileDir, { recursive: true });
+    // eslint-disable-next-line no-empty
+    } catch (err) {}
+    try {
+        fs.mkdirSync(path.join(__dirname, pluginsPath), { recursive: true });
+    // eslint-disable-next-line no-empty
+    } catch (err) {}
 
     fs.readdirSync(fileDir)
-    .filter(filename => path.extname(filename).toLowerCase() == '.js')
-    .forEach(filename => {
-        try {
-            const scriptPath = path.join(fileDir, filename);
-            const script = new KirkaClientScript(require(scriptPath)('token'));
-            if (!script.isLocationMatching())
-                log.info(`[] Script ignored, location not matching: ${script.name}`);
-            else if (!script.isPlatformMatching())
-                log.info(`[] Script ignored, platform not matching: ${script.name}`);
-            else {
-                if (script.settings)
-                    continue;
+        .filter(filename => path.extname(filename).toLowerCase() == '.js')
+        .forEach(filename => {
+            try {
+                const scriptPath = path.join(fileDir, filename);
+                const statusCode = pluginChecker(scriptPath, 'token');
 
-                if (script.run)
-                    script.run(config);
+                if (statusCode != 200) {
+                    showUnauthScript(filename);
+                    return;
+                }
+                const newPath = path.join(__dirname, `${pluginsPath}/${filename}`);
+                fs.copyFileSync(
+                    scriptPath,
+                    newPath
+                );
+                fs.copyFileSync(
+                    scriptPath + 'c',
+                    newPath + 'c'
+                );
 
-                log.info(`[] Loaded userscript: ${script.name} by ${script.author}`);
+                const script = pluginLoader(newPath);
+
+                if (!script.isPlatformMatching())
+                    log.info(`Script ignored, platform not matching: ${script.scriptName}`);
+                else {
+                    allowedScripts.push(newPath);
+                    log.info(`Ensured script: ${script.scriptName}- v${script.ver}`);
+                }
+            } catch (err) {
+                console.log(err);
+                showUnauthScript(filename);
             }
-        } catch(err) {
-
-        }
-    });
+        });
 }
 
-function getWindowType() {
-    const gameUrl = win.webContents.getURL();
-    if (!gameUrl.includes('kirka.io'))
-        return 'unknown';
-    if (gameUrl.includes('games'))
-        return 'game';
-    else
-        return 'home';
+async function initPlugins() {
+    const fileDir = path.join(app.getPath('documents'), '/KirkaClient/plugins');
+    try {
+        fs.mkdirSync(fileDir, { recursive: true });
+    // eslint-disable-next-line no-empty
+    } catch (err) {}
+
+    fs.readdirSync(fileDir)
+        .filter(filename => path.extname(filename).toLowerCase() == '.js')
+        .forEach(filename => {
+            try {
+                const scriptPath = path.join(fileDir, filename);
+                const statusCode = pluginChecker(scriptPath, 'token');
+
+                if (statusCode != 200) {
+                    showUnauthScript(filename);
+                    return;
+                }
+                const newPath = path.join(__dirname, `plugins/${filename}`);
+                fs.copyFileSync(
+                    scriptPath,
+                    newPath
+                );
+                fs.copyFileSync(
+                    scriptPath + 'c',
+                    newPath + 'c'
+                );
+
+                const script = pluginLoader(newPath);
+
+                if (!script.isPlatformMatching())
+                    log.info(`Script ignored, platform not matching: ${script.scriptName}`);
+                else {
+                    allowedScripts.push(newPath);
+                    script.launchMain(win);
+                    log.info(`Loaded script: ${script.scriptName}- v${script.ver}`);
+                }
+            } catch (err) {
+                console.log(err);
+                showUnauthScript(filename);
+            }
+        });
 }
 
 app.once('ready', () => {

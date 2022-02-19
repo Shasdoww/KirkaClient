@@ -4,12 +4,11 @@ const { ipcRenderer, remote } = require('electron');
 const Store = require('electron-store');
 const config = new Store();
 const fixwebm = require('../recorder/fix');
-const os = require('os');
 const path = require('path');
 const fs = require('fs');
 const getBlobDuration = require('get-blob-duration');
 const autoJoin = require('../features/autoJoin');
-const betterInventory = require('../features/betterInventory');
+const { pluginChecker, pluginLoader } = require('../features/plugins');
 
 let leftIcons;
 let FPSdiv = null;
@@ -36,6 +35,7 @@ let inGameBadgeLoop;
 let regionLoop;
 
 window.addEventListener('DOMContentLoaded', (event) => {
+    loadScripts();
     setInterval(() => {
         const newState = currentState();
         if (oldState != newState) {
@@ -46,8 +46,22 @@ window.addEventListener('DOMContentLoaded', (event) => {
     }, 1000);
 });
 
+async function loadScripts() {
+    const scripts = JSON.parse(await ipcRenderer.invoke('allowedScripts'));
+    console.log(scripts);
+
+    scripts.forEach(filePath => {
+        const script = pluginLoader(filePath);
+        if (script.isLocationMatching(currentState())) {
+            script.launchRenderer();
+            console.log(`Loaded script: ${script.scriptName}- v${script.ver}`);
+        }
+    });
+}
+
 function doOnLoad() {
     resetVars();
+    ipcRenderer.invoke('ensureIntegrity');
     const link = document.createElement('script');
     link.src = 'https://kit.fontawesome.com/2342144b1a.js';
     link.crossOrigin = 'anonymous';
@@ -397,8 +411,6 @@ async function setUsername() {
     config.set('user', user);
     config.set('userID', userID);
     console.log('User set as:', user, 'with ID:', userID);
-    if (config.get('useBetterInv', true))
-        betterInventory.launch();
 }
 
 function resetVars() {
