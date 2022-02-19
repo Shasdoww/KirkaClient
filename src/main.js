@@ -16,6 +16,7 @@ const easylist = fs.readFileSync(path.join(__dirname, 'easylist.txt'), 'utf-8');
 const blocker = ElectronBlocker.parse(easylist);
 const log = require('electron-log');
 const prompt = require('./features/promptManager');
+const pluginChecker = require('./features/plugins');
 
 const gamePreload = path.join(__dirname, 'preload', 'global.js');
 const splashPreload = path.join(__dirname, 'preload', 'splash.js');
@@ -533,6 +534,70 @@ const initResourceSwapper = () => {
         });
     }
 };
+
+class KirkaClientScript {
+    
+    constructor(initiator) {
+        this.name = initiator.name || 'UnnamedScript';
+        this.version = initiator.version || '1.0.0';
+        this.author = initiator.author || 'UnknownAuthor';
+        this.description = initiator.discription || 'No description provided';
+        this.locations = initiator.locations || ['all'];
+        this.platforms = initiator.platforms || ['all'];
+        this.settings = initiator.settings || null;
+        this.run = initiator.run || null;
+    }
+
+    isLocationMatching() {
+        return this.locations.some(location => ['all', getWindowType()].includes(location));
+    }
+
+    isPlatformMatching() {
+        return this.platforms.some(platform => ['all', process.platform].includes(platform));
+    }
+
+}
+
+const initPlugins = () => {
+    const fileDir = path.join(app.getPath('documents'), '/KirkaClient/plugins');
+    try {
+        fs.mkdirSync(fileDir, { recursive: true })
+    } catch(err) {}
+
+    fs.readdirSync(fileDir)
+    .filter(filename => path.extname(filename).toLowerCase() == '.js')
+    .forEach(filename => {
+        try {
+            const scriptPath = path.join(fileDir, filename);
+            const script = new KirkaClientScript(require(scriptPath)('token'));
+            if (!script.isLocationMatching())
+                log.info(`[] Script ignored, location not matching: ${script.name}`);
+            else if (!script.isPlatformMatching())
+                log.info(`[] Script ignored, platform not matching: ${script.name}`);
+            else {
+                if (script.settings)
+                    continue;
+
+                if (script.run)
+                    script.run(config);
+
+                log.info(`[] Loaded userscript: ${script.name} by ${script.author}`);
+            }
+        } catch(err) {
+
+        }
+    });
+}
+
+function getWindowType() {
+    const gameUrl = win.webContents.getURL();
+    if (!gameUrl.includes('kirka.io'))
+        return 'unknown';
+    if (gameUrl.includes('games'))
+        return 'game';
+    else
+        return 'home';
+}
 
 app.once('ready', () => {
     // Initialize protocol to access files
