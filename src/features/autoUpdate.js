@@ -46,7 +46,7 @@ async function downloadUpdate(contents, updateData) {
         return new Promise((resolve) => {
             myreq = https.get(updateUrl, (res) => {
                 res.setEncoding('binary');
-
+                
                 let a = '';
                 res.on('data', function(chunk) {
                     a += chunk;

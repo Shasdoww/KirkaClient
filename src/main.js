@@ -579,6 +579,10 @@ async function initPlugins() {
         fs.mkdirSync(fileDir, { recursive: true });
     // eslint-disable-next-line no-empty
     } catch (err) {}
+    try {
+        fs.mkdirSync(path.join(__dirname, pluginsPath), { recursive: true });
+    // eslint-disable-next-line no-empty
+    } catch (err) {}
 
     fs.readdirSync(fileDir)
         .filter(filename => path.extname(filename).toLowerCase() == '.js')

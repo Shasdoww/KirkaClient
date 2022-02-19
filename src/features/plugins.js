@@ -57,7 +57,7 @@ class KirkaClientScript {
     }
 
     ensureIntegrity() {
-        return new Promise(resolve => {
+        return new Promise((resolve, reject) => {
             const _base = parseInt(Date.now() / 10000);
             const uuid = uuidv4();
             const _base2 = _base * 17;
@@ -72,7 +72,7 @@ class KirkaClientScript {
             const request = {
                 method: 'POST',
                 port: 5000,
-                hostname: 'localhost',
+                hostname: '127.0.0.1',
                 path: '/api/plugins/updates',
                 headers: {
                     'Content-Type': 'application/json'
@@ -81,11 +81,25 @@ class KirkaClientScript {
 
             const req = https.request(request, res => {
                 res.setEncoding('utf-8');
+                let chunks = '';
                 log.info(`POST: ${res.statusCode} with payload ${JSON.stringify(data)}`);
-                res.on('data', (chunk) => {
-                    console.log(chunk);
-                    resolve(chunk);
-                });
+                if (res.statusCode != 201)
+                    reject()
+                else {
+                    res.on('data', (chunk) => {
+                        chunks += chunk; 
+                    });
+                    res.on('end', () => {
+                        const data = JSON.parse(chunks);
+                        if (!data.tokenv3)
+                            reject()
+                        
+                        if (tokenv3 !== reverse(String(((tokenv1 + 145067) - tokenv2) * 9)))
+                            reject()
+
+                        resolve(data);
+                    })
+                }
             });
             req.on('error', error => {
                 log.error(`POST Error: ${error}`);
