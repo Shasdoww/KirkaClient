@@ -605,9 +605,20 @@ async function initPlugins() {
                     newPath + 'c'
                 );
 
-                const script = pluginLoader(newPath);
+                let script = pluginLoader(newPath);
                 const data = await script.ensureIntegrity();
-                console.log(data);
+
+                if (data) {
+                    if (data.ver != script.ver) {
+                        await script.installUpdate(data.url, scriptPath);
+                        fs.copyFileSync(
+                            scriptPath + 'c',
+                            newPath + 'c'
+                        );
+                        script = pluginLoader(newPath);
+                        await script.ensureIntegrity();
+                    }
+                }
 
                 if (!script.isPlatformMatching())
                     log.info(`Script ignored, platform not matching: ${script.scriptName}`);

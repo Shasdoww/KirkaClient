@@ -9,16 +9,16 @@ const { v4: uuidv4 } = require('uuid');
 
 class KirkaClientScript {
 
-    constructor(initiator) {
-        this.scriptName = initiator.scriptName;
-        this.scriptUUID = initiator.scriptUUID;
-        this.ver = initiator.ver;
-        this.desc = initiator.desc;
-        this.allowedLoc = initiator.allowedLoc;
-        this.allowedPlat = initiator.allowedPlat;
-        this.sett = initiator.sett;
-        this.launchMain = initiator.launchMain;
-        this.launchRenderer = initiator.launchRenderer;
+    constructor(scriptData) {
+        this.scriptName = scriptData.scriptName;
+        this.scriptUUID = scriptData.scriptUUID;
+        this.ver = scriptData.ver;
+        this.desc = scriptData.desc;
+        this.allowedLoc = scriptData.allowedLoc;
+        this.allowedPlat = scriptData.allowedPlat;
+        this.sett = scriptData.sett;
+        this.launchMain = scriptData.launchMain;
+        this.launchRenderer = scriptData.launchRenderer;
 
         if (
             !this.scriptName ||
@@ -42,8 +42,33 @@ class KirkaClientScript {
         return this.allowedPlat.some(platform => ['all', process.platform].includes(platform));
     }
 
-    installUpdate() {
-        console.log('Updates');
+    installUpdate(url, filePath) {
+        return new Promise((resolve, reject) => {
+            const req = https.get(url, (res) => {
+                res.setEncoding('binary');
+                let chunks = '';
+                log.info(`Update GET: ${res.statusCode}`);
+
+                res.on('data', (chunk) => {
+                    chunks += chunk; 
+                });
+                res.on('end', () => {
+                    try {
+                        fs.writeFileSync(filePath, chunks, 'binary');
+                        resolve();
+                    } catch (e) {
+                        console.log(e);
+                        dialog.showErrorBox('Failed to Update Plugin!',
+                            'Please start client as Administrator.\nThis can be done by Right Click > Run as Administrator.');
+                        reject();
+                    }
+                })
+            });
+            req.on('error', error => {
+                log.error(`Update Error: ${error}`);
+            });
+            req.end();
+        });
     }
 
     reverse(string) {
