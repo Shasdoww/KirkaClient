@@ -6,6 +6,7 @@ const https = require('http');
 const fileChecker = new RegExp(/require\('bytenode'\); module\.exports = require\('\.\/.*'\);(?!.|\n)/, 'gm');
 const log = require('electron-log');
 const { v4: uuidv4 } = require('uuid');
+const { dialog } = require('electron');
 
 class KirkaClientScript {
 
@@ -50,7 +51,7 @@ class KirkaClientScript {
                 log.info(`Update GET: ${res.statusCode}`);
 
                 res.on('data', (chunk) => {
-                    chunks += chunk; 
+                    chunks += chunk;
                 });
                 res.on('end', () => {
                     try {
@@ -62,7 +63,7 @@ class KirkaClientScript {
                             'Please start client as Administrator.\nThis can be done by Right Click > Run as Administrator.');
                         reject();
                     }
-                })
+                });
             });
             req.on('error', error => {
                 log.error(`Update Error: ${error}`);
@@ -86,10 +87,13 @@ class KirkaClientScript {
             const _base = parseInt(Date.now() / 10000);
             const uuid = uuidv4();
             const _base2 = _base * 17;
+
+            const tokenv1 = this.reverse(_base.toString());
+            const tokenv2 = this.reverse(_base2.toString());
             const data = {
                 uuid: this.scriptUUID,
-                tokenv1: this.reverse(_base.toString()),
-                tokenv2: this.reverse(_base2.toString()),
+                tokenv1: tokenv1,
+                tokenv2: tokenv2,
                 a: uuid.split('-')[0],
                 aa: uuid.split('-')[3],
                 secret: this.getRandomInt(2 ** 8, 2 ** 10)
@@ -109,21 +113,22 @@ class KirkaClientScript {
                 let chunks = '';
                 log.info(`POST: ${res.statusCode} with payload ${JSON.stringify(data)}`);
                 if (res.statusCode != 201)
-                    reject()
+                    reject();
                 else {
                     res.on('data', (chunk) => {
-                        chunks += chunk; 
+                        chunks += chunk;
                     });
                     res.on('end', () => {
-                        const data = JSON.parse(chunks);
-                        if (!data.tokenv3)
-                            reject()
-                        
-                        if (tokenv3 !== reverse(String(((tokenv1 + 145067) - tokenv2) * 9)))
-                            reject()
+                        const response = JSON.parse(chunks);
+                        const tokenv3 = response.tokenv3;
+                        if (!tokenv3)
+                            reject();
+
+                        if (tokenv3 !== this.reverse(String(((tokenv1 + 145067) - tokenv2) * 9)))
+                            reject();
 
                         resolve(data);
-                    })
+                    });
                 }
             });
             req.on('error', error => {
