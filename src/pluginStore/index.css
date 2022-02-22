@@ -1,0 +1,103 @@
+:root {
+    --bgcolor: rgb(23, 27, 26);
+    --collapse: rgba(143, 143, 143, 0.247);
+    --uncollapse: rgba(143, 143, 143, 0.397);
+    --frame-content: rgba(255, 255, 255, 0.068);
+}
+
+#particles-js {
+    position: fixed;
+    width: 100%;
+    height: 100%;
+    top: 0px;
+    background: none;
+    display: flex;
+    align-items: baseline;
+    justify-content: center;
+    z-index: -19;
+    opacity: 0.7;
+}
+
+body {
+    background-color: var(--bgcolor)
+}
+
+.main {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    font-family: 'Lato', sans-serif;
+}
+
+.heading {
+    display: flex;
+    color: white;
+    align-items: center;
+    justify-content: center;
+}
+
+.plugin-frame {
+    display: flex;
+    flex-direction: column;
+    width: 75%;
+    align-items: center;
+    justify-content: center;
+}
+
+.collapsible {
+    display: flex;
+    flex-direction: row;
+    justify-content: flex-start;
+    align-items: center;
+    background-color: var(--collapse);
+    color: rgb(255, 255, 255);
+    cursor: pointer;
+    padding: 18px;
+    width: 100%;
+    border: none;
+    text-align: left;
+    outline: none;
+    font-size: 15px;
+}
+
+.active, .collapsible:hover {
+    background-color: var(--uncollapse);
+}
+
+.frame-content {
+    display: none;
+    color: white;
+    overflow: hidden;
+    background-color: var(--frame-content);
+    flex-direction: column;
+    width: -webkit-fill-available;
+    padding: 10px;
+}
+
+.card {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: space-between;
+    width: 250px;
+    height: 150px;
+    background-color: rgba(255, 227, 193, 0.863);
+}
+
+.card-image {
+    display: flex;
+    background-image: url('https://media.discordapp.net/attachments/856723935357173780/945642126924988416/Pngtreevector_shop_icon_3788233.png');
+    background-size: contain;
+    background-repeat: no-repeat;
+    background-position: center;
+    width: 100%;
+    height: 100%;
+}
+
+.card-label {
+    color: black;
+}
+
+.bold {
+    font-weight: bold;
+}
