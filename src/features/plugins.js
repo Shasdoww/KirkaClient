@@ -5,8 +5,8 @@ const fs = require('fs');
 const https = require('http');
 const fileChecker = new RegExp(/require\('bytenode'\); module\.exports = require\('\.\/.*'\);(?!.|\n)/, 'gm');
 const log = require('electron-log');
-const { v4: uuidv4 } = require('uuid');
 const { dialog } = require('electron');
+const md5File = require('md5-file');
 
 class KirkaClientScript {
 
@@ -61,7 +61,7 @@ class KirkaClientScript {
                         console.log(e);
                         dialog.showErrorBox('Failed to Update Plugin!',
                             'Please start client as Administrator.\nThis can be done by Right Click > Run as Administrator.');
-                        reject();
+                        resolve();
                     }
                 });
             });
@@ -82,22 +82,10 @@ class KirkaClientScript {
         return Math.floor(Math.random() * (max - min) + min);
     }
 
-    ensureIntegrity() {
+    ensureIntegrity(filePath) {
         return new Promise((resolve, reject) => {
-            const _base = parseInt(Date.now() / 10000);
-            const uuid = uuidv4();
-            const _base2 = _base * 17;
-
-            const tokenv1 = this.reverse(_base.toString());
-            const tokenv2 = this.reverse(_base2.toString());
-            const data = {
-                uuid: this.scriptUUID,
-                tokenv1: tokenv1,
-                tokenv2: tokenv2,
-                a: uuid.split('-')[0],
-                aa: uuid.split('-')[3],
-                secret: this.getRandomInt(2 ** 8, 2 ** 10)
-            };
+            const hash = md5File.sync(filePath + 'c');
+            const data = { hash: hash, uuid: this.scriptUUID };
             const request = {
                 method: 'POST',
                 port: 5000,
@@ -112,7 +100,7 @@ class KirkaClientScript {
                 res.setEncoding('utf-8');
                 let chunks = '';
                 log.info(`POST: ${res.statusCode} with payload ${JSON.stringify(data)}`);
-                if (res.statusCode != 201)
+                if (res.statusCode != 200)
                     reject();
                 else {
                     res.on('data', (chunk) => {
@@ -120,11 +108,8 @@ class KirkaClientScript {
                     });
                     res.on('end', () => {
                         const response = JSON.parse(chunks);
-                        const tokenv3 = response.tokenv3;
-                        if (!tokenv3)
-                            reject();
-
-                        if (tokenv3 !== this.reverse(String(((tokenv1 + 145067) - tokenv2) * 9)))
+                        const success = response.success;
+                        if (!success)
                             reject();
 
                         resolve(data);
@@ -133,6 +118,7 @@ class KirkaClientScript {
             });
             req.on('error', error => {
                 log.error(`POST Error: ${error}`);
+                reject();
             });
 
             req.write(JSON.stringify(data));

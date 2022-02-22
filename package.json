@@ -20,6 +20,7 @@
     "electron-store": "^8.0.0",
     "follow-redirects": "^1.14.1",
     "get-blob-duration": "^1.2.0",
+    "md5-file": "^5.0.0",
     "node-fetch": "^2.6.5",
     "socket.io-client": "^4.4.0",
     "systeminformation": "^5.10.7",
