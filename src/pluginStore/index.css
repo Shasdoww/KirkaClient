@@ -94,8 +94,15 @@ body {
     height: 100%;
 }
 
-.card-label {
+.card-text {
     color: black;
+    display: none;
+    transition: all 10s ease;
+    transition-timing-function: ease;
+}
+
+.card-text:hover {
+    display: flex;
 }
 
 .bold {

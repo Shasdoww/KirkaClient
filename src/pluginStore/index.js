@@ -18,4 +18,21 @@ function makeCollapsible() {
             }
         });
     }
+
+    const lables = document.getElementsByClassName('card');
+    for (let i = 0; i < coll.length; i++) {
+        const label = lables[i];
+        const child = label.getElementsByClassName('card-text');
+        console.log(child);
+        label.addEventListener('mouseenter', () => {
+            for (const ch of child) {
+                console.log(ch.id);
+                $(`#${ch.id}`).trigger('mouseenter');
+            }
+        });
+        label.addEventListener('mouseleave', () => {
+            for (const ch of child)
+                ch.style.display = 'none';
+        });
+    }
 }
