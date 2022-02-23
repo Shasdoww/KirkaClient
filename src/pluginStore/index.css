@@ -72,7 +72,7 @@ body {
     color: white;
     overflow: hidden;
     background-color: var(--frame-content);
-    flex-direction: column;
+    flex-direction: row;
     width: -webkit-fill-available;
     padding: 10px;
 }
@@ -85,6 +85,7 @@ body {
     width: 250px;
     height: 12em;
     background-color: rgb(136 144 159 / 86%);
+    margin: 10px;
 }
 
 .card-image {
@@ -127,7 +128,6 @@ body {
     margin-left: 2px;
     margin-right: 2px;
 }
-
 
 button {
     cursor: pointer;
@@ -173,6 +173,7 @@ button {
     position: absolute;
     z-index: 1;
     transition: opacity 0.5s linear;
+    font-size: small;
   }
 
 .tooltip:hover .tooltiptext {
