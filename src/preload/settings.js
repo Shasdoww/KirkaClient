@@ -3,15 +3,128 @@
 const allSettings = require('../features/customSettings');
 const autoJoin = require('../features/autoJoin');
 const { ipcRenderer } = require('electron');
+let installedPlugins;
 
 ipcRenderer.on('make-settings', () => {
     makeSettings();
 });
 
+ipcRenderer.on('statusUpdate', (ev, uuid, status) => {
+    console.log(uuid, status);
+});
+
+function uninstallPlugin(button, uuid) {
+    setState(button, '--in-progress', 'Uninstalling...');
+    ipcRenderer.invoke('uninstallPlugin', uuid).then(result => {
+        console.log(result);
+        setState(button, '--done', 'Refresh?');
+        button.onclick = () => handlePlugins();
+        installedPlugins = JSON.parse(ipcRenderer.sendSync('installedPlugins'));
+    });
+}
+
+function downloadPlugin(button, uuid) {
+    setState(button, '--in-progress', 'Downloading...');
+    ipcRenderer.invoke('downloadPlugin', uuid).then(result => {
+        console.log(result);
+        setState(button, '--done', 'Install Now?');
+        button.onclick = () => ipcRenderer.send('reboot');
+        installedPlugins = JSON.parse(ipcRenderer.sendSync('installedPlugins'));
+    });
+}
+
+function setState(button, varName, text) {
+    button.innerText = text;
+    button.style.backgroundColor = `var(${varName})`;
+}
+
+function takeAcion(button, uuid) {
+    if (installedPlugins.includes(uuid))
+        uninstallPlugin(button, uuid);
+    else
+        downloadPlugin(button, uuid);
+}
+
+function handlePlugins() {
+    installedPlugins = JSON.parse(ipcRenderer.sendSync('installedPlugins'));
+    console.log(installedPlugins);
+    $.ajax({
+        url: 'https://kirkaclient.herokuapp.com/api/plugins',
+        complete: (res) => {
+            const data = res.responseJSON;
+            paintCards(data);
+        }
+    });
+}
+
+function paintCards(data) {
+    document.getElementsByClassName('frame-content')[0].innerHTML = '';
+    document.getElementsByClassName('frame-content')[1].innerHTML = '';
+    data.forEach(d => {
+        const card = document.createElement('div');
+        card.className = 'card';
+
+        const topDiv = document.createElement('div');
+        topDiv.classList = 'card-text item-name';
+        const fake = document.createElement('span');
+        fake.style.marginLeft = '5px';
+
+        const name = document.createElement('label');
+        name.classList = 'card-label bold';
+        name.innerText = `${d.name} v${d.ver}`;
+
+        const toolTip = document.createElement('div');
+        toolTip.classList = 'tooltip help';
+        const material = document.createElement('span');
+        material.classList = 'material-icons md-48';
+        material.style.fontSize = 'large';
+        material.innerText = 'help';
+        const desc = document.createElement('span');
+        desc.classList = 'tooltiptext tooltip-top';
+        desc.innerText = d.desc;
+        toolTip.appendChild(material);
+        toolTip.appendChild(desc);
+
+        topDiv.appendChild(fake);
+        topDiv.appendChild(name);
+        topDiv.appendChild(toolTip);
+
+        const image = document.createElement('div');
+        image.style.backgroundImage = `url('${d.img}')`;
+        image.className = 'card-image';
+
+        const bottomDiv = document.createElement('div');
+        bottomDiv.classList = 'card-text bottom';
+        const dlCount = document.createElement('label');
+        dlCount.className = 'util';
+        // dlCount.innerText = `${d.dls} Downloads`;
+        const dlBtn = document.createElement('button');
+        dlBtn.onclick = () => takeAcion(dlBtn, d.uuid);
+
+        bottomDiv.appendChild(dlCount);
+        bottomDiv.appendChild(dlBtn);
+
+        card.appendChild(topDiv);
+        card.appendChild(image);
+        card.appendChild(bottomDiv);
+        if (installedPlugins.includes(d.uuid)) {
+            dlBtn.classList = 'util uninstall';
+            dlBtn.innerText = 'Uninstall';
+            document.getElementsByClassName('frame-content')[1].appendChild(card);
+        } else {
+            dlBtn.classList = 'util download';
+            dlBtn.innerText = 'Download';
+            document.getElementsByClassName('frame-content')[0].appendChild(card);
+        }
+    });
+}
+
 window.addEventListener('DOMContentLoaded', () => {
     const check = document.getElementsByClassName('plugin-frame');
-    if (check.length > 0)
+    if (check.length > 0) {
+        handlePlugins();
         return;
+    }
 
     const mainDIV = document.createElement('div');
     mainDIV.id = 'optionsHolder';

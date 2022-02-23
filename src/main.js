@@ -11,7 +11,7 @@ const { io } = require('socket.io-client');
 const socket = io('https://kirkaclient.herokuapp.com');
 const { ElectronBlocker } = require('@cliqz/adblocker-electron');
 const fs = require('fs');
-const { https } = require('follow-redirects');
+const https = require('https');
 const easylist = fs.readFileSync(path.join(__dirname, 'easylist.txt'), 'utf-8');
 const blocker = ElectronBlocker.parse(easylist);
 const log = require('electron-log');
@@ -53,6 +53,8 @@ let errTries = 0;
 let changeLogs;
 let uniqueID = '';
 const allowedScripts = [];
+const installedPlugins = [];
+const pluginIdentifier = {};
 
 socket.on('connect', () => {
     log.info('WebSocket Connected!');
@@ -436,11 +438,60 @@ ipcMain.on('show-settings', () => {
     createSettings();
 });
 
+ipcMain.on('reboot', () => {
+    rebootClient();
+});
+
+ipcMain.handle('downloadPlugin', (ev, uuid) => {
+    console.log('Need to download', uuid);
+    https.get(`https://kirkaclient.herokuapp.com/plugins/download/${uuid}.jsc`, (res) => {
+        res.setEncoding('binary');
+        let a = '';
+        res.on('data', function(chunk) {
+            a += chunk;
+        });
+
+        res.on('end', () => {
+            try {
+                const pluginsDir = path.join(app.getPath('documents'), '/KirkaClient/plugins');
+                fs.writeFileSync(`${pluginsDir}/${uuid}.jsc`, a, 'binary');
+                fs.writeFileSync(
+                    `${pluginsDir}/${uuid}.js`,
+                    `require('bytenode'); module.exports = require('./${uuid}.jsc');`
+                );
+            } catch (e) {
+                console.log(e);
+                dialog.showErrorBox('Permission Error!',
+                    'Please start client as Administrator.\nThis can be done by Right Click > Run as Administrator.');
+                app.quit();
+            }
+        });
+    });
+});
+
+ipcMain.handle('uninstallPlugin', (ev, uuid) => {
+    console.log('Need to remove', uuid);
+    const scriptPath = pluginIdentifier[uuid];
+    if (!scriptPath)
+        return { success: false };
+    if (!fs.existsSync(scriptPath))
+        return { success: false };
+
+    fs.unlinkSync(scriptPath);
+    fs.unlinkSync(scriptPath + 'c');
+    installedPlugins.splice(installedPlugins.indexOf(uuid), 1);
+    return { success: true };
+});
+
+ipcMain.on('installedPlugins', (ev) => {
+    ev.returnValue = JSON.stringify(installedPlugins);
+});
+
 function createSettings() {
     setwin = new BrowserWindow({
-        width: 1000,
-        height: 600,
-        show: false,
+        width: 1360,
+        height: 768,
+        show: true,
         frame: true,
         icon: icon,
         title: 'KirkaClient Settings',
@@ -453,12 +504,8 @@ function createSettings() {
     });
     setwin.removeMenu();
     setwin.loadFile(path.join(__dirname, '/settings/settings.html'));
+    setwin.webContents.openDevTools();
     // setwin.setResizable(false)
-
-    setwin.once('ready-to-show', () => {
-        setwin.show();
-        setwin.webContents.openDevTools();
-    });
 
     setwin.on('close', () => {
         setwin = null;
@@ -629,6 +676,8 @@ async function initPlugins() {
                     log.info(`Script ignored, platform not matching: ${script.scriptName}`);
                 else {
                     allowedScripts.push(newPath);
+                    installedPlugins.push(script.scriptUUID);
+                    pluginIdentifier[script.scriptUUID] = scriptPath;
                     script.launchMain(win);
                     log.info(`Loaded script: ${script.scriptName}- v${script.ver}`);
                 }
@@ -637,6 +686,11 @@ async function initPlugins() {
                 showUnauthScript(filename);
             }
         });
+}
+
+function rebootClient() {
+    app.relaunch();
+    app.quit();
 }
 
 app.once('ready', () => {

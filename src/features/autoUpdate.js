@@ -1,4 +1,4 @@
-const https = require('follow-redirects').https;
+const https = require('https');
 const { version } = require('./const');
 const { dialog, app } = require('electron');
 const Store = require('electron-store');
@@ -46,7 +46,7 @@ async function downloadUpdate(contents, updateData) {
         return new Promise((resolve) => {
             myreq = https.get(updateUrl, (res) => {
                 res.setEncoding('binary');
-                
+
                 let a = '';
                 res.on('data', function(chunk) {
                     a += chunk;

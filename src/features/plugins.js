@@ -2,7 +2,7 @@
 /* eslint-disable quotes */
 
 const fs = require('fs');
-const https = require('http');
+const https = require('https');
 const fileChecker = new RegExp(/require\('bytenode'\); module\.exports = require\('\.\/.*'\);(?!.|\n)/, 'gm');
 const log = require('electron-log');
 const { dialog } = require('electron');
@@ -88,8 +88,7 @@ class KirkaClientScript {
             const data = { hash: hash, uuid: this.scriptUUID };
             const request = {
                 method: 'POST',
-                port: 5000,
-                hostname: '127.0.0.1',
+                hostname: 'kirkaclient.herokuapp.com',
                 path: '/api/plugins/updates',
                 headers: {
                     'Content-Type': 'application/json'
