@@ -3,6 +3,9 @@
     --collapse: rgba(143, 143, 143, 0.247);
     --uncollapse: rgba(143, 143, 143, 0.397);
     --frame-content: rgba(255, 255, 255, 0.068);
+    --black1: rgba(0, 0, 0, 0.322);
+    --download: rgb(38, 190, 94);
+    --download-hover: rgb(53, 161, 93);
 }
 
 #particles-js {
@@ -65,7 +68,7 @@ body {
 }
 
 .frame-content {
-    display: none;
+    display: flex;
     color: white;
     overflow: hidden;
     background-color: var(--frame-content);
@@ -80,13 +83,12 @@ body {
     align-items: center;
     justify-content: space-between;
     width: 250px;
-    height: 150px;
-    background-color: rgba(255, 227, 193, 0.863);
+    height: 12em;
+    background-color: rgb(136 144 159 / 86%);
 }
 
 .card-image {
     display: flex;
-    background-image: url('https://media.discordapp.net/attachments/856723935357173780/945642126924988416/Pngtreevector_shop_icon_3788233.png');
     background-size: contain;
     background-repeat: no-repeat;
     background-position: center;
@@ -95,16 +97,106 @@ body {
 }
 
 .card-text {
+    display: flex;
     color: black;
-    display: none;
-    transition: all 10s ease;
-    transition-timing-function: ease;
+    width: 100%;
+    justify-content: center;
+    background-color: var(--black1);
 }
 
-.card-text:hover {
+.card-text label{
+    margin-left: 0.6em;
+}
+
+.item-name{
+    padding: 0.4em 0 0.4em 0;
     display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.card .bottom {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+    width: 100%;
+    opacity: 1;
+    background-color: var(--black1);
+    margin-left: 2px;
+    margin-right: 2px;
+}
+
+
+button {
+    cursor: pointer;
+}
+
+.download {
+    background-color: var(--download);
+    padding: 10px;
+    text-align: center;
+    font-size: 14px;
+    cursor: pointer;
+    transition: background-color .2s linear;
+    border: none;
+}
+
+.download:hover {
+    background-color: var(--download-hover);
 }
 
 .bold {
     font-weight: bold;
+}
+
+.material-icons {
+    font-size: smaller;
+}
+
+.tooltip {
+    position: relative;
+    display: inline-block;
+    cursor: help;
+}
+
+.tooltip .tooltiptext {
+    visibility: hidden;
+    opacity: 0;
+    width: 400px;
+    background-color: black;
+    color: #fff;
+    text-align: center;
+    padding: 5px 0;
+    border-radius: 6px;
+    position: absolute;
+    z-index: 1;
+    transition: opacity 0.5s linear;
+  }
+
+.tooltip:hover .tooltiptext {
+    opacity: 1;
+    visibility: visible;
+}
+
+.tooltip-top {
+    top: 100%;
+    left: 50%;
+    margin-left: -200px;
+}
+
+.tooltiptext::after {
+    content: " ";
+    position: absolute;
+    bottom: 100%;
+    left: 50%;
+    margin-left: -5px;
+    border-width: 5px;
+    border-style: solid;
+    border-color: transparent transparent black transparent;
+}
+
+.help {
+    margin-right: 5px;
 }

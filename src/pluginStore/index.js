@@ -1,5 +1,12 @@
 document.addEventListener('DOMContentLoaded', () => {
     makeCollapsible();
+    $.ajax({
+        url: 'http://127.0.0.1:5000/api/plugins',
+        complete: (res) => {
+            const data = res.responseJSON;
+            console.log(data);
+        }
+    });
 });
 
 function makeCollapsible() {
@@ -18,21 +25,29 @@ function makeCollapsible() {
             }
         });
     }
+}
 
-    const lables = document.getElementsByClassName('card');
-    for (let i = 0; i < coll.length; i++) {
-        const label = lables[i];
-        const child = label.getElementsByClassName('card-text');
-        console.log(child);
-        label.addEventListener('mouseenter', () => {
-            for (const ch of child) {
-                console.log(ch.id);
-                $(`#${ch.id}`).trigger('mouseenter');
-            }
-        });
-        label.addEventListener('mouseleave', () => {
-            for (const ch of child)
-                ch.style.display = 'none';
-        });
-    }
+function paintCards(data) {
+    data.forEach(d => {
+        const card = document.createElement('div');
+        card.className = 'card';
+
+        const topDiv = document.createElement('div');
+        topDiv.classList = 'card-text item-name';
+        const fake = document.createElement('span')
+        fake.style.marginLeft = '5px';
+
+        const name = document.createElement('label');
+        name.classList = 'card-label bold'
+        name.innerText = d.name;
+
+        const toolTip = document.createElement('div');
+        toolTip.classList = 'tooltip help';
+        const material = document.createElement('span');
+        material.classList = 'material-icons md-48';
+        material.style.fontSize = 'large';
+        material.innerText = 'help';
+
+        
+    })
 }
