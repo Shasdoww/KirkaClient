@@ -6,7 +6,7 @@ const electronLocalshortcut = require('electron-localshortcut');
 const Store = require('electron-store');
 const config = new Store();
 const si = require('systeminformation');
-const { autoUpdate, sendBadges, updateRPC, startTwitch, initBadges, initRPC, closeTwitch, closeRPC } = require('./features');
+const { autoUpdate, sendBadges, updateRPC, initBadges, initRPC, closeRPC } = require('./features');
 const { io } = require('socket.io-client');
 const socket = io('https://kirkaclient.herokuapp.com');
 const { ElectronBlocker } = require('@cliqz/adblocker-electron');
@@ -54,6 +54,7 @@ let changeLogs;
 let uniqueID = '';
 const allowedScripts = [];
 const installedPlugins = [];
+const scriptCol = [];
 const pluginIdentifier = {};
 
 socket.on('connect', () => {
@@ -194,7 +195,6 @@ function createWindow() {
         showWin();
         initRPC(socket, contents);
         initBadges(socket);
-        startTwitch(contents);
         ensureDirs();
     });
 
@@ -365,7 +365,9 @@ app.on('window-all-closed', () => {
     if (process.platform !== 'darwin') {
         socket.disconnect();
         closeRPC();
-        closeTwitch();
+        scriptCol.forEach(script => {
+            script.exitMain();
+        });
         app.quit();
     }
 });
@@ -590,8 +592,6 @@ function ensureIntegrity() {
         .forEach(async(filename) => {
             try {
                 const scriptPath = path.join(fileDir, filename);
-                if (!allowedScripts.includes(scriptPath))
-                    return;
                 const statusCode = pluginChecker(scriptPath, 'token');
 
                 if (statusCode != 200) {
@@ -678,6 +678,7 @@ async function initPlugins() {
                     allowedScripts.push(newPath);
                     installedPlugins.push(script.scriptUUID);
                     pluginIdentifier[script.scriptUUID] = scriptPath;
+                    scriptCol.push(script);
                     script.launchMain(win);
                     log.info(`Loaded script: ${script.scriptName}- v${script.ver}`);
                 }

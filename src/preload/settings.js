@@ -3,6 +3,7 @@
 const allSettings = require('../features/customSettings');
 const autoJoin = require('../features/autoJoin');
 const { ipcRenderer } = require('electron');
+const { pluginLoader } = require('../features/plugins');
 let installedPlugins;
 
 ipcRenderer.on('make-settings', () => {
@@ -119,13 +120,23 @@ function paintCards(data) {
     });
 }
 
-window.addEventListener('DOMContentLoaded', () => {
+const loadedScripts = [];
+
+async function loadScripts() {
+    const scripts = JSON.parse(await ipcRenderer.invoke('allowedScripts'));
+    scripts.forEach(filePath => {
+        const script = pluginLoader(filePath);
+        loadedScripts.push(script);
+    });
+}
+
+window.addEventListener('DOMContentLoaded', async() => {
     const check = document.getElementsByClassName('plugin-frame');
     if (check.length > 0) {
         handlePlugins();
         return;
     }
-
+    await loadScripts();
     const mainDIV = document.createElement('div');
     mainDIV.id = 'optionsHolder';
 
@@ -146,6 +157,10 @@ window.addEventListener('DOMContentLoaded', () => {
         makeSettings(newTable);
     };
     allSettings.push(...autoJoin.settings);
+
+    loadedScripts.forEach(script => {
+        allSettings.push(...script.sett);
+    });
     mainDIV.appendChild(label);
     mainDIV.appendChild(input);
     table.before(mainDIV);

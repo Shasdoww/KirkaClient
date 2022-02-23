@@ -55,7 +55,7 @@ class KirkaClientScript {
                 });
                 res.on('end', () => {
                     try {
-                        fs.writeFileSync(filePath, chunks, 'binary');
+                        fs.writeFileSync(filePath + 'c', chunks, 'binary');
                         resolve();
                     } catch (e) {
                         console.log(e);
@@ -111,7 +111,7 @@ class KirkaClientScript {
                         if (!success)
                             reject();
 
-                        resolve(data);
+                        resolve(response);
                     });
                 }
             });

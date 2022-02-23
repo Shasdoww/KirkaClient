@@ -134,65 +134,6 @@ module.exports = [
         placeholder: 'CSS URL (http/https only)'
     },
     {
-        name: 'Twitch Integration',
-        id: 'twitchInt',
-        category: 'Twitch',
-        type: 'checkbox',
-        needsRestart: true,
-        val: config.get('twitchInt', false),
-    },
-    {
-        name: 'Show Twitch chat in Kirka chat',
-        id: 'twitchChatSwap',
-        category: 'Twitch',
-        type: 'checkbox',
-        val: config.get('twitchChatSwap', false),
-    },
-    {
-        name: 'Bot Username',
-        id: 'botUsername',
-        category: 'Twitch',
-        type: 'input',
-        needsRestart: true,
-        placeholder: 'Twitch Bot Username',
-        val: config.get('botUsername', '')
-    },
-    {
-        name: 'Bot OAuth',
-        id: 'botOAuth',
-        category: 'Twitch',
-        type: 'input',
-        password: true,
-        needsRestart: true,
-        placeholder: 'Twitch Bot OAuth Token',
-        val: config.get('botOAuth', '')
-    },
-    {
-        name: 'Twitch Channel',
-        id: 'twitchChannel',
-        category: 'Twitch',
-        type: 'input',
-        needsRestart: true,
-        placeholder: 'Your Twitch channel name.',
-        val: config.get('twitchChannel', '')
-    },
-    {
-        name: 'Link Command',
-        id: 'linkCommand',
-        category: 'Twitch',
-        type: 'input',
-        placeholder: 'Command to get the link of your game',
-        val: config.get('linkCommand', '!link')
-    },
-    {
-        name: 'Link Message',
-        id: 'linkMessage',
-        category: 'Twitch',
-        type: 'input',
-        placeholder: '{link} = Gamelink. Client will auto-replace that.',
-        val: config.get('linkMessage', 'Join here: {link}')
-    },
-    {
         name: 'Updates Behaviour',
         id: 'updateType',
         category: 'Updates',
