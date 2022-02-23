@@ -1,7 +1,6 @@
 require('v8-compile-cache');
 const path = require('path');
-const { app, BrowserWindow, clipboard, dialog, ipcMain, protocol, session } = require('electron');
-const url = require('url');
+const { app, BrowserWindow, clipboard, dialog, ipcMain } = require('electron');
 const electronLocalshortcut = require('electron-localshortcut');
 const Store = require('electron-store');
 const config = new Store();
@@ -515,49 +514,6 @@ function createSettings() {
 }
 
 
-const initResourceSwapper = () => {
-    const SWAP_FOLDER = path.join(app.getPath('documents'), '/KirkaSwapper');
-    try {
-        fs.mkdirSync(path.join(SWAP_FOLDER, '/assets'), { recursive: true });
-    } catch (e) {
-        log.error(`ResourceSwapper Error: ${e}`);
-    }
-    const swap = {
-        filter: {
-            urls: []
-        },
-        files: {}
-    };
-    const allFilesSync = (dir) => {
-        fs.readdirSync(dir).forEach(file => {
-            const filePath = path.join(dir, file);
-            const useAssets = !(/KirkaSwapper\\(css|media)/.test(dir));
-            log.info('ASSET: ', useAssets);
-            if (fs.statSync(filePath).isDirectory())
-                allFilesSync(filePath);
-            else {
-                const kirk = '*://' + (useAssets ? 'kirka.io' : '') + filePath.replace(SWAP_FOLDER, '').replace(/\\/g, '/') + '*';
-                log.info(`[RSC] kirk: ${kirk}`);
-                swap.filter.urls.push(kirk);
-                swap.files[kirk.replace(/\*/g, '')] = url.format({
-                    pathname: filePath,
-                    protocol: '',
-                    slashes: false
-                });
-            }
-        });
-        log.info(JSON.stringify(swap, null, 2));
-    };
-    allFilesSync(SWAP_FOLDER);
-    if (swap.filter.urls.length) {
-        session.defaultSession.webRequest.onBeforeRequest(swap.filter, (details, callback) => {
-            const redirect = swap.files[details.url.replace(/https|http|(\?.*)|(#.*)/gi, '')] || details.url;
-            callback({ cancel: false, redirectURL: redirect });
-            log.info('Redirecting', details.url, 'to', redirect);
-        });
-    }
-};
-
 function showUnauthScript(filename) {
     dialog.showErrorBox(
         'Unauthorized Script Loaded.',
@@ -704,11 +660,5 @@ app.once('ready', () => {
         return;
     }
     // Initialize protocol to access files
-    protocol.registerFileProtocol('file', (request, callback) => {
-        const pathname = decodeURIComponent(request.url.replace('file:///', ''));
-        callback(pathname);
-    });
-    if (config.get('resourceSwapper', true))
-        initResourceSwapper();
     createSplashWindow();
 });

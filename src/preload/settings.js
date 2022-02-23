@@ -1,7 +1,6 @@
 /* eslint-disable no-undef */
 /* eslint-disable no-case-declarations */
 const allSettings = require('../features/customSettings');
-const autoJoin = require('../features/autoJoin');
 const { ipcRenderer } = require('electron');
 const { pluginLoader } = require('../features/plugins');
 let installedPlugins;
@@ -156,8 +155,6 @@ window.addEventListener('DOMContentLoaded', async() => {
         newTable.innerHTML = '';
         makeSettings(newTable);
     };
-    allSettings.push(...autoJoin.settings);
-
     loadedScripts.forEach(script => {
         allSettings.push(...script.sett);
     });

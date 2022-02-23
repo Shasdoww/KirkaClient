@@ -7,7 +7,6 @@ const fixwebm = require('../recorder/fix');
 const path = require('path');
 const fs = require('fs');
 const getBlobDuration = require('get-blob-duration');
-const autoJoin = require('../features/autoJoin');
 const { pluginChecker, pluginLoader } = require('../features/plugins');
 
 let leftIcons;
@@ -53,7 +52,7 @@ async function loadScripts() {
     scripts.forEach(filePath => {
         const script = pluginLoader(filePath);
         if (script.isLocationMatching(currentState())) {
-            script.launchRenderer();
+            script.launchRenderer(remote.getCurrentWindow());
             console.log(`Loaded script: ${script.scriptName}- v${script.ver}`);
         }
     });
@@ -521,7 +520,6 @@ function toggleChat() {
 }
 
 window.addEventListener('keydown', function(event) {
-    const autoJoinKey = config.get('AJ_keybind', 'F7');
     switch (event.key) {
     case 'F1':
         startRecording();
@@ -531,21 +529,6 @@ window.addEventListener('keydown', function(event) {
         break;
     case 'F3':
         stopRecording(false);
-        break;
-    case autoJoinKey:
-        createBalloon('Searching for Games...');
-        autoJoin.launch().then(res => {
-            if (!res.success || res.found == 0) {
-                createBalloon('No Match Found!', 'error');
-                return;
-            }
-
-            const url = `https://kirka.io/games/${res.code}`;
-            setTimeout(() => {
-                console.log('Loading', url);
-                window.location.replace(url);
-            }, 0);
-        });
         break;
     case 'Escape':
         addSettingsButton();
