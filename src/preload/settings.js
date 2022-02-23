@@ -9,19 +9,17 @@ ipcRenderer.on('make-settings', () => {
 });
 
 window.addEventListener('DOMContentLoaded', () => {
-    const check = document.getElementsByClassName('about-wrapper');
+    const check = document.getElementsByClassName('plugin-frame');
     if (check.length > 0)
         return;
 
     const mainDIV = document.createElement('div');
     mainDIV.id = 'optionsHolder';
-    mainDIV.style.marginTop = '65px';
 
     const table = document.getElementsByTagName('table')[0];
     const label = document.createElement('label');
     label.id = 'name';
     label.innerText = 'Search for a setting:';
-    label.style.marginRight = '3px';
 
     const input = document.createElement('input');
     input.type = 'input';
@@ -70,11 +68,9 @@ function makeSettings(table) {
         const option = allSettings[i];
         if (!(option.name.toLowerCase().includes(searchFilter.toLowerCase()) || option.category.toLowerCase().includes(searchFilter.toLowerCase())))
             continue;
-        const tableRow = document.createElement('tr');
         const mainDIV = document.createElement('div');
+        mainDIV.className = 'option';
 
-        const tdName = document.createElement('td');
-        tdName.style.width = '65vw';
         const optName = document.createElement('label');
         optName.innerText = option.name;
         optName.id = 'name';
@@ -84,16 +80,11 @@ function makeSettings(table) {
             optSpan.innerText = '*';
             optName.appendChild(optSpan);
         }
-        tdName.appendChild(optName);
-        const tdSpace = document.createElement('td');
-        tdSpace.innerText = '\u200b';
+        mainDIV.appendChild(optName);
 
-        const tdValue = document.createElement('td');
         const label = document.createElement('label');
         const input = document.createElement('input');
 
-        mainDIV.appendChild(tdName);
-        mainDIV.appendChild(tdSpace);
         switch (option.type) {
         case 'checkbox':
             label.className = 'toggle';
@@ -111,8 +102,7 @@ function makeSettings(table) {
             span2.className = 'slider round';
             label.appendChild(span2);
 
-            tdValue.appendChild(label);
-            mainDIV.appendChild(tdValue);
+            mainDIV.appendChild(label);
             break;
         case 'input':
             label.className = 'textbox';
@@ -123,8 +113,7 @@ function makeSettings(table) {
             input.value = option.val;
             input.oninput = () => inputbox(option);
 
-            tdValue.appendChild(input);
-            mainDIV.appendChild(tdValue);
+            mainDIV.appendChild(input);
             break;
         case 'list':
             const optionValues = option.values;
@@ -144,9 +133,7 @@ function makeSettings(table) {
             optValue.className = 'textbox';
 
             optValue.appendChild(select);
-            tdValue.appendChild(optValue);
-
-            mainDIV.appendChild(tdValue);
+            mainDIV.appendChild(optValue);
             break;
         case 'slider':
             const div = document.createElement('div');
@@ -167,13 +154,11 @@ function makeSettings(table) {
             div.appendChild(label);
             div.appendChild(input);
 
-            tdValue.appendChild(div);
-            mainDIV.appendChild(tdValue);
+            mainDIV.appendChild(div);
             break;
         }
         const category = document.getElementById(option.category);
-        category.appendChild(tableRow);
-        tableRow.appendChild(mainDIV);
+        category.appendChild(mainDIV);
     }
     const endNote = document.createElement('tr');
     endNote.innerHTML = `<td>

@@ -1,23 +1,35 @@
 <!DOCTYPE html>
-<html>
-  <title>Kirka Settings</title>
-  <link rel="stylesheet" href="settings.css" />
-  <script src="scripts.js"></script>
-  <style>
-    body {
-      background-color: #3b4975;
-    }
-  </style>
+<html lang="en">
+  <head>
+    <title>KirkaClient Settings</title>
+      <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+      <link rel="preconnect" href="https://fonts.googleapis.com">
+      <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+      <link href="https://fonts.googleapis.com/css2?family=Lato&display=swap" rel="stylesheet">
+      <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+      <script src="./index.js"></script>
+      <link href="./index.css" rel="stylesheet">
+      <script src="./particles.js"></script>
+      <script src="./app.js"></script>
+      <meta name="viewport" content="width=device-width, initial-scale=1">
+  </head>
   <body>
     <nav>
       <ul>
-        <li><a href="#settings">Settings</a></li>
-        <li><a href="about.html">About Us</a></li>
+        <li><a href="">Settings</a></li>
+        <li><a href="plugins.html">Plugins</a></li>
       </ul>
     </nav>
-    <div class="setDiv" id="settings">
-      <table style="width: 100vw;">
-      </table>
+    <div class="main">
+      <div id="particles-js">
+      </div>
+      <div class="heading">
+        <h1><span class="material-icons md-48" style="font-size: x-large;">settings</span> KirkaClient Settings</h1>
+      </div>
+      <div class="setDiv" id="settings">
+        <table class="settingsTable">
+        </table>
+      </div>
     </div>
   </body>
 </html>
