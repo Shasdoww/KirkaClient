@@ -21,17 +21,13 @@ const gamePreload = path.join(__dirname, 'preload', 'global.js');
 const splashPreload = path.join(__dirname, 'preload', 'splash.js');
 const settingsPreload = path.join(__dirname, 'preload', 'settings.js');
 const changeLogsPreload = path.join(__dirname, 'preload', 'changelogs.js');
+const pluginsPath = path.join(__dirname, 'plugins');
 
 const md5File = require('md5-file');
 const pluginHash = md5File.sync(path.join(__dirname, 'features/plugins.js'));
 const preloadHash = md5File.sync(path.join(__dirname, 'preload/settings.js'));
 console.log(pluginHash);
-let pluginsPath;
 // process.env.ELECTRON_ENABLE_LOGGING = true;
-if (process.env.DEV_MODE)
-    pluginsPath = 'plugins';
-else
-    pluginsPath = 'src/plugins';
 
 log.info(`
 ------------------------------------------
@@ -543,9 +539,9 @@ function ensureIntegrity() {
         fs.mkdirSync(fileDir, { recursive: true });
     // eslint-disable-next-line no-empty
     } catch (err) {}
-    console.log('Pl Path:', path.join(__dirname, pluginsPath));
+    console.log('Pl Path:', pluginsPath);
     try {
-        fs.mkdirSync(path.join(__dirname, pluginsPath), { recursive: true });
+        fs.mkdirSync(pluginsPath, { recursive: true });
     // eslint-disable-next-line no-empty
     } catch (err) {
         console.log(err);
@@ -562,7 +558,7 @@ function ensureIntegrity() {
                     showUnauthScript(filename);
                     return;
                 }
-                const newPath = path.join(__dirname, `${pluginsPath}/${filename}`);
+                const newPath = path.join(pluginsPath, filename);
                 fs.copyFileSync(
                     scriptPath,
                     newPath
@@ -598,9 +594,9 @@ async function initPlugins() {
     } catch (err) {
         console.log(err);
     }
-    console.log('Plugins path', path.join(__dirname, pluginsPath));
+    console.log('Plugins path', pluginsPath);
     try {
-        fs.mkdirSync(path.join(__dirname, pluginsPath), { recursive: true });
+        fs.mkdirSync(pluginsPath, { recursive: true });
     // eslint-disable-next-line no-empty
     } catch (err) {
         console.log(err);
@@ -618,7 +614,7 @@ async function initPlugins() {
                     showUnauthScript(filename);
                     return;
                 }
-                const newPath = path.join(__dirname, `plugins/${filename}`);
+                const newPath = path.join(pluginsPath, filename);
                 fs.copyFileSync(
                     scriptPath,
                     newPath
