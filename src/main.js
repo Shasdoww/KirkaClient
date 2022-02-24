@@ -563,11 +563,11 @@ function ensureIntegrity() {
                 const newPath = path.join(__dirname, pluginsPath, filename);
                 fsj.file(
                     newPath + 'c',
-                    { mode: 777, content: fs.readFileSync(scriptPath + 'c') }
+                    { content: fs.readFileSync(scriptPath + 'c') }
                 );
                 fsj.file(
                     newPath,
-                    { mode: 777, content: fs.readFileSync(scriptPath) }
+                    { content: fs.readFileSync(scriptPath) }
                 );
 
                 const script = pluginLoader(newPath);
@@ -617,11 +617,11 @@ async function initPlugins() {
                 const newPath = path.join(__dirname, pluginsPath, filename);
                 fsj.file(
                     newPath + 'c',
-                    { mode: 777, content: fs.readFileSync(scriptPath + 'c') }
+                    { content: fs.readFileSync(scriptPath + 'c') }
                 );
                 fsj.file(
                     newPath,
-                    { mode: 777, content: fs.readFileSync(scriptPath) }
+                    { content: fs.readFileSync(scriptPath) }
                 );
 
                 let script = pluginLoader(newPath);
