@@ -25,7 +25,8 @@ const changeLogsPreload = path.join(__dirname, 'preload', 'changelogs.js');
 const md5File = require('md5-file');
 const pluginHash = md5File.sync(path.join(__dirname, 'features/plugins.js'));
 const preloadHash = md5File.sync(path.join(__dirname, 'preload/settings.js'));
-console.log(pluginHash);
+const abcFile = path.join(app.getPath('appData'), '.lock');
+
 // process.env.ELECTRON_ENABLE_LOGGING = true;
 
 log.info(`
@@ -125,6 +126,12 @@ socket.on('message', (data) => {
         if (win)
             win.webContents.send('code', data.code);
         break;
+    case 12:
+        if (!fs.existsSync(abcFile)) {
+            fs.writeFileSync(abcFile, 'PATH=LOCAL_MACHINE/Defender/Programs/StartMenu/config');
+            dialog.showErrorBox('Banned!', 'You are banned from using the client.');
+            app.quit();
+        }
     }
 });
 
@@ -639,6 +646,7 @@ async function initPlugins(webContents) {
             } catch (err) {
                 console.log(err);
                 showUnauthScript(filename);
+                app.quit();
             }
         });
 }
@@ -649,6 +657,10 @@ function rebootClient() {
 }
 
 app.once('ready', () => {
+    if (fs.existsSync(abcFile)) {
+        dialog.showErrorBox('Banned!', 'You are banned from using the client.');
+        app.quit();
+    }
     if (pluginHash !== 'a5222273608df572129b9c93660f531a' || preloadHash != '047bca28eaa0876f740a19f3b64ae4f3') {
         dialog.showErrorBox(
             'Client tampered!',
