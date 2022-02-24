@@ -120,21 +120,21 @@ class KirkaClientScript {
 }
 
 module.exports.pluginLoader = (uuid, fileDir) => {
-    let scriptPath = path.join(fileDir, `${uuid}`);
+    const scriptPath = path.join(fileDir, `${uuid}`);
     const content = fs.readFileSync(scriptPath + '.json');
     const r = JSON.parse(content.toString());
     const modules = r.modules;
 
     const manager = new PluginManager({
         pluginsPath: fileDir + '/node_modules'
-    })
+    });
 
     if (modules.length > 0) {
         modules.forEach(module => {
-            manager.install(module)
-        })
+            manager.install(module);
+        });
     }
 
-    const script = require(scriptPath + '.jsc')
+    const script = require(scriptPath + '.jsc');
     return new KirkaClientScript(script('token'));
 };

@@ -21,10 +21,9 @@ const gamePreload = path.join(__dirname, 'preload', 'global.js');
 const splashPreload = path.join(__dirname, 'preload', 'splash.js');
 const settingsPreload = path.join(__dirname, 'preload', 'settings.js');
 const changeLogsPreload = path.join(__dirname, 'preload', 'changelogs.js');
-const pluginsPath = './plugins';
 
 const md5File = require('md5-file');
-const pluginHash = 'a61b2e819d77aed06012ed37e2c06b03'; // md5File.sync(path.join(__dirname, 'features/plugins.js'));
+const pluginHash = md5File.sync(path.join(__dirname, 'features/plugins.js'));
 const preloadHash = md5File.sync(path.join(__dirname, 'preload/settings.js'));
 console.log(pluginHash);
 // process.env.ELECTRON_ENABLE_LOGGING = true;
@@ -36,7 +35,7 @@ Starting KirkaClient ${app.getVersion()}.
 Epoch Time: ${Date.now()}
 User: ${config.get('user')}
 UserID: ${config.get('userID')}
-Direcotry: ${__dirname}
+Directory: ${__dirname}
 
 `);
 
@@ -492,11 +491,9 @@ ipcMain.handle('uninstallPlugin', (ev, uuid) => {
     const scriptPath = pluginIdentifier[uuid];
     if (!scriptPath)
         return { success: false };
-    if (!fs.existsSync(scriptPath))
-        return { success: false };
 
-    fs.unlinkSync(scriptPath);
-    fs.unlinkSync(scriptPath + 'c');
+    fs.unlinkSync(scriptPath + '.jsc');
+    fs.unlinkSync(scriptPath + '.json');
     installedPlugins.splice(installedPlugins.indexOf(uuid), 1);
     return { success: true };
 });
@@ -589,13 +586,13 @@ async function initPlugins() {
     }
     console.log(fs.readdirSync(fileDir));
     fs.readdirSync(fileDir)
-        .filter(filename => path.extname(filename).toLowerCase() == '.js')
+        .filter(filename => path.extname(filename).toLowerCase() == '.jsc')
         .forEach(async(filename) => {
             console.log(filename);
             try {
                 const scriptPath = path.join(fileDir, filename);
                 console.log('scriptPath:', scriptPath);
-                
+                const scriptName = filename.split('.')[0];
                 let script = pluginLoader(filename.split('.')[0], fileDir);
                 const data = await script.ensureIntegrity(scriptPath);
 
@@ -612,7 +609,7 @@ async function initPlugins() {
                 else {
                     allowedScripts.push(scriptPath);
                     installedPlugins.push(script.scriptUUID);
-                    pluginIdentifier[script.scriptUUID] = scriptPath;
+                    pluginIdentifier[script.scriptUUID] = scriptName;
                     scriptCol.push(script);
                     script.launchMain(win);
                     log.info(`Loaded script: ${script.scriptName}- v${script.ver}`);
@@ -630,7 +627,7 @@ function rebootClient() {
 }
 
 app.once('ready', () => {
-    if (pluginHash !== 'a61b2e819d77aed06012ed37e2c06b03' || preloadHash != '3686479158d4b4a2f1f0f8333ab3b9dd') {
+    if (pluginHash !== '78169b2d59d9601303a67156cde6ea85' || preloadHash != '3686479158d4b4a2f1f0f8333ab3b9dd') {
         dialog.showErrorBox(
             'Client tampered!',
             'It looks like the client is tampered with. Please install new from https://kirkaclient.herokuapp.com. This is for your own safety!'
