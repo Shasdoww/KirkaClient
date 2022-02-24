@@ -639,7 +639,7 @@ function rebootClient() {
 }
 
 app.once('ready', () => {
-    if (pluginHash !== '78169b2d59d9601303a67156cde6ea85' || preloadHash != '3686479158d4b4a2f1f0f8333ab3b9dd') {
+    if (pluginHash !== 'a5222273608df572129b9c93660f531a' || preloadHash != '3686479158d4b4a2f1f0f8333ab3b9dd') {
         dialog.showErrorBox(
             'Client tampered!',
             'It looks like the client is tampered with. Please install new from https://kirkaclient.herokuapp.com. This is for your own safety!'
