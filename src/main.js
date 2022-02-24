@@ -162,7 +162,7 @@ function createWindow() {
             enableRemoteModule: true,
             contextIsolation: false,
             webSecurity: false,
-            devTools: config.get('dTpv2', false)
+            devTools: !app.isPackaged
         },
     });
     win.removeMenu();
@@ -325,7 +325,7 @@ function ensureDev(password) {
 let promptWindow;
 
 function toggleDevTools() {
-    if (config.get('dTpv2', false)) {
+    if (!app.isPackaged) {
         win.webContents.openDevTools();
         return;
     }

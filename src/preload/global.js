@@ -58,7 +58,9 @@ async function loadScripts() {
         const scriptUUID = getKeyByValue(scripts, uuids[i]);
         const script = pluginLoader(scriptUUID, fileDir);
         if (script.isLocationMatching(currentState())) {
-            script.launchRenderer(remote.getCurrentWindow());
+            const win = remote.getCurrentWindow();
+            console.log(win);
+            script.launchRenderer(win);
             console.log(`Loaded script: ${script.scriptName}- v${script.ver}`);
         }
     }
