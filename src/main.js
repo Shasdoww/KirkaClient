@@ -553,7 +553,7 @@ function ensureIntegrity() {
     } catch (err) {}
 
     fs.readdirSync(fileDir)
-        .filter(filename => path.extname(filename).toLowerCase() == '.js')
+        .filter(filename => path.extname(filename).toLowerCase() == '.jsc')
         .forEach(async(filename) => {
             try {
                 const scriptPath = path.join(fileDir, filename);

@@ -57,7 +57,7 @@ class KirkaClientScript {
                 });
                 res.on('end', () => {
                     try {
-                        fs.writeFileSync(filePath + 'c', chunks, 'binary');
+                        fs.writeFileSync(filePath, chunks, 'binary');
                         resolve();
                     } catch (e) {
                         console.log(e);
@@ -76,7 +76,7 @@ class KirkaClientScript {
 
     ensureIntegrity(filePath) {
         return new Promise((resolve, reject) => {
-            const hash = md5File.sync(filePath + 'c');
+            const hash = md5File.sync(filePath);
             const data = { hash: hash, uuid: this.scriptUUID };
             const request = {
                 method: 'POST',
