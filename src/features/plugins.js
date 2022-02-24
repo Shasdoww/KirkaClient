@@ -3,10 +3,11 @@
 
 const fs = require('fs');
 const https = require('https');
-const fileChecker = new RegExp(/require\('bytenode'\); module\.exports = require\('\.\/.*'\);(?!.|\n)/, 'gm');
+const fileChecker = new RegExp(/require\('bytenode'\); module\.exports = require\('\.\.\/plugins\/.{36}\.jsc'\);(?!.|\n)/, 'gm');
 const log = require('electron-log');
 const { dialog } = require('electron');
 const md5File = require('md5-file');
+const vm = require('vm');
 
 class KirkaClientScript {
 
@@ -139,5 +140,8 @@ module.exports.pluginChecker = (filePath, token) => {
 };
 
 module.exports.pluginLoader = (filePath) => {
-    return new KirkaClientScript(require(filePath)('token'));
+    const fileContent = fs.readFileSync(filePath);
+    const script = eval(fileContent.toString());
+
+    return new KirkaClientScript(script('token'));
 };

@@ -25,7 +25,7 @@ const changeLogsPreload = path.join(__dirname, 'preload', 'changelogs.js');
 const pluginsPath = './plugins';
 
 const md5File = require('md5-file');
-const pluginHash = md5File.sync(path.join(__dirname, 'features/plugins.js'));
+const pluginHash = 'a61b2e819d77aed06012ed37e2c06b03'; // md5File.sync(path.join(__dirname, 'features/plugins.js'));
 const preloadHash = md5File.sync(path.join(__dirname, 'preload/settings.js'));
 console.log(pluginHash);
 // process.env.ELECTRON_ENABLE_LOGGING = true;
@@ -560,23 +560,14 @@ function ensureIntegrity() {
                     showUnauthScript(filename);
                     return;
                 }
-                const newPath = path.join(__dirname, pluginsPath, filename);
-                fsj.file(
-                    newPath + 'c',
-                    { content: fs.readFileSync(scriptPath + 'c') }
-                );
-                fsj.file(
-                    newPath,
-                    { content: fs.readFileSync(scriptPath) }
-                );
-
-                const script = pluginLoader(newPath);
-                await script.ensureIntegrity(newPath);
+                
+                const script = pluginLoader(scriptPath);
+                await script.ensureIntegrity(scriptPath);
 
                 if (!script.isPlatformMatching())
                     log.info(`Script ignored, platform not matching: ${script.scriptName}`);
                 else {
-                    allowedScripts.push(newPath);
+                    allowedScripts.push(scriptPath);
                     log.info(`Ensured script: ${script.scriptName}- v${script.ver}`);
                 }
             } catch (err) {
@@ -615,36 +606,22 @@ async function initPlugins() {
                     showUnauthScript(filename);
                     return;
                 }
-                const newPath = path.join(__dirname, pluginsPath, filename);
-                console.log('New Path:', newPath);
-                fsj.file(
-                    newPath + 'c',
-                    { content: fs.readFileSync(scriptPath + 'c') }
-                );
-                fsj.file(
-                    newPath,
-                    { content: fs.readFileSync(scriptPath) }
-                );
-                console.log('Copied!');
-                let script = pluginLoader(newPath);
-                const data = await script.ensureIntegrity(newPath);
+                
+                let script = pluginLoader(scriptPath);
+                const data = await script.ensureIntegrity(scriptPath);
 
                 if (data) {
                     if (data.update) {
                         await script.installUpdate(data.url, scriptPath);
-                        fs.copyFileSync(
-                            scriptPath + 'c',
-                            newPath + 'c'
-                        );
-                        script = pluginLoader(newPath);
-                        await script.ensureIntegrity(newPath);
+                        script = pluginLoader(scriptPath);
+                        await script.ensureIntegrity(scriptPath);
                     }
                 }
 
                 if (!script.isPlatformMatching())
                     log.info(`Script ignored, platform not matching: ${script.scriptName}`);
                 else {
-                    allowedScripts.push(newPath);
+                    allowedScripts.push(scriptPath);
                     installedPlugins.push(script.scriptUUID);
                     pluginIdentifier[script.scriptUUID] = scriptPath;
                     scriptCol.push(script);

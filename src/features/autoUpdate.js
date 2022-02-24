@@ -38,7 +38,7 @@ async function autoUpdate(contents, updateData) {
 async function downloadUpdate(contents, updateData) {
     const updateUrl = updateData.url;
     const updateSize = updateData.size;
-    const downloadDestination = path.join(__dirname, 'resources/app.asar');
+    const downloadDestination = path.join('./resources/app.asar');
     // const downloadDestination = path.join('./app.asar');
     let myreq;
 
