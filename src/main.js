@@ -541,6 +541,7 @@ function ensureIntegrity() {
         fs.mkdirSync(fileDir, { recursive: true });
     // eslint-disable-next-line no-empty
     } catch (err) {}
+    console.log('Pl Path:', path.join(__dirname, pluginsPath));
     try {
         fs.mkdirSync(path.join(__dirname, pluginsPath), { recursive: true });
     // eslint-disable-next-line no-empty
