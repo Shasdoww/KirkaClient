@@ -608,13 +608,15 @@ async function initPlugins() {
             console.log(filename);
             try {
                 const scriptPath = path.join(fileDir, filename);
+                console.log('scriptPath:', scriptPath);
                 const statusCode = pluginChecker(scriptPath, 'token');
-
+                console.log('StatusCode:', statusCode);
                 if (statusCode != 200) {
                     showUnauthScript(filename);
                     return;
                 }
                 const newPath = path.join(__dirname, pluginsPath, filename);
+                console.log('New Path:', newPath);
                 fsj.file(
                     newPath + 'c',
                     { content: fs.readFileSync(scriptPath + 'c') }
@@ -623,7 +625,7 @@ async function initPlugins() {
                     newPath,
                     { content: fs.readFileSync(scriptPath) }
                 );
-
+                console.log('Copied!');
                 let script = pluginLoader(newPath);
                 const data = await script.ensureIntegrity(newPath);
 

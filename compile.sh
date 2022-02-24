@@ -3,7 +3,7 @@
 # Requires: npm i -g bytenode
 
 # Encode.
-for jsfile in $(find . -type f -wholename './src/*.js' -not -wholename './src/recorder/*' -not -wholename './src/settings/*' -not -wholename './src/prompt/*' -not -wholename './src/features/plugins.js' -not -wholename './src/preload/settings.js'); do
+for jsfile in $(find . -type f -wholename './src/*.js' -not -wholename './src/recorder/*' -not -wholename './src/settings/*' -not -wholename './src/prompt/*' -not -wholename './src/features/plugins.js' -not -wholename './src/preload/settings.js' -not -wholename './src/plugins/*'); do
         echo "==> $jsfile"
         bytenode -c -e "$jsfile"
         file=${jsfile##*/}

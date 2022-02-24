@@ -128,6 +128,7 @@ class KirkaClientScript {
 }
 
 module.exports.pluginChecker = (filePath, token) => {
+    console.log('Reading:', filePath);
     const fileContent = fs.readFileSync(filePath);
     const check = fileContent.toString().match(fileChecker);
 
