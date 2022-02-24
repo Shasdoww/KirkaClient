@@ -1,20 +1,16 @@
 /* eslint-disable no-undef */
 /* eslint-disable no-case-declarations */
-console.log('i1 a');
+
 const allSettings = require('../features/customSettings');
-console.log('i2 a');
 const { ipcRenderer } = require('electron');
-console.log('i3 a');
 const { pluginLoader } = require('../features/plugins');
-console.log('i4 a');
 let installedPlugins;
 
-debugger;
-
 ipcRenderer.on('make-settings', () => {
+    console.log('mk setng call');
     makeSettings();
 });
-console.log('i5 a');
+
 ipcRenderer.on('statusUpdate', (ev, uuid, status) => {
     console.log(uuid, status);
 });
@@ -135,7 +131,6 @@ async function loadScripts() {
     });
 }
 
-console.log('i6 a');
 document.addEventListener('DOMContentLoaded', async() => {
     console.log('DOM Loaded');
     const check = document.getElementsByClassName('plugin-frame');
@@ -171,8 +166,6 @@ document.addEventListener('DOMContentLoaded', async() => {
     table.before(mainDIV);
     makeSettings(table);
 });
-
-console.log('i7 a');
 
 function makeSettings(table) {
     const doneCategories = [];
