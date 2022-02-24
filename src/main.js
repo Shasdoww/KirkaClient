@@ -422,9 +422,7 @@ async function initAutoUpdater(webContents) {
         app.quit();
     } else {
         createWindow();
-        console.log('window made');
-        initPlugins();
-        console.log('plugins made');
+        initPlugins(webContents);
         const wait = ms => new Promise(resolve => setTimeout(resolve, ms));
         await wait(2500);
         canDestroy = true;
@@ -576,9 +574,23 @@ function ensureIntegrity() {
         });
 }
 
-async function initPlugins() {
+async function initPlugins(webContents) {
     const fileDir = path.join(app.getPath('documents'), '/KirkaClient/plugins');
     console.log('fileDir', fileDir);
+    const node_modules = path.join(fileDir, 'node_modules');
+    if (!fs.existsSync(node_modules)) {
+        webContents.send('message', 'Configuring Plugins...');
+        const fse = require('fs-extra');
+        const srcDir = path.join(__dirname, '../node_modules');
+        const destDir = node_modules;
+
+        fse.copySync(srcDir, destDir, { overwrite: true }, function(err) {
+            if (err)
+                console.error(err);
+            else
+                console.log('success!');
+        });
+    }
     try {
         fs.mkdirSync(fileDir, { recursive: true });
     } catch (err) {
