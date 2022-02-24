@@ -603,10 +603,11 @@ async function initPlugins() {
     } catch (err) {
         console.log(err);
     }
-
+    console.log(fs.readdirSync(fileDir));
     fs.readdirSync(fileDir)
         .filter(filename => path.extname(filename).toLowerCase() == '.js')
         .forEach(async(filename) => {
+            console.log(filename);
             try {
                 const scriptPath = path.join(fileDir, filename);
                 const statusCode = pluginChecker(scriptPath, 'token');
