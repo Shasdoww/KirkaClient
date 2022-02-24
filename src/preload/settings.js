@@ -1,8 +1,12 @@
 /* eslint-disable no-undef */
 /* eslint-disable no-case-declarations */
+console.log('i1 a');
 const allSettings = require('../features/customSettings');
+console.log('i2 a');
 const { ipcRenderer } = require('electron');
+console.log('i3 a');
 const { pluginLoader } = require('../features/plugins');
+console.log('i4 a');
 let installedPlugins;
 
 ipcRenderer.on('make-settings', () => {
