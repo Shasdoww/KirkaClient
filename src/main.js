@@ -15,8 +15,7 @@ const easylist = fs.readFileSync(path.join(__dirname, 'easylist.txt'), 'utf-8');
 const blocker = ElectronBlocker.parse(easylist);
 const log = require('electron-log');
 const prompt = require('./features/promptManager');
-const { pluginChecker, pluginLoader } = require('./features/plugins');
-const fsj = require('fs-jetpack');
+const { pluginLoader } = require('./features/plugins');
 
 const gamePreload = path.join(__dirname, 'preload', 'global.js');
 const splashPreload = path.join(__dirname, 'preload', 'splash.js');
@@ -458,10 +457,26 @@ ipcMain.handle('downloadPlugin', (ev, uuid) => {
             try {
                 const pluginsDir = path.join(app.getPath('documents'), '/KirkaClient/plugins');
                 fs.writeFileSync(`${pluginsDir}/${uuid}.jsc`, a, 'binary');
-                fs.writeFileSync(
-                    `${pluginsDir}/${uuid}.js`,
-                    `require('bytenode'); module.exports = require('./${uuid}.jsc');`
-                );
+            } catch (e) {
+                console.log(e);
+                dialog.showErrorBox('Permission Error!',
+                    'Please start client as Administrator.\nThis can be done by Right Click > Run as Administrator.');
+                app.quit();
+            }
+        });
+    });
+
+    https.get(`https://kirkaclient.herokuapp.com/plugins/download/${uuid}.json`, (res) => {
+        res.setEncoding('binary');
+        let a = '';
+        res.on('data', function(chunk) {
+            a += chunk;
+        });
+
+        res.on('end', () => {
+            try {
+                const pluginsDir = path.join(app.getPath('documents'), '/KirkaClient/plugins');
+                fs.writeFileSync(`${pluginsDir}/${uuid}.json`, a, 'binary');
             } catch (e) {
                 console.log(e);
                 dialog.showErrorBox('Permission Error!',
@@ -541,27 +556,13 @@ function ensureIntegrity() {
         fs.mkdirSync(fileDir, { recursive: true });
     // eslint-disable-next-line no-empty
     } catch (err) {}
-    console.log('Pl Path:', pluginsPath);
-    try {
-        fs.mkdirSync(pluginsPath, { recursive: true });
-    // eslint-disable-next-line no-empty
-    } catch (err) {
-        console.log(err);
-    }
 
     fs.readdirSync(fileDir)
         .filter(filename => path.extname(filename).toLowerCase() == '.js')
         .forEach(async(filename) => {
             try {
                 const scriptPath = path.join(fileDir, filename);
-                const statusCode = pluginChecker(scriptPath, 'token');
-
-                if (statusCode != 200) {
-                    showUnauthScript(filename);
-                    return;
-                }
-                
-                const script = pluginLoader(scriptPath);
+                const script = pluginLoader(filename.split('.')[0], fileDir);
                 await script.ensureIntegrity(scriptPath);
 
                 if (!script.isPlatformMatching())
@@ -586,12 +587,6 @@ async function initPlugins() {
     } catch (err) {
         console.log(err);
     }
-    console.log('Plugins path', pluginsPath);
-    try {
-        fs.mkdirSync(pluginsPath, { recursive: true });
-    } catch (err) {
-        console.log(err);
-    }
     console.log(fs.readdirSync(fileDir));
     fs.readdirSync(fileDir)
         .filter(filename => path.extname(filename).toLowerCase() == '.js')
@@ -600,20 +595,14 @@ async function initPlugins() {
             try {
                 const scriptPath = path.join(fileDir, filename);
                 console.log('scriptPath:', scriptPath);
-                const statusCode = pluginChecker(scriptPath, 'token');
-                console.log('StatusCode:', statusCode);
-                if (statusCode != 200) {
-                    showUnauthScript(filename);
-                    return;
-                }
                 
-                let script = pluginLoader(scriptPath);
+                let script = pluginLoader(filename.split('.')[0], fileDir);
                 const data = await script.ensureIntegrity(scriptPath);
 
                 if (data) {
                     if (data.update) {
                         await script.installUpdate(data.url, scriptPath);
-                        script = pluginLoader(scriptPath);
+                        script = pluginLoader(filename.split('.')[0], fileDir);
                         await script.ensureIntegrity(scriptPath);
                     }
                 }

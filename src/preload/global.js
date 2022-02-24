@@ -7,7 +7,7 @@ const fixwebm = require('../recorder/fix');
 const path = require('path');
 const fs = require('fs');
 const getBlobDuration = require('get-blob-duration');
-const { pluginChecker, pluginLoader } = require('../features/plugins');
+const { pluginLoader } = require('../features/plugins');
 
 let leftIcons;
 let FPSdiv = null;

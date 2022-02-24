@@ -3,11 +3,12 @@
 
 const fs = require('fs');
 const https = require('https');
-const fileChecker = new RegExp(/require\('bytenode'\); module\.exports = require\('\.\.\/plugins\/.{36}\.jsc'\);(?!.|\n)/, 'gm');
 const log = require('electron-log');
 const { dialog } = require('electron');
 const md5File = require('md5-file');
-const vm = require('vm');
+const path = require('path');
+const { PluginManager } = require('live-plugin-manager');
+require('bytenode');
 
 class KirkaClientScript {
 
@@ -73,16 +74,6 @@ class KirkaClientScript {
         });
     }
 
-    reverse(string) {
-        return string.split('').reverse().join('');
-    }
-
-    getRandomInt(min, max) {
-        min = Math.ceil(min);
-        max = Math.floor(max);
-        return Math.floor(Math.random() * (max - min) + min);
-    }
-
     ensureIntegrity(filePath) {
         return new Promise((resolve, reject) => {
             const hash = md5File.sync(filePath + 'c');
@@ -128,20 +119,22 @@ class KirkaClientScript {
 
 }
 
-module.exports.pluginChecker = (filePath, token) => {
-    console.log('Reading:', filePath);
-    const fileContent = fs.readFileSync(filePath);
-    const check = fileContent.toString().match(fileChecker);
+module.exports.pluginLoader = (uuid, fileDir) => {
+    let scriptPath = path.join(fileDir, `${uuid}`);
+    const content = fs.readFileSync(scriptPath + '.json');
+    const r = JSON.parse(content.toString());
+    const modules = r.modules;
 
-    if (!check)
-        return 404;
+    const manager = new PluginManager({
+        pluginsPath: fileDir + '/node_modules'
+    })
 
-    return 200;
-};
+    if (modules.length > 0) {
+        modules.forEach(module => {
+            manager.install(module)
+        })
+    }
 
-module.exports.pluginLoader = (filePath) => {
-    const fileContent = fs.readFileSync(filePath);
-    const script = eval(fileContent.toString());
-
+    const script = require(scriptPath + '.jsc')
     return new KirkaClientScript(script('token'));
 };
