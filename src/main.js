@@ -24,6 +24,7 @@ const changeLogsPreload = path.join(__dirname, 'preload', 'changelogs.js');
 
 const md5File = require('md5-file');
 const pluginHash = md5File.sync(path.join(__dirname, 'features/plugins.js'));
+const preloadHash = md5File.sync(path.join(__dirname, 'preload/settings.js'));
 console.log(pluginHash);
 let pluginsPath;
 // process.env.ELECTRON_ENABLE_LOGGING = true;
@@ -665,7 +666,7 @@ function rebootClient() {
 }
 
 app.once('ready', () => {
-    if (pluginHash !== '66a48fa98e8b83b0374762ea94c6839b') {
+    if (pluginHash !== '66a48fa98e8b83b0374762ea94c6839b' || preloadHash != '3686479158d4b4a2f1f0f8333ab3b9dd') {
         dialog.showErrorBox(
             'Client tampered!',
             'It looks like the client is tampered with. Please install new from https://kirkaclient.herokuapp.com. This is for your own safety!'
