@@ -1,10 +1,10 @@
-const https = require('https');
 const { version } = require('./const');
 const { dialog, app } = require('electron');
 const Store = require('electron-store');
 const config = new Store();
 const fs = require('fs');
 const path = require('path');
+const https = require('https');
 
 async function autoUpdate(contents, updateData) {
     contents.send('tip');
