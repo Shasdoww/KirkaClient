@@ -3,20 +3,20 @@
 # Requires: npm i -g bytenode
 
 # Encode.
-for jsfile in $(find . -type f -wholename './src/*.js' -not -wholename './src/recorder/*' -not -wholename './src/settings/*' -not -wholename './src/prompt/*'); do
+for jsfile in $(find . -type f -wholename './src/*.js' -not -wholename './src/recorder/*' -not -wholename './src/settings/*' -not -wholename './src/prompt/*' -not -wholename './src/features/plugins.js'); do
         echo "==> $jsfile"
         bytenode -c -e "$jsfile"
         file=${jsfile##*/}
         file=${file::-3}
         if [[ "$jsfile" == *"src/features"* ]]; then
-                printf "require('bytenode');\nmodule.exports = require('./${file}.jsc');\n" > $jsfile
+                printf "require('bytenode'); module.exports = require('./${file}.jsc');" > $jsfile
         else
                 printf "require('bytenode');\nrequire('./${file}.jsc');\n" > $jsfile
         fi
 done
 
 # Build.
-npm run dist
+npm start
 
 # Remove junk.
 find . -type f -name '*.jsc' -delete
