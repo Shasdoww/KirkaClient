@@ -414,6 +414,7 @@ async function initAutoUpdater(webContents) {
     }
 
     const didUpdate = await autoUpdate(webContents, updateContent);
+    console.log(didUpdate);
     if (didUpdate) {
         config.set('update', true);
         const options = {
