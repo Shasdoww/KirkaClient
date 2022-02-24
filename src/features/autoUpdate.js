@@ -33,7 +33,9 @@ async function autoUpdate(contents, updateData) {
         await downloadUpdate(contents, updateData);
         return true;
     } else {
+        console.log('no up');
         contents.send('message', 'No update. Starting Client...');
+        console.log('sent');
         return false;
     }
 }
