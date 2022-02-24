@@ -17,6 +17,7 @@ async function autoUpdate(contents, updateData) {
     contents.send('version', `KirkaClient v${version}`);
 
     const latest = updateData.version;
+    console.log(latest, version);
     if (latest != version) {
         if (config.get('updateType', 'Auto download') == 'Ask for download') {
             const options = {
