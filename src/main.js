@@ -24,7 +24,7 @@ const changeLogsPreload = path.join(__dirname, 'preload', 'changelogs.js');
 
 const md5File = require('md5-file');
 const pluginHash = md5File.sync(path.join(__dirname, 'features/plugins.js'));
-
+console.log(pluginHash);
 let pluginsPath;
 // process.env.ELECTRON_ENABLE_LOGGING = true;
 if (process.env.DEV_MODE)
