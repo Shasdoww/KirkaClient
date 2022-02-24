@@ -4,7 +4,7 @@ const Store = require('electron-store');
 const config = new Store();
 const fs = require('fs');
 const path = require('path');
-const https = require('https');
+const { https } = require('follow-redirects');
 
 async function autoUpdate(contents, updateData) {
     contents.send('tip');
