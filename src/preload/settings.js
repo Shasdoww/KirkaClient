@@ -122,12 +122,21 @@ function paintCards(data) {
 
 const loadedScripts = [];
 
+function getKeyByValue(object, value) {
+    return Object.keys(object).find(key => object[key] === value);
+}
+
 async function loadScripts() {
     const scripts = JSON.parse(await ipcRenderer.invoke('allowedScripts'));
-    scripts.forEach(filePath => {
-        const script = pluginLoader(filePath);
+    const fileDir = await ipcRenderer.invoke('scriptPath');
+    const uuids = Object.keys(scripts);
+
+    for (let i = 0; i < uuids.length; i++) {
+        const scriptUUID = getKeyByValue(scripts, uuids[i]);
+        const script = pluginLoader(scriptUUID, fileDir);
         loadedScripts.push(script);
-    });
+    }
+    console.log(loadedScripts);
 }
 
 document.addEventListener('DOMContentLoaded', async() => {

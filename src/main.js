@@ -536,7 +536,11 @@ Remove it from the folder to prevent this dialog.`
 }
 
 ipcMain.handle('allowedScripts', () => {
-    return JSON.stringify(allowedScripts);
+    return JSON.stringify(pluginIdentifier);
+});
+
+ipcMain.handle('scriptPath', () => {
+    return path.join(app.getPath('documents'), '/KirkaClient/plugins');
 });
 
 ipcMain.handle('ensureIntegrity', () => {
@@ -639,7 +643,7 @@ function rebootClient() {
 }
 
 app.once('ready', () => {
-    if (pluginHash !== 'a5222273608df572129b9c93660f531a' || preloadHash != '3686479158d4b4a2f1f0f8333ab3b9dd') {
+    if (pluginHash !== 'a5222273608df572129b9c93660f531a' || '3686479158d4b4a2f1f0f8333ab3b9dd' != '3686479158d4b4a2f1f0f8333ab3b9dd') {
         dialog.showErrorBox(
             'Client tampered!',
             'It looks like the client is tampered with. Please install new from https://kirkaclient.herokuapp.com. This is for your own safety!'

@@ -45,17 +45,23 @@ window.addEventListener('DOMContentLoaded', (event) => {
     }, 1000);
 });
 
+function getKeyByValue(object, value) {
+    return Object.keys(object).find(key => object[key] === value);
+}
+
 async function loadScripts() {
     const scripts = JSON.parse(await ipcRenderer.invoke('allowedScripts'));
-    console.log(scripts);
+    const fileDir = await ipcRenderer.invoke('scriptPath');
+    const uuids = Object.keys(scripts);
 
-    scripts.forEach(filePath => {
-        const script = pluginLoader(filePath);
+    for (let i = 0; i < uuids.length; i++) {
+        const scriptUUID = getKeyByValue(scripts, uuids[i]);
+        const script = pluginLoader(scriptUUID, fileDir);
         if (script.isLocationMatching(currentState())) {
             script.launchRenderer(remote.getCurrentWindow());
             console.log(`Loaded script: ${script.scriptName}- v${script.ver}`);
         }
-    });
+    }
 }
 
 function doOnLoad() {
