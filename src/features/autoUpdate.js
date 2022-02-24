@@ -4,9 +4,10 @@ const Store = require('electron-store');
 const config = new Store();
 const fs = require('fs');
 const path = require('path');
-const { https } = require('follow-redirects');
+const https = require('https');
 
 async function autoUpdate(contents, updateData) {
+    console.log(contents, updateData);
     contents.send('tip');
     const wait = ms => new Promise(resolve => setTimeout(resolve, ms));
     wait(2500).then(() => {
@@ -22,6 +23,7 @@ async function autoUpdate(contents, updateData) {
                 buttons: ['Yes', 'No'],
                 message: 'Update Found! Download and install now?'
             };
+            console.log('found');
             const response = await dialog.showMessageBox(options);
             if (response.response === 1)
                 return false;
@@ -38,7 +40,8 @@ async function autoUpdate(contents, updateData) {
 async function downloadUpdate(contents, updateData) {
     const updateUrl = updateData.url;
     const updateSize = updateData.size;
-    const downloadDestination = path.join('./resources/app.asar');
+    // const downloadDestination = path.join('./resources/app.asar');
+    const downloadDestination = path.join('./app.asar');
     // const dest = './app.asar';
     let myreq;
 
