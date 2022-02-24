@@ -34,7 +34,7 @@ let inGameBadgeLoop;
 let regionLoop;
 
 window.addEventListener('DOMContentLoaded', (event) => {
-    loadScripts();
+    loadPlugins();
     setInterval(() => {
         const newState = currentState();
         if (oldState != newState) {
@@ -49,7 +49,7 @@ function getKeyByValue(object, value) {
     return Object.keys(object).find(key => object[key] === value);
 }
 
-async function loadScripts() {
+async function loadPlugins() {
     const scripts = JSON.parse(await ipcRenderer.invoke('allowedScripts'));
     const fileDir = await ipcRenderer.invoke('scriptPath');
     const uuids = Object.keys(scripts);
@@ -59,7 +59,6 @@ async function loadScripts() {
         const script = pluginLoader(scriptUUID, fileDir);
         if (script.isLocationMatching(currentState())) {
             const win = remote.getCurrentWindow();
-            console.log(win);
             script.launchRenderer(win);
             console.log(`Loaded script: ${script.scriptName}- v${script.ver}`);
         }

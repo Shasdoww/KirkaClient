@@ -206,6 +206,10 @@ function createWindow() {
             closeRPC();
     });
 
+    win.webContents.once('did-finish-load', () => {
+        win.webContents.reload();
+    });
+
     function showWin() {
         if (!canDestroy) {
             setTimeout(showWin, 500);
@@ -359,6 +363,7 @@ else
 
 app.on('window-all-closed', () => {
     if (process.platform !== 'darwin') {
+        win = null;
         socket.disconnect();
         closeRPC();
         scriptCol.forEach(script => {
@@ -422,9 +427,7 @@ async function initAutoUpdater(webContents) {
         app.quit();
     } else {
         createWindow();
-        initPlugins(webContents);
-        const wait = ms => new Promise(resolve => setTimeout(resolve, ms));
-        await wait(2500);
+        await initPlugins(webContents);
         canDestroy = true;
     }
 }
@@ -485,10 +488,13 @@ ipcMain.handle('downloadPlugin', (ev, uuid) => {
 });
 
 ipcMain.handle('uninstallPlugin', (ev, uuid) => {
+    const fileDir = path.join(app.getPath('documents'), '/KirkaClient/plugins');
     console.log('Need to remove', uuid);
-    const scriptPath = pluginIdentifier[uuid];
-    if (!scriptPath)
+
+    if (!pluginIdentifier[uuid])
         return { success: false };
+
+    const scriptPath = path.join(fileDir, pluginIdentifier[uuid]);
 
     fs.unlinkSync(scriptPath + '.jsc');
     fs.unlinkSync(scriptPath + '.json');
@@ -643,7 +649,7 @@ function rebootClient() {
 }
 
 app.once('ready', () => {
-    if (pluginHash !== 'a5222273608df572129b9c93660f531a' || '3686479158d4b4a2f1f0f8333ab3b9dd' != '3686479158d4b4a2f1f0f8333ab3b9dd') {
+    if (pluginHash !== 'a5222273608df572129b9c93660f531a' || preloadHash != '047bca28eaa0876f740a19f3b64ae4f3') {
         dialog.showErrorBox(
             'Client tampered!',
             'It looks like the client is tampered with. Please install new from https://kirkaclient.herokuapp.com. This is for your own safety!'

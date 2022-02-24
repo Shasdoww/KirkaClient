@@ -10,14 +10,9 @@ ipcRenderer.on('make-settings', () => {
     makeSettings();
 });
 
-ipcRenderer.on('statusUpdate', (ev, uuid, status) => {
-    console.log(uuid, status);
-});
-
 function uninstallPlugin(button, uuid) {
     setState(button, '--in-progress', 'Uninstalling...');
-    ipcRenderer.invoke('uninstallPlugin', uuid).then(result => {
-        console.log(result);
+    ipcRenderer.invoke('uninstallPlugin', uuid).then(() => {
         setState(button, '--done', 'Refresh?');
         button.onclick = () => handlePlugins();
         installedPlugins = JSON.parse(ipcRenderer.sendSync('installedPlugins'));
@@ -26,8 +21,7 @@ function uninstallPlugin(button, uuid) {
 
 function downloadPlugin(button, uuid) {
     setState(button, '--in-progress', 'Downloading...');
-    ipcRenderer.invoke('downloadPlugin', uuid).then(result => {
-        console.log(result);
+    ipcRenderer.invoke('downloadPlugin', uuid).then(() => {
         setState(button, '--done', 'Install Now?');
         button.onclick = () => ipcRenderer.send('reboot');
         installedPlugins = JSON.parse(ipcRenderer.sendSync('installedPlugins'));
@@ -48,7 +42,6 @@ function takeAcion(button, uuid) {
 
 function handlePlugins() {
     installedPlugins = JSON.parse(ipcRenderer.sendSync('installedPlugins'));
-    console.log(installedPlugins);
     $.ajax({
         url: 'https://kirkaclient.herokuapp.com/api/plugins',
         complete: (res) => {
@@ -136,7 +129,6 @@ async function loadScripts() {
         const script = pluginLoader(scriptUUID, fileDir);
         loadedScripts.push(script);
     }
-    console.log(loadedScripts);
 }
 
 document.addEventListener('DOMContentLoaded', async() => {
