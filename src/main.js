@@ -425,7 +425,9 @@ async function initAutoUpdater(webContents) {
         app.quit();
     } else {
         createWindow();
+        console.log('window made');
         initPlugins();
+        console.log('plugins made');
         const wait = ms => new Promise(resolve => setTimeout(resolve, ms));
         await wait(2500);
         canDestroy = true;

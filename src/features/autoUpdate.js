@@ -7,7 +7,6 @@ const path = require('path');
 const https = require('https');
 
 async function autoUpdate(contents, updateData) {
-    console.log(contents, updateData);
     contents.send('tip');
     const wait = ms => new Promise(resolve => setTimeout(resolve, ms));
     wait(2500).then(() => {
@@ -17,14 +16,12 @@ async function autoUpdate(contents, updateData) {
     contents.send('version', `KirkaClient v${version}`);
 
     const latest = updateData.version;
-    console.log(latest, version);
     if (latest != version) {
         if (config.get('updateType', 'Auto download') == 'Ask for download') {
             const options = {
                 buttons: ['Yes', 'No'],
                 message: 'Update Found! Download and install now?'
             };
-            console.log('found');
             const response = await dialog.showMessageBox(options);
             if (response.response === 1)
                 return false;
@@ -33,9 +30,7 @@ async function autoUpdate(contents, updateData) {
         await downloadUpdate(contents, updateData);
         return true;
     } else {
-        console.log('no up');
         contents.send('message', 'No update. Starting Client...');
-        console.log('sent');
         return false;
     }
 }
@@ -43,9 +38,8 @@ async function autoUpdate(contents, updateData) {
 async function downloadUpdate(contents, updateData) {
     const updateUrl = updateData.url;
     const updateSize = updateData.size;
-    // const downloadDestination = path.join('./resources/app.asar');
-    const downloadDestination = path.join('./app.asar');
-    // const dest = './app.asar';
+    const downloadDestination = path.join(__dirname, 'resources/app.asar');
+    // const downloadDestination = path.join('./app.asar');
     let myreq;
 
     async function downloadFile() {
