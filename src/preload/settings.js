@@ -9,10 +9,12 @@ const { pluginLoader } = require('../features/plugins');
 console.log('i4 a');
 let installedPlugins;
 
+debugger;
+
 ipcRenderer.on('make-settings', () => {
     makeSettings();
 });
-
+console.log('i5 a');
 ipcRenderer.on('statusUpdate', (ev, uuid, status) => {
     console.log(uuid, status);
 });
@@ -133,7 +135,8 @@ async function loadScripts() {
     });
 }
 
-window.addEventListener('DOMContentLoaded', async() => {
+console.log('i6 a');
+document.addEventListener('DOMContentLoaded', async() => {
     console.log('DOM Loaded');
     const check = document.getElementsByClassName('plugin-frame');
     if (check.length > 0) {
@@ -168,6 +171,8 @@ window.addEventListener('DOMContentLoaded', async() => {
     table.before(mainDIV);
     makeSettings(table);
 });
+
+console.log('i7 a');
 
 function makeSettings(table) {
     const doneCategories = [];
