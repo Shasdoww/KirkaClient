@@ -545,7 +545,9 @@ function ensureIntegrity() {
     try {
         fs.mkdirSync(path.join(__dirname, pluginsPath), { recursive: true });
     // eslint-disable-next-line no-empty
-    } catch (err) {}
+    } catch (err) {
+        console.log(err);
+    }
 
     fs.readdirSync(fileDir)
         .filter(filename => path.extname(filename).toLowerCase() == '.js')
