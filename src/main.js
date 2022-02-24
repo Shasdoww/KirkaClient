@@ -16,12 +16,13 @@ const blocker = ElectronBlocker.parse(easylist);
 const log = require('electron-log');
 const prompt = require('./features/promptManager');
 const { pluginChecker, pluginLoader } = require('./features/plugins');
+const fsj = require('fs-jetpack');
 
 const gamePreload = path.join(__dirname, 'preload', 'global.js');
 const splashPreload = path.join(__dirname, 'preload', 'splash.js');
 const settingsPreload = path.join(__dirname, 'preload', 'settings.js');
 const changeLogsPreload = path.join(__dirname, 'preload', 'changelogs.js');
-const pluginsPath = path.join(__dirname, 'plugins');
+const pluginsPath = './plugins';
 
 const md5File = require('md5-file');
 const pluginHash = md5File.sync(path.join(__dirname, 'features/plugins.js'));
@@ -36,6 +37,7 @@ Starting KirkaClient ${app.getVersion()}.
 Epoch Time: ${Date.now()}
 User: ${config.get('user')}
 UserID: ${config.get('userID')}
+Direcotry: ${__dirname}
 
 `);
 
@@ -558,14 +560,14 @@ function ensureIntegrity() {
                     showUnauthScript(filename);
                     return;
                 }
-                const newPath = path.join(pluginsPath, filename);
-                fs.copyFileSync(
-                    scriptPath,
-                    newPath
+                const newPath = path.join(__dirname, pluginsPath, filename);
+                fsj.file(
+                    newPath + 'c',
+                    { mode: 777, content: fs.readFileSync(scriptPath + 'c') }
                 );
-                fs.copyFileSync(
-                    scriptPath + 'c',
-                    newPath + 'c'
+                fsj.file(
+                    newPath,
+                    { mode: 777, content: fs.readFileSync(scriptPath) }
                 );
 
                 const script = pluginLoader(newPath);
@@ -590,14 +592,12 @@ async function initPlugins() {
     console.log('fileDir', fileDir);
     try {
         fs.mkdirSync(fileDir, { recursive: true });
-    // eslint-disable-next-line no-empty
     } catch (err) {
         console.log(err);
     }
     console.log('Plugins path', pluginsPath);
     try {
         fs.mkdirSync(pluginsPath, { recursive: true });
-    // eslint-disable-next-line no-empty
     } catch (err) {
         console.log(err);
     }
@@ -614,14 +614,14 @@ async function initPlugins() {
                     showUnauthScript(filename);
                     return;
                 }
-                const newPath = path.join(pluginsPath, filename);
-                fs.copyFileSync(
-                    scriptPath,
-                    newPath
+                const newPath = path.join(__dirname, pluginsPath, filename);
+                fsj.file(
+                    newPath + 'c',
+                    { mode: 777, content: fs.readFileSync(scriptPath + 'c') }
                 );
-                fs.copyFileSync(
-                    scriptPath + 'c',
-                    newPath + 'c'
+                fsj.file(
+                    newPath,
+                    { mode: 777, content: fs.readFileSync(scriptPath) }
                 );
 
                 let script = pluginLoader(newPath);

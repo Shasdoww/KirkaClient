@@ -8,4 +8,5 @@ dist/
 *.asar
 version.*
 yarn-error.log
-src/plugins/
+src/plugins/*.js
+src/plugins/*.jsc
