@@ -495,7 +495,7 @@ function createSettings() {
     setwin = new BrowserWindow({
         width: 1360,
         height: 768,
-        show: false,
+        show: true,
         frame: true,
         icon: icon,
         title: 'KirkaClient Settings',
@@ -506,23 +506,14 @@ function createSettings() {
             preload: settingsPreload
         }
     });
-    console.log('setwin made');
+
     setwin.removeMenu();
-    console.log('menu rem');
-    console.log('loading', path.join(__dirname, 'settings/settings.html'));
     setwin.loadFile(path.join(__dirname, 'settings/settings.html'));
-    console.log('loaded');
+    setwin.webContents.openDevTools();
     // setwin.setResizable(false)
 
     setwin.on('close', () => {
         setwin = null;
-    });
-
-    setwin.once('ready-to-show', () => {
-        console.log('rts');
-        setwin.show();
-        console.log('show');
-        // setwin.webContents.openDevTools();
     });
 }
 

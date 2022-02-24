@@ -7,7 +7,6 @@ const { pluginLoader } = require('../features/plugins');
 let installedPlugins;
 
 ipcRenderer.on('make-settings', () => {
-    console.log('mk setng call');
     makeSettings();
 });
 
