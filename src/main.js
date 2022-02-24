@@ -495,7 +495,7 @@ function createSettings() {
     setwin = new BrowserWindow({
         width: 1360,
         height: 768,
-        show: true,
+        show: false,
         frame: true,
         icon: icon,
         title: 'KirkaClient Settings',
@@ -508,11 +508,15 @@ function createSettings() {
     });
     setwin.removeMenu();
     setwin.loadFile(path.join(__dirname, 'settings/settings.html'));
-    setwin.webContents.openDevTools();
     // setwin.setResizable(false)
 
     setwin.on('close', () => {
         setwin = null;
+    });
+
+    setwin.once('ready-to-show', () => {
+        setwin.show();
+        setwin.webContents.openDevTools();
     });
 }
 
