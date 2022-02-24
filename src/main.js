@@ -519,8 +519,10 @@ function createSettings() {
     });
 
     setwin.once('ready-to-show', () => {
+        console.log('rts');
         setwin.show();
-        setwin.webContents.openDevTools();
+        console.log('show');
+        // setwin.webContents.openDevTools();
     });
 }
 
