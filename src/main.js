@@ -506,8 +506,12 @@ function createSettings() {
             preload: settingsPreload
         }
     });
+    console.log('setwin made');
     setwin.removeMenu();
+    console.log('menu rem');
+    console.log('loading', path.join(__dirname, 'settings/settings.html'));
     setwin.loadFile(path.join(__dirname, 'settings/settings.html'));
+    console.log('loaded');
     // setwin.setResizable(false)
 
     setwin.on('close', () => {
