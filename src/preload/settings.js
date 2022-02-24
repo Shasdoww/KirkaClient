@@ -130,6 +130,7 @@ async function loadScripts() {
 }
 
 window.addEventListener('DOMContentLoaded', async() => {
+    console.log('DOM Loaded');
     const check = document.getElementsByClassName('plugin-frame');
     if (check.length > 0) {
         handlePlugins();
