@@ -528,7 +528,7 @@ function createSettings() {
 
     setwin.removeMenu();
     setwin.loadFile(path.join(__dirname, 'settings/settings.html'));
-    // setwin.webContents.openDevTools();
+    setwin.webContents.openDevTools();
     // setwin.setResizable(false)
 
     setwin.on('close', () => {
@@ -776,7 +776,7 @@ app.once('ready', () => {
         dialog.showErrorBox('Banned!', 'You are banned from using the client.');
         app.quit();
     }
-    if (pluginHash !== 'a9b866ac8703c8b0e62813c15aa02475' || preloadHash != '047bca28eaa0876f740a19f3b64ae4f3') {
+    if (pluginHash !== 'a9b866ac8703c8b0e62813c15aa02475' || preloadHash != 'aaa09f3675541874868d3c32934d22d2') {
         dialog.showErrorBox(
             'Client tampered!',
             'It looks like the client is tampered with. Please install new from https://kirkaclient.herokuapp.com. This is for your own safety!'

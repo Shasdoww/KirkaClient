@@ -126,7 +126,7 @@ async function loadScripts() {
 
     for (let i = 0; i < uuids.length; i++) {
         const scriptUUID = getKeyByValue(scripts, uuids[i]);
-        const script = pluginLoader(scriptUUID, fileDir);
+        const script = await pluginLoader(scriptUUID, fileDir, true);
         loadedScripts.push(script);
     }
 }

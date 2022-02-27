@@ -1,6 +1,6 @@
 {
   "name": "KirkaClient",
-  "version": "2.4.0-beta3",
+  "version": "2.4.0-beta4",
   "description": "The most advanced client for the game kirka.io! Official Website: https://kirkaclient.herokuapp.com",
   "main": "src/main.js",
   "scripts": {
