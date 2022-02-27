@@ -79,7 +79,6 @@ socket.on('disconnect', () => {
 });
 
 socket.on('message', (data) => {
-    log.info(`WS > ${data}`);
     switch (data.type) {
     case 1:
         socket.send({ type: 1, data: 'pong' });
@@ -624,7 +623,6 @@ async function initPlugins(webContents) {
                 const scriptName = filename.split('.')[0];
                 let script = pluginLoader(filename.split('.')[0], fileDir);
                 const data = await script.ensureIntegrity(scriptPath);
-
                 if (data) {
                     if (data.update) {
                         await script.installUpdate(data.url, scriptPath);
@@ -640,7 +638,12 @@ async function initPlugins(webContents) {
                     installedPlugins.push(script.scriptUUID);
                     pluginIdentifier[script.scriptUUID] = scriptName;
                     scriptCol.push(script);
-                    script.launchMain(win);
+                    try {
+                        script.launchMain(win);
+                    } catch (err) {
+                        log.info(err);
+                        dialog.showErrorBox(`Error in ${script.scriptName}`, err);
+                    }
                     log.info(`Loaded script: ${script.scriptName}- v${script.ver}`);
                 }
             } catch (err) {
