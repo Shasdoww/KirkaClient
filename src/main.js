@@ -8,11 +8,8 @@ const si = require('systeminformation');
 const { autoUpdate, sendBadges, updateRPC, initBadges, initRPC, closeRPC } = require('./features');
 const { io } = require('socket.io-client');
 const socket = io('https://kirkaclient.herokuapp.com');
-const { ElectronBlocker } = require('@cliqz/adblocker-electron');
 const fs = require('fs');
 const https = require('https');
-const easylist = fs.readFileSync(path.join(__dirname, 'easylist.txt'), 'utf-8');
-const blocker = ElectronBlocker.parse(easylist);
 const log = require('electron-log');
 const prompt = require('./features/promptManager');
 const { pluginLoader } = require('./features/plugins');
@@ -53,6 +50,7 @@ const allowedScripts = [];
 const installedPlugins = [];
 const scriptCol = [];
 const pluginIdentifier = {};
+let pluginsLoaded = false;
 
 socket.on('connect', () => {
     log.info('WebSocket Connected!');
@@ -193,7 +191,6 @@ function createWindow() {
     const contents = win.webContents;
 
     win.once('ready-to-show', () => {
-        blocker.enableBlockingInSession(win.webContents.session);
         showWin();
         initRPC(socket, contents);
         initBadges(socket);
@@ -212,10 +209,6 @@ function createWindow() {
             closeRPC();
     });
 
-    win.webContents.once('did-finish-load', () => {
-        win.webContents.reload();
-    });
-
     function showWin() {
         if (!canDestroy) {
             setTimeout(showWin, 500);
@@ -226,7 +219,7 @@ function createWindow() {
             win.setFullScreen(true);
 
         win.show();
-
+        win.webContents.send('initPlugins');
         if (config.get('update', true))
             showChangeLogs();
     }
@@ -450,6 +443,13 @@ ipcMain.on('reboot', () => {
     rebootClient();
 });
 
+function showRunAsAdmin() {
+    dialog.showErrorBox(
+        'Permission Error!',
+        'Please start client as Administrator.\nThis can be done by Right Click > Run as Administrator.'
+    );
+}
+
 ipcMain.handle('downloadPlugin', (ev, uuid) => {
     console.log('Need to download', uuid);
     https.get(`https://kirkaclient.herokuapp.com/plugins/download/${uuid}.jsc`, (res) => {
@@ -465,8 +465,7 @@ ipcMain.handle('downloadPlugin', (ev, uuid) => {
                 fs.writeFileSync(`${pluginsDir}/${uuid}.jsc`, a, 'binary');
             } catch (e) {
                 console.log(e);
-                dialog.showErrorBox('Permission Error!',
-                    'Please start client as Administrator.\nThis can be done by Right Click > Run as Administrator.');
+                showRunAsAdmin();
                 app.quit();
             }
         });
@@ -485,8 +484,7 @@ ipcMain.handle('downloadPlugin', (ev, uuid) => {
                 fs.writeFileSync(`${pluginsDir}/${uuid}.json`, a, 'binary');
             } catch (e) {
                 console.log(e);
-                dialog.showErrorBox('Permission Error!',
-                    'Please start client as Administrator.\nThis can be done by Right Click > Run as Administrator.');
+                showRunAsAdmin();
                 app.quit();
             }
         });
@@ -560,6 +558,112 @@ ipcMain.handle('ensureIntegrity', () => {
     return JSON.stringify(allowedScripts);
 });
 
+ipcMain.handle('canLoadPlugins', () => {
+    return pluginsLoaded;
+});
+
+function installUpdate(uuid) {
+    return Promise.all([
+        new Promise(resolve => {
+            const req = https.get(`https://kirkaclient.herokuapp.com/plugins/download/${uuid}.jsc`, (res) => {
+                res.setEncoding('binary');
+                let chunks = '';
+                log.info(`Update GET: ${res.statusCode}`);
+
+                res.on('data', (chunk) => {
+                    chunks += chunk;
+                });
+                res.on('end', () => {
+                    try {
+                        const pluginsDir = path.join(app.getPath('documents'), '/KirkaClient/plugins/', uuid + '.jsc');
+                        fs.writeFileSync(pluginsDir, chunks, 'binary');
+                    } catch (e) {
+                        console.log(e);
+                        showRunAsAdmin();
+                        app.quit();
+                    } finally {
+                        resolve();
+                    }
+                });
+            });
+            req.on('error', error => {
+                log.error(`Update Error: ${error}`);
+            });
+            req.end();
+        }),
+        new Promise(resolve => {
+            const req2 = https.get(`https://kirkaclient.herokuapp.com/plugins/download/${uuid}.json`, (res) => {
+                res.setEncoding('binary');
+                let a = '';
+                res.on('data', function(chunk) {
+                    a += chunk;
+                });
+
+                res.on('end', () => {
+                    try {
+                        const pluginsDir = path.join(app.getPath('documents'), '/KirkaClient/plugins/', uuid + '.json');
+                        fs.writeFileSync(pluginsDir, a, 'binary');
+                    } catch (e) {
+                        console.log(e);
+                        showRunAsAdmin();
+                        app.quit();
+                    } finally {
+                        resolve();
+                    }
+                });
+            });
+            req2.on('error', error => {
+                log.error(`Update Error: ${error}`);
+            });
+            req2.end();
+        })
+    ]);
+}
+
+function ensureScriptIntegrity(filePath, scriptUUID) {
+    return new Promise((resolve, reject) => {
+        const hash = md5File.sync(filePath);
+        const data = { hash: hash, uuid: scriptUUID };
+        const request = {
+            method: 'POST',
+            hostname: 'kirkaclient.herokuapp.com',
+            path: '/api/plugins/updates',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+        };
+
+        const req = https.request(request, res => {
+            res.setEncoding('utf-8');
+            let chunks = '';
+            log.info(`POST: ${res.statusCode} with payload ${JSON.stringify(data)}`);
+            if (res.statusCode != 200)
+                reject();
+            else {
+                res.on('data', (chunk) => {
+                    chunks += chunk;
+                });
+                res.on('end', () => {
+                    const response = JSON.parse(chunks);
+                    const success = response.success;
+                    console.log(`Response on ${scriptUUID}: ${JSON.stringify(response, null, 2)}`);
+                    if (!success)
+                        reject();
+
+                    resolve(response);
+                });
+            }
+        });
+        req.on('error', error => {
+            log.error(`POST Error: ${error}`);
+            reject();
+        });
+
+        req.write(JSON.stringify(data));
+        req.end();
+    });
+}
+
 function ensureIntegrity() {
     allowedScripts.length = 0;
     const fileDir = path.join(app.getPath('documents'), '/KirkaClient/plugins');
@@ -573,8 +677,9 @@ function ensureIntegrity() {
         .forEach(async(filename) => {
             try {
                 const scriptPath = path.join(fileDir, filename);
-                const script = pluginLoader(filename.split('.')[0], fileDir);
-                await script.ensureIntegrity(scriptPath);
+                const scriptName = filename.split('.')[0];
+                await ensureScriptIntegrity(scriptPath, scriptName);
+                const script = await pluginLoader(scriptName, fileDir, true);
 
                 if (!script.isPlatformMatching())
                     log.info(`Script ignored, platform not matching: ${script.scriptName}`);
@@ -613,45 +718,52 @@ async function initPlugins(webContents) {
         console.log(err);
     }
     console.log(fs.readdirSync(fileDir));
+    const filenames = [];
     fs.readdirSync(fileDir)
         .filter(filename => path.extname(filename).toLowerCase() == '.jsc')
-        .forEach(async(filename) => {
-            console.log(filename);
-            try {
-                const scriptPath = path.join(fileDir, filename);
-                console.log('scriptPath:', scriptPath);
-                const scriptName = filename.split('.')[0];
-                let script = pluginLoader(filename.split('.')[0], fileDir);
-                const data = await script.ensureIntegrity(scriptPath);
-                if (data) {
-                    if (data.update) {
-                        await script.installUpdate(data.url, scriptPath);
-                        script = pluginLoader(filename.split('.')[0], fileDir);
-                        await script.ensureIntegrity(scriptPath);
-                    }
-                }
-
-                if (!script.isPlatformMatching())
-                    log.info(`Script ignored, platform not matching: ${script.scriptName}`);
-                else {
-                    allowedScripts.push(scriptPath);
-                    installedPlugins.push(script.scriptUUID);
-                    pluginIdentifier[script.scriptUUID] = scriptName;
-                    scriptCol.push(script);
-                    try {
-                        script.launchMain(win);
-                    } catch (err) {
-                        log.info(err);
-                        dialog.showErrorBox(`Error in ${script.scriptName}`, err);
-                    }
-                    log.info(`Loaded script: ${script.scriptName}- v${script.ver}`);
-                }
-            } catch (err) {
-                console.log(err);
-                showUnauthScript(filename);
-                app.quit();
-            }
+        .forEach((filename) => {
+            filenames.push(filename);
         });
+
+    for (let i = 0; i < filenames.length; i++) {
+        const filename = filenames[i];
+        console.log(filename);
+        try {
+            webContents.send('message', `Loading Plugin: ${i + 1}/${filenames.length}`);
+            const scriptPath = path.join(fileDir, filename);
+            console.log('scriptPath:', scriptPath);
+            const scriptName = filename.split('.')[0];
+            const data = await ensureScriptIntegrity(scriptPath, scriptName);
+            if (data) {
+                if (data.update) {
+                    webContents.send('message', 'Updating Plugin');
+                    await installUpdate(scriptName);
+                    webContents.send('message', `Reloading Plugin: ${i + 1}/${filenames.length}`);
+                }
+            }
+            const script = await pluginLoader(filename.split('.')[0], fileDir);
+
+            if (!script.isPlatformMatching())
+                log.info(`Script ignored, platform not matching: ${script.scriptName}`);
+            else {
+                allowedScripts.push(scriptPath);
+                installedPlugins.push(script.scriptUUID);
+                pluginIdentifier[script.scriptUUID] = scriptName;
+                scriptCol.push(script);
+                try {
+                    script.launchMain(win);
+                } catch (err) {
+                    log.info(err);
+                    dialog.showErrorBox(`Error in ${script.scriptName}`, err);
+                }
+                log.info(`Loaded script: ${script.scriptName}- v${script.ver}`);
+            }
+        } catch (err) {
+            console.log(err);
+            showUnauthScript(filename);
+        }
+    }
+    pluginsLoaded = true;
 }
 
 function rebootClient() {
@@ -664,7 +776,7 @@ app.once('ready', () => {
         dialog.showErrorBox('Banned!', 'You are banned from using the client.');
         app.quit();
     }
-    if (pluginHash !== 'a5222273608df572129b9c93660f531a' || preloadHash != '047bca28eaa0876f740a19f3b64ae4f3') {
+    if (pluginHash !== 'a9b866ac8703c8b0e62813c15aa02475' || preloadHash != '047bca28eaa0876f740a19f3b64ae4f3') {
         dialog.showErrorBox(
             'Client tampered!',
             'It looks like the client is tampered with. Please install new from https://kirkaclient.herokuapp.com. This is for your own safety!'

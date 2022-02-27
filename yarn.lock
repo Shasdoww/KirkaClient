@@ -14,48 +14,6 @@
   dependencies:
     regenerator-runtime "^0.13.4"
 
-"@cliqz/adblocker-content@^1.23.1":
-  version "1.23.1"
-  resolved "https://registry.npmjs.org/@cliqz/adblocker-content/-/adblocker-content-1.23.1.tgz"
-  integrity sha512-xOmwu4LsCfg89O7AwLEhxdiLN4pHOXcKAwd6LQAWbp0wjFoT9tuUOwrbyPSGjH7KDIM3qkW0pA94qEhuX1BxCg==
-  dependencies:
-    "@cliqz/adblocker-extended-selectors" "^1.23.1"
-
-"@cliqz/adblocker-electron-preload@^1.23.1":
-  version "1.23.1"
-  resolved "https://registry.npmjs.org/@cliqz/adblocker-electron-preload/-/adblocker-electron-preload-1.23.1.tgz"
-  integrity sha512-N00ZUxwlUqaCrF6Zu3ZY2QB0+twoaG//PYirEYP+slIsAgGuTaMYaYBqbQ8kRXD9SHopMXKsRhbBqWrBygqiNA==
-  dependencies:
-    "@cliqz/adblocker-content" "^1.23.1"
-
-"@cliqz/adblocker-electron@^1.23.1":
-  version "1.23.1"
-  resolved "https://registry.npmjs.org/@cliqz/adblocker-electron/-/adblocker-electron-1.23.1.tgz"
-  integrity sha512-U+TNgN71S6Cl5Eq7EJof9/hTVKp8KPqtg1VOqX2NSuCc8VskGoAas4Yfu6/vMq4I56BGvoYhxlrtppjPIhCZmQ==
-  dependencies:
-    "@cliqz/adblocker" "^1.23.1"
-    "@cliqz/adblocker-electron-preload" "^1.23.1"
-    tldts-experimental "^5.6.21"
-
-"@cliqz/adblocker-extended-selectors@^1.23.1":
-  version "1.23.1"
-  resolved "https://registry.npmjs.org/@cliqz/adblocker-extended-selectors/-/adblocker-extended-selectors-1.23.1.tgz"
-  integrity sha512-wjBJmDvWZeyCcYjc21ucW/9RfzXzYbri3yke1b+PBD2XbViyZPr6/O9fQFZr5qrSD7CC+7vaK2UloKJpstqm7A==
-
-"@cliqz/adblocker@^1.23.1":
-  version "1.23.1"
-  resolved "https://registry.npmjs.org/@cliqz/adblocker/-/adblocker-1.23.1.tgz"
-  integrity sha512-Urio6l08ABay13qL0XPInjlBL2/PNqfQaHwEnyL1jLvF0qo/MnndzO0g3k5VXbfSeS42VVMxXR5EqeHtCfwJtw==
-  dependencies:
-    "@cliqz/adblocker-content" "^1.23.1"
-    "@cliqz/adblocker-extended-selectors" "^1.23.1"
-    "@remusao/guess-url-type" "^1.1.2"
-    "@remusao/small" "^1.1.2"
-    "@remusao/smaz" "^1.7.1"
-    "@types/chrome" "^0.0.164"
-    "@types/firefox-webext-browser" "^94.0.0"
-    tldts-experimental "^5.6.21"
-
 "@develar/schema-utils@~2.6.5":
   version "2.6.5"
   resolved "https://registry.npmjs.org/@develar/schema-utils/-/schema-utils-2.6.5.tgz"
@@ -127,41 +85,6 @@
   dependencies:
     cross-spawn "^7.0.1"
 
-"@remusao/guess-url-type@^1.1.2":
-  version "1.2.1"
-  resolved "https://registry.npmjs.org/@remusao/guess-url-type/-/guess-url-type-1.2.1.tgz"
-  integrity sha512-rbOqre2jW8STjheOsOaQHLgYBaBZ9Owbdt8NO7WvNZftJlaG3y/K9oOkl8ZUpuFBisIhmBuMEW6c+YrQl5inRA==
-
-"@remusao/small@^1.1.2":
-  version "1.2.1"
-  resolved "https://registry.npmjs.org/@remusao/small/-/small-1.2.1.tgz"
-  integrity sha512-7MjoGt0TJMVw1GPKgWq6SJPws1SLsUXQRa43Umht+nkyw2jnpy3WpiLNqGdwo5rHr5Wp9B2W/Pm5RQp656UJdw==
-
-"@remusao/smaz-compress@^1.9.1":
-  version "1.9.1"
-  resolved "https://registry.npmjs.org/@remusao/smaz-compress/-/smaz-compress-1.9.1.tgz"
-  integrity sha512-E2f48TwloQu3r6BdLOGF2aczeH7bJ/32oJGqvzT9SKur0cuUnLcZ7ZXP874E2fwmdE+cXzfC7bKzp79cDnmeyw==
-  dependencies:
-    "@remusao/trie" "^1.4.1"
-
-"@remusao/smaz-decompress@^1.9.1":
-  version "1.9.1"
-  resolved "https://registry.npmjs.org/@remusao/smaz-decompress/-/smaz-decompress-1.9.1.tgz"
-  integrity sha512-TfjKKprYe3n47od8auhvJ/Ikj9kQTbDTe71ynKlxslrvvUhlIV3VQSuwYuMWMbdz1fIs0H/fxCN1Z8/H3km6/A==
-
-"@remusao/smaz@^1.7.1":
-  version "1.9.1"
-  resolved "https://registry.npmjs.org/@remusao/smaz/-/smaz-1.9.1.tgz"
-  integrity sha512-e6BLuP8oaXCZ9+v46Is4ilAZ/Vq6YLgmBP204Ixgk1qTjXmqvFYG7+AS7v9nsZdGOy96r9DWGFbbDVgMxwu1rA==
-  dependencies:
-    "@remusao/smaz-compress" "^1.9.1"
-    "@remusao/smaz-decompress" "^1.9.1"
-
-"@remusao/trie@^1.4.1":
-  version "1.4.1"
-  resolved "https://registry.npmjs.org/@remusao/trie/-/trie-1.4.1.tgz"
-  integrity sha512-yvwa+aCyYI/UjeD39BnpMypG8N06l86wIDW1/PAc6ihBRnodIfZDwccxQN3n1t74wduzaz74m4ZMHZnB06567Q==
-
 "@sindresorhus/is@^0.14.0":
   version "0.14.0"
   resolved "https://registry.npmjs.org/@sindresorhus/is/-/is-0.14.0.tgz"
@@ -179,37 +102,12 @@
   dependencies:
     defer-to-connect "^1.0.1"
 
-"@types/chrome@^0.0.164":
-  version "0.0.164"
-  resolved "https://registry.npmjs.org/@types/chrome/-/chrome-0.0.164.tgz"
-  integrity sha512-/EvjbfcowiA+f8Fwv5PSzxHhnAgjIx50Bjy1zQQYYwxlbJ+rI07CXMhrxwz4jUZlxLjnn/kugNQBjZIN58pKyg==
-  dependencies:
-    "@types/filesystem" "*"
-    "@types/har-format" "*"
-
 "@types/debug@^4.1.5", "@types/debug@^4.1.7":
   version "4.1.7"
   resolved "https://registry.npmjs.org/@types/debug/-/debug-4.1.7.tgz"
   integrity sha512-9AonUzyTjXXhEOa0DnqpzZi6VHlqKMswga9EXjpXnnqxwLtdvPPtlO8evrI5D9S6asFRCQ6v+wpiUKbw+vKqyg==
   dependencies:
     "@types/ms" "*"
-
-"@types/filesystem@*":
-  version "0.0.32"
-  resolved "https://registry.npmjs.org/@types/filesystem/-/filesystem-0.0.32.tgz"
-  integrity sha512-Yuf4jR5YYMR2DVgwuCiP11s0xuVRyPKmz8vo6HBY3CGdeMj8af93CFZX+T82+VD1+UqHOxTq31lO7MI7lepBtQ==
-  dependencies:
-    "@types/filewriter" "*"
-
-"@types/filewriter@*":
-  version "0.0.29"
-  resolved "https://registry.npmjs.org/@types/filewriter/-/filewriter-0.0.29.tgz"
-  integrity sha512-BsPXH/irW0ht0Ji6iw/jJaK8Lj3FJemon2gvEqHKpCdDCeemHa+rI3WBGq5z7cDMZgoLjY40oninGxqk+8NzNQ==
-
-"@types/firefox-webext-browser@^94.0.0":
-  version "94.0.0"
-  resolved "https://registry.npmjs.org/@types/firefox-webext-browser/-/firefox-webext-browser-94.0.0.tgz"
-  integrity sha512-DU6rySaklQlzc3tnVAFNgK2OGkOKCDze8ZlhQFtx+Ag4w2rzgNFoqlwQHrUqUogRJph7Gxf1M8e9n4mlYlragw==
 
 "@types/fs-extra@^9.0.12", "@types/fs-extra@^9.0.7":
   version "9.0.13"
@@ -225,11 +123,6 @@
   dependencies:
     "@types/minimatch" "*"
     "@types/node" "*"
-
-"@types/har-format@*":
-  version "1.2.8"
-  resolved "https://registry.npmjs.org/@types/har-format/-/har-format-1.2.8.tgz"
-  integrity sha512-OP6L9VuZNdskgNN3zFQQ54ceYD8OLq5IbqO4VK91ORLfOm7WdT/CiT/pHEBSQEqCInJ2y3O6iCm/zGtPElpgJQ==
 
 "@types/lockfile@^1.0.2":
   version "1.0.2"
@@ -2511,18 +2404,6 @@ textextensions@^5.13.0:
   version "5.14.0"
   resolved "https://registry.npmjs.org/textextensions/-/textextensions-5.14.0.tgz"
   integrity sha512-4cAYwNFNYlIAHBUo7p6zw8POUvWbZor+/R0Tanv+rIhsauEyV9QSrEXL40pI+GfTQxKX8k6Tyw6CmdSDSmASrg==
-
-tldts-core@^5.7.56:
-  version "5.7.56"
-  resolved "https://registry.npmjs.org/tldts-core/-/tldts-core-5.7.56.tgz"
-  integrity sha512-uGxR0RetJUmkYVtCBfKpH5iYecb3vN9fomssmwHDIgqgZQl+sZcJAyDAjaoVphSEfsT53x0Sw+lVCafxexDW8g==
-
-tldts-experimental@^5.6.21:
-  version "5.7.56"
-  resolved "https://registry.npmjs.org/tldts-experimental/-/tldts-experimental-5.7.56.tgz"
-  integrity sha512-NPvX9tT0Prd/D3kW5B1vnYELRmSVJdhVkGf5d/WRwhnNvAlpnCUFc/2Fp2SGxgETuu5ca57E4CGaFOa99BdX5w==
-  dependencies:
-    tldts-core "^5.7.56"
 
 to-readable-stream@^1.0.0:
   version "1.0.0"

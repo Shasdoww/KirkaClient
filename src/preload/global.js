@@ -32,9 +32,9 @@ let oldState;
 let homeBadgeLoop;
 let inGameBadgeLoop;
 let regionLoop;
+let pluginsLoadAllowed = false;
 
 window.addEventListener('DOMContentLoaded', (event) => {
-    loadPlugins();
     setInterval(() => {
         const newState = currentState();
         if (oldState != newState) {
@@ -49,14 +49,18 @@ function getKeyByValue(object, value) {
     return Object.keys(object).find(key => object[key] === value);
 }
 
-async function loadPlugins() {
+ipcRenderer.on('initPlugins', () => loadPlugins(false));
+
+async function loadPlugins(ensure) {
+    if (ensure)
+        await ipcRenderer.invoke('ensureIntegrity');
     const scripts = JSON.parse(await ipcRenderer.invoke('allowedScripts'));
     const fileDir = await ipcRenderer.invoke('scriptPath');
     const uuids = Object.keys(scripts);
 
     for (let i = 0; i < uuids.length; i++) {
         const scriptUUID = getKeyByValue(scripts, uuids[i]);
-        const script = pluginLoader(scriptUUID, fileDir);
+        const script = await pluginLoader(scriptUUID, fileDir, true);
         if (script.isLocationMatching(currentState())) {
             const win = remote.getCurrentWindow();
             script.launchRenderer(win);
@@ -67,7 +71,10 @@ async function loadPlugins() {
 
 function doOnLoad() {
     resetVars();
-    ipcRenderer.invoke('ensureIntegrity');
+    ipcRenderer.invoke('canLoadPlugins').then(answer => {
+        if (answer)
+            loadPlugins(true);
+    });
     const link = document.createElement('script');
     link.src = 'https://kit.fontawesome.com/2342144b1a.js';
     link.crossOrigin = 'anonymous';

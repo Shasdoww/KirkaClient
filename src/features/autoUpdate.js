@@ -13,7 +13,7 @@ async function autoUpdate(contents, updateData) {
         contents.send('tip');
     });
     contents.send('message', 'Checking for updates...');
-    contents.send('version', `KirkaClient v${version}`);
+    contents.send('version', `v${version}`);
 
     const latest = updateData.version;
     if (latest != version) {

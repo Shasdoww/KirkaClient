@@ -8,6 +8,7 @@ const { dialog } = require('electron');
 const md5File = require('md5-file');
 const path = require('path');
 const { PluginManager } = require('live-plugin-manager');
+let manager;
 require('bytenode');
 
 class KirkaClientScript {
@@ -45,94 +46,34 @@ class KirkaClientScript {
         return this.allowedPlat.some(platform => ['all', process.platform].includes(platform));
     }
 
-    installUpdate(url, filePath) {
-        return new Promise((resolve, reject) => {
-            const req = https.get(url, (res) => {
-                res.setEncoding('binary');
-                let chunks = '';
-                log.info(`Update GET: ${res.statusCode}`);
-
-                res.on('data', (chunk) => {
-                    chunks += chunk;
-                });
-                res.on('end', () => {
-                    try {
-                        fs.writeFileSync(filePath, chunks, 'binary');
-                        resolve();
-                    } catch (e) {
-                        console.log(e);
-                        dialog.showErrorBox('Failed to Update Plugin!',
-                            'Please start client as Administrator.\nThis can be done by Right Click > Run as Administrator.');
-                        resolve();
-                    }
-                });
-            });
-            req.on('error', error => {
-                log.error(`Update Error: ${error}`);
-            });
-            req.end();
-        });
-    }
-
-    ensureIntegrity(filePath) {
-        return new Promise((resolve, reject) => {
-            const hash = md5File.sync(filePath);
-            const data = { hash: hash, uuid: this.scriptUUID };
-            const request = {
-                method: 'POST',
-                hostname: 'kirkaclient.herokuapp.com',
-                path: '/api/plugins/updates',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-            };
-
-            const req = https.request(request, res => {
-                res.setEncoding('utf-8');
-                let chunks = '';
-                log.info(`POST: ${res.statusCode} with payload ${JSON.stringify(data)}`);
-                if (res.statusCode != 200)
-                    reject();
-                else {
-                    res.on('data', (chunk) => {
-                        chunks += chunk;
-                    });
-                    res.on('end', () => {
-                        const response = JSON.parse(chunks);
-                        const success = response.success;
-                        if (!success)
-                            reject();
-
-                        resolve(response);
-                    });
-                }
-            });
-            req.on('error', error => {
-                log.error(`POST Error: ${error}`);
-                reject();
-            });
-
-            req.write(JSON.stringify(data));
-            req.end();
-        });
-    }
-
 }
 
-module.exports.pluginLoader = (uuid, fileDir) => {
+module.exports.pluginLoader = async function(uuid, fileDir, skipInstall = false) {
+    console.log('call to load', uuid, 'with skipInstall as', skipInstall);
     const scriptPath = path.join(fileDir, `${uuid}`);
-    const content = fs.readFileSync(scriptPath + '.json');
-    const r = JSON.parse(content.toString());
-    const modules = r.modules;
 
-    const manager = new PluginManager({
-        pluginsPath: fileDir + '/node_modules'
-    });
-
-    if (modules.length > 0) {
-        modules.forEach(module => {
-            manager.install(module);
+    if (!manager) {
+        manager = new PluginManager({
+            pluginsPath: path.join(fileDir, 'node_modules')
         });
+    }
+
+    if (!skipInstall) {
+        const content = fs.readFileSync(scriptPath + '.json');
+        const r = JSON.parse(content.toString());
+        const modules = r.modules;
+
+        console.log('Modules to install:', modules);
+        for (let i = 0; i < modules.length; i++) {
+            const mod = modules[i];
+            if (manager.alreadyInstalled(mod)) {
+                console.log(mod, 'is already installed. Skipping.');
+                continue;
+            }
+            console.log('installing', mod);
+            await manager.install(mod);
+            console.log(mod, 'installed');
+        }
     }
 
     const script = require(scriptPath + '.jsc');
