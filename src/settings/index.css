@@ -85,6 +85,7 @@ body {
     overflow: hidden;
     background-color: var(--frame-content);
     flex-direction: row;
+    flex-wrap: wrap;
     width: -webkit-fill-available;
     padding: 10px;
 }
@@ -98,6 +99,7 @@ body {
     height: 12em;
     background-color: rgb(136 144 159 / 86%);
     margin: 10px;
+    flex-basis: 22.9%;
 }
 
 .card-image {
@@ -387,6 +389,8 @@ td {
 .catDIV {
     background-color: var(--frame-content);
     margin-right: 65px;
+    padding-bottom: 10px;
+    padding-top: 5px;
 }
  
 .slidecontainer {

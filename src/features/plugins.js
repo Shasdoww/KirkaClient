@@ -9,6 +9,7 @@ const md5File = require('md5-file');
 const path = require('path');
 const { PluginManager } = require('live-plugin-manager');
 let manager;
+let tmpFile;
 require('bytenode');
 
 class KirkaClientScript {
@@ -58,6 +59,11 @@ module.exports.pluginLoader = async function(uuid, fileDir, skipInstall = false)
         });
     }
 
+    if (!tmpFile) {
+        tmpFile = path.join(fileDir, 'tmp.js');
+        fs.writeFileSync(tmpFile, '');
+    }
+
     if (!skipInstall) {
         const content = fs.readFileSync(scriptPath + '.json');
         const r = JSON.parse(content.toString());
@@ -70,9 +76,22 @@ module.exports.pluginLoader = async function(uuid, fileDir, skipInstall = false)
                 console.log(mod, 'is already installed. Skipping.');
                 continue;
             }
-            console.log('installing', mod);
-            await manager.install(mod);
-            console.log(mod, 'installed');
+            const code = `const data = { success: true };
+            try {
+                require('${mod}');
+            } catch(err) {
+                data['success'] = false;
+            }
+            module.exports = data;
+            `;
+            fs.writeFileSync(tmpFile, code);
+            const need = require(tmpFile);
+            console.log(need, 'for', mod);
+            if (!need.success) {
+                console.log('installing', mod);
+                await manager.install(mod);
+                console.log(mod, 'installed');
+            }
         }
     }
 
