@@ -4,6 +4,7 @@
 const allSettings = require('../features/customSettings');
 const { ipcRenderer } = require('electron');
 const { pluginLoader } = require('../features/plugins');
+const log = require('electron-log');
 let installedPlugins;
 
 ipcRenderer.on('make-settings', () => {
