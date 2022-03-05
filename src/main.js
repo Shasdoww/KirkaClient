@@ -538,7 +538,7 @@ function createSettings() {
 
 
 function showUnauthScript(filename) {
-    dialog.showErrorBox(
+    console.log(
         'Unauthorized Script Loaded.',
         `You have attempted to load an unauthorized script named "${filename}".
 Remove it from the folder to prevent this dialog.`
@@ -690,7 +690,6 @@ function ensureIntegrity() {
             } catch (err) {
                 console.log(err);
                 showUnauthScript(filename);
-                app.quit();
             }
         });
 }
