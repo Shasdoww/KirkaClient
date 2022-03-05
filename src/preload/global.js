@@ -64,7 +64,7 @@ async function loadPlugins(ensure) {
         if (script.isLocationMatching(currentState())) {
             const win = remote.getCurrentWindow();
             script.launchRenderer(win);
-            console.log(`Loaded script: ${script.scriptName}- v${script.ver}`);
+            log.info(`Loaded script: ${script.scriptName}- v${script.ver}`);
         }
     }
 }
@@ -155,7 +155,7 @@ function doOnLoad() {
     const state = currentState();
     if (state === 'unknown')
         return;
-    console.log('DOM Content loaded for:', state);
+    log.info('DOM Content loaded for:', state);
     let promo;
     const div = document.createElement('div');
     div.className = 'clientNotifDIV';
@@ -278,9 +278,7 @@ function commaFormat() {
             let elem = document.getElementsByClassName('stat-value text-2');
             if (elem.length > 0) {
                 elem = document.getElementsByClassName('stat-value text-2')[i].innerText;
-                console.log(elem);
                 const elem2 = new Intl.NumberFormat().format(elem);
-                console.log(elem2);
                 if (!elem2.includes(','))
                     continue;
                 if (!document.getElementsByClassName('stat-value text-2')[i].innerText.includes('.'))
@@ -329,9 +327,7 @@ function commaFormat() {
         if (elem.length > 0) {
             for (let count = 0; count < 2; count += 1) {
                 elem = document.getElementsByClassName('card-cont money')[count].childNodes[1].textContent;
-                console.log(elem);
                 const elem2 = new Intl.NumberFormat().format(elem);
-                console.log(elem2);
                 if (!elem2.includes(','))
                     continue;
                 document.getElementsByClassName('card-cont money')[count].childNodes[1].textContent = elem2;
@@ -423,7 +419,7 @@ async function setUsername() {
     const userID = userIDdiv.innerText.replace(re2, '').replace(re3, '');
     config.set('user', user);
     config.set('userID', userID);
-    console.log('User set as:', user, 'with ID:', userID);
+    log.info('User set as:', user, 'with ID:', userID);
 }
 
 function resetVars() {
@@ -676,11 +672,11 @@ async function configMR() {
     };
     const stream = await navigator.mediaDevices.getUserMedia(constraints);
     mediaRecorder = new MediaRecorder(stream, options);
-    console.log('mR', mediaRecorder);
+    log.info('mR', mediaRecorder);
     mediaRecorder.ondataavailable = (e) => { recordedChunks.push(e.data); };
     mediaRecorder.onstop = handleStop;
     mediaRecorder.onstart = () => {
-        console.log('started recording');
+        log.info('started recording');
         recording = true;
     };
     mediaRecorder.onpause = () => { paused = true; };
@@ -695,16 +691,16 @@ async function handleStop() {
     const blob = new Blob(recordedChunks, {
         type: 'video/mp4;'
     });
-    console.log('handeling stop. starttime:', starttime, 'Date.now():', Date.now(), 'pause:', totalPause, 'duration', Date.now() - starttime - totalPause);
+    log.info('handeling stop. starttime:', starttime, 'Date.now():', Date.now(), 'pause:', totalPause, 'duration', Date.now() - starttime - totalPause);
     fixwebm(blob, Date.now() - starttime - totalPause, saveRecording);
 }
 
 async function startRecording() {
     if (mediaRecorder === null) {
-        console.log('First Time: Configuring mR');
+        log.info('First Time: Configuring mR');
         try {
             const mR = await configMR();
-            console.log('Configurated!', mR);
+            log.info('Configurated!', mR);
             mediaRecorder = mR;
             startrec();
         } catch (err) {
@@ -720,7 +716,7 @@ async function startRecording() {
 }
 
 function pauseRecording() {
-    console.log('mR is paused!');
+    log.info('mR is paused!');
     pausetime = Date.now() - starttime - totalPause;
     try {
         mediaRecorder.pause();
@@ -732,7 +728,7 @@ function pauseRecording() {
 }
 
 function resumeRecording() {
-    console.log('mR is resumed!');
+    log.info('mR is resumed!');
     try {
         mediaRecorder.resume();
         createBalloon('Recording Resumed!');
@@ -754,7 +750,7 @@ function stopRecording(save) {
 
     if (save) {
         const folderPath = path.join(logDir, 'videos');
-        console.log(folderPath);
+        log.info(folderPath);
         if (!fs.existsSync(folderPath))
             fs.mkdirSync(folderPath);
         filepath = path.join(folderPath, `kirkaclient-${new Date(Date.now()).toDateString()}.mp4`);
@@ -770,7 +766,7 @@ function stopRecording(save) {
 }
 
 async function startrec() {
-    console.log('mR state:', mediaRecorder.state);
+    log.info('mR state:', mediaRecorder.state);
     recordedChunks = [];
     try {
         mediaRecorder.start(500);
@@ -781,31 +777,31 @@ async function startrec() {
     starttime = Date.now();
     pause = 0;
     totalPause = 0;
-    console.log('New mR state:', mediaRecorder.state);
+    log.info('New mR state:', mediaRecorder.state);
 }
 
 function saveRecording(blob) {
-    console.log('In saveRecording');
+    log.info('In saveRecording');
     getBlobDuration.default(blob).then(function(duration) {
-        console.log(duration + ' seconds');
+        log.info(duration + ' seconds');
         if (isNaN(parseFloat(duration))) {
             console.error('Broken duration detected, attempting fix...');
             fixwebm(blob, 300000, saveRecording);
         } else {
             blob.arrayBuffer().then(buf => {
                 const buffer = Buffer.from(buf);
-                console.log('Filepath:', filepath);
+                log.info('Filepath:', filepath);
                 if (filepath !== '')
                     fs.writeFileSync(filepath, buffer);
                 if (shouldSave)
                     createBalloon('Recording Saved!', 'success');
                 else
                     createBalloon('Recording Cancelled', 'error');
-                console.log('Completed!');
+                log.info('Completed!');
             });
         }
     }).catch(err => {
-        console.log(err);
+        log.info(err);
     });
 }
 

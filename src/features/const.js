@@ -5,7 +5,7 @@ module.exports.gameLoaded = (urlid) => {
         else
             return false;
     } catch (err) {
-        console.log(err);
+        log.info(err);
         return false;
     }
 };

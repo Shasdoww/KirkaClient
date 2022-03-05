@@ -415,7 +415,7 @@ async function initAutoUpdater(webContents) {
     }
 
     const didUpdate = await autoUpdate(webContents, updateContent);
-    console.log(didUpdate);
+    log.info(didUpdate);
     if (didUpdate) {
         config.set('update', true);
         const options = {
@@ -451,7 +451,7 @@ function showRunAsAdmin() {
 }
 
 ipcMain.handle('downloadPlugin', (ev, uuid) => {
-    console.log('Need to download', uuid);
+    log.info('Need to download', uuid);
     https.get(`https://kirkaclient.herokuapp.com/plugins/download/${uuid}.jsc`, (res) => {
         res.setEncoding('binary');
         let a = '';
@@ -464,7 +464,7 @@ ipcMain.handle('downloadPlugin', (ev, uuid) => {
                 const pluginsDir = path.join(app.getPath('documents'), '/KirkaClient/plugins');
                 fs.writeFileSync(`${pluginsDir}/${uuid}.jsc`, a, 'binary');
             } catch (e) {
-                console.log(e);
+                log.info(e);
                 showRunAsAdmin();
                 app.quit();
             }
@@ -483,7 +483,7 @@ ipcMain.handle('downloadPlugin', (ev, uuid) => {
                 const pluginsDir = path.join(app.getPath('documents'), '/KirkaClient/plugins');
                 fs.writeFileSync(`${pluginsDir}/${uuid}.json`, a, 'binary');
             } catch (e) {
-                console.log(e);
+                log.info(e);
                 showRunAsAdmin();
                 app.quit();
             }
@@ -493,7 +493,7 @@ ipcMain.handle('downloadPlugin', (ev, uuid) => {
 
 ipcMain.handle('uninstallPlugin', (ev, uuid) => {
     const fileDir = path.join(app.getPath('documents'), '/KirkaClient/plugins');
-    console.log('Need to remove', uuid);
+    log.info('Need to remove', uuid);
 
     if (!pluginIdentifier[uuid])
         return { success: false };
@@ -538,7 +538,7 @@ function createSettings() {
 
 
 function showUnauthScript(filename) {
-    console.log(
+    log.info(
         'Unauthorized Script Loaded.',
         `You have attempted to load an unauthorized script named "${filename}".
 Remove it from the folder to prevent this dialog.`
@@ -578,7 +578,7 @@ function installUpdate(uuid) {
                         const pluginsDir = path.join(app.getPath('documents'), '/KirkaClient/plugins/', uuid + '.jsc');
                         fs.writeFileSync(pluginsDir, chunks, 'binary');
                     } catch (e) {
-                        console.log(e);
+                        log.info(e);
                         showRunAsAdmin();
                         app.quit();
                     } finally {
@@ -604,7 +604,7 @@ function installUpdate(uuid) {
                         const pluginsDir = path.join(app.getPath('documents'), '/KirkaClient/plugins/', uuid + '.json');
                         fs.writeFileSync(pluginsDir, a, 'binary');
                     } catch (e) {
-                        console.log(e);
+                        log.info(e);
                         showRunAsAdmin();
                         app.quit();
                     } finally {
@@ -646,7 +646,7 @@ function ensureScriptIntegrity(filePath, scriptUUID) {
                 res.on('end', () => {
                     const response = JSON.parse(chunks);
                     const success = response.success;
-                    console.log(`Response on ${scriptUUID}: ${JSON.stringify(response, null, 2)}`);
+                    log.info(`Response on ${scriptUUID}: ${JSON.stringify(response, null, 2)}`);
                     if (!success)
                         reject();
 
@@ -688,7 +688,7 @@ function ensureIntegrity() {
                     log.info(`Ensured script: ${script.scriptName}- v${script.ver}`);
                 }
             } catch (err) {
-                console.log(err);
+                log.info(err);
                 showUnauthScript(filename);
             }
         });
@@ -696,7 +696,7 @@ function ensureIntegrity() {
 
 async function initPlugins(webContents) {
     const fileDir = path.join(app.getPath('documents'), '/KirkaClient/plugins');
-    console.log('fileDir', fileDir);
+    log.info('fileDir', fileDir);
     const node_modules = path.join(fileDir, 'node_modules');
     if (!fs.existsSync(node_modules)) {
         webContents.send('message', 'Configuring Plugins...');
@@ -708,15 +708,15 @@ async function initPlugins(webContents) {
             if (err)
                 console.error(err);
             else
-                console.log('success!');
+                log.info('success!');
         });
     }
     try {
         fs.mkdirSync(fileDir, { recursive: true });
     } catch (err) {
-        console.log(err);
+        log.info(err);
     }
-    console.log(fs.readdirSync(fileDir));
+    log.info(fs.readdirSync(fileDir));
     const filenames = [];
     fs.readdirSync(fileDir)
         .filter(filename => path.extname(filename).toLowerCase() == '.jsc')
@@ -726,11 +726,11 @@ async function initPlugins(webContents) {
 
     for (let i = 0; i < filenames.length; i++) {
         const filename = filenames[i];
-        console.log(filename);
+        log.info(filename);
         try {
             webContents.send('message', `Loading Plugin: ${i + 1}/${filenames.length}`);
             const scriptPath = path.join(fileDir, filename);
-            console.log('scriptPath:', scriptPath);
+            log.info('scriptPath:', scriptPath);
             const scriptName = filename.split('.')[0];
             const data = await ensureScriptIntegrity(scriptPath, scriptName);
             if (data) {
@@ -758,7 +758,7 @@ async function initPlugins(webContents) {
                 log.info(`Loaded script: ${script.scriptName}- v${script.ver}`);
             }
         } catch (err) {
-            console.log(err);
+            log.info(err);
             showUnauthScript(filename);
         }
     }

@@ -13,12 +13,12 @@ let discordOpen = false;
 DiscordRPC.register(ClientID);
 const client = new DiscordRPC.Client({ transport: 'ipc' });
 client.login({ clientId: ClientID }).catch((error) => {
-    console.log(error);
+    log.info(error);
 });
 
 
 client.on('ready', () => {
-    console.log(`RPC Ready! Username: ${client.user.username}#${client.user.discriminator}`);
+    log.info(`RPC Ready! Username: ${client.user.username}#${client.user.discriminator}`);
     discordOpen = true;
 });
 

@@ -50,7 +50,7 @@ class KirkaClientScript {
 }
 
 module.exports.pluginLoader = async function(uuid, fileDir, skipInstall = false) {
-    console.log('call to load', uuid, 'with skipInstall as', skipInstall);
+    log.info('call to load', uuid, 'with skipInstall as', skipInstall);
     const scriptPath = path.join(fileDir, `${uuid}`);
 
     if (!manager) {
@@ -69,11 +69,11 @@ module.exports.pluginLoader = async function(uuid, fileDir, skipInstall = false)
         const r = JSON.parse(content.toString());
         const modules = r.modules;
 
-        console.log('Modules to install:', modules);
+        log.info('Modules to install:', modules);
         for (let i = 0; i < modules.length; i++) {
             const mod = modules[i];
             if (manager.alreadyInstalled(mod)) {
-                console.log(mod, 'is already installed. Skipping.');
+                log.info(mod, 'is already installed. Skipping.');
                 continue;
             }
             const code = `const data = { success: true };
@@ -86,11 +86,11 @@ module.exports.pluginLoader = async function(uuid, fileDir, skipInstall = false)
             `;
             fs.writeFileSync(tmpFile, code);
             const need = require(tmpFile);
-            console.log(need, 'for', mod);
+            log.info(need, 'for', mod);
             if (!need.success) {
-                console.log('installing', mod);
+                log.info('installing', mod);
                 await manager.install(mod);
-                console.log(mod, 'installed');
+                log.info(mod, 'installed');
             }
         }
     }
