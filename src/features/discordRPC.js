@@ -1,4 +1,4 @@
-const { gameLoaded, version } = require('./const');
+const { version } = require('./const');
 const DiscordRPC = require('discord-rpc');
 const ClientID = '871730144836976650';
 const starttime = Date.now();
@@ -52,18 +52,40 @@ function initRPC(socket_, webContents) {
             }[userBadges['role']];
         }
         const gameURL = webContents.getURL();
-        if (!gameLoaded(gameURL))
-            notPlaying();
-        else {
+        const state = getGameState(gameURL);
+        if (state == 'game') {
             const gamecode = gameURL.replace('https://kirka.io/games/', '');
             socket.send({ type: 3, data: gamecode });
-        }
+        } else
+            notPlaying(state);
     }, 2500);
 }
 
-function notPlaying() {
+function getGameState(url) {
+    if (url == 'https://kirka.io/store')
+        return 'store';
+    else if (url == 'https://kirka.io/')
+        return 'home';
+    else if (url.includes('https://kirka.io/games/'))
+        return 'game';
+    else if (url == 'https://kirka.io/hub/leaderboard')
+        return 'leaderboard';
+    else if (url.includes('https://kirka.io/hub/clans'))
+        return 'clans';
+    else if (url == 'https://kirka.io/hub/market')
+        return 'market';
+}
+
+function notPlaying(state) {
+    const message = {
+        'home': 'Home Page',
+        'store': 'Browsing Store',
+        'leaderboard': 'Checking Leaderboards',
+        'clans': 'Browsing Clans',
+        'market': 'Looking at market'
+    };
     client.setActivity({
-        state: 'Home Page',
+        state: message[state],
         smallImageKey: userBadges.type,
         smallImageText: userBadges.role,
         largeImageKey: 'client_logo',
@@ -71,7 +93,7 @@ function notPlaying() {
         instance: true,
         startTimestamp: starttime,
         buttons: [
-            { label: 'Get KirkaClient', url: 'https://discord.gg/bD9JNv6GFS' }
+            { label: 'Get KirkaClient', url: 'https://kirkaclient.herokuapp.com' }
         ]
     });
 }
@@ -80,25 +102,21 @@ async function updateRPC(data) {
     if (!discordOpen)
         return;
 
-    if (!data.success)
+    if (!data.success) {
+        updateClient(
+            { mode: 'In a private match' },
+            'private'
+        );
         return;
-    let finalData, category;
-    if (data.shortMode == 'MAP') {
-        finalData = {
-            mode: 'Editing a map',
-            cap: data.players
-        };
-        category = 'map';
-    } else {
-        finalData = {
-            mode: data.shortMode,
-            map: data.map,
-            cap: data.players,
-            url: data.link
-        };
-        category = 'game';
     }
-    updateClient(finalData, category);
+
+    const finalData = {
+        mode: data.shortMode,
+        map: data.map,
+        cap: data.players,
+        url: data.link
+    };
+    updateClient(finalData, 'game');
 }
 
 function updateClient(data, type) {
@@ -115,17 +133,16 @@ function updateClient(data, type) {
     case 'game':
         updateData['buttons'] = [
             { label: 'Join Game', url: data.url },
-            { label: 'Get KirkaClient', url: 'https://discord.gg/bD9JNv6GFS' }
+            { label: 'Get KirkaClient', url: 'https://kirkaclient.herokuapp.com' }
         ];
         updateData['details'] = `Playing ${data.mode}`;
         updateData['state'] = `${data.map} (${data.cap})`;
         break;
-    case 'map':
+    case 'private':
         updateData['buttons'] = [
-            { label: 'Get KirkaClient', url: 'https://discord.gg/bD9JNv6GFS' }
+            { label: 'Get KirkaClient', url: 'https://kirkaclient.herokuapp.com' }
         ];
-        updateData['details'] = 'Editing a map';
-        updateData['state'] = data.cap;
+        updateData['details'] = data.mode;
         break;
     }
     client.setActivity(updateData);
