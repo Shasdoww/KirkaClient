@@ -42,7 +42,7 @@ function checkBadge() {
         const badgeType = allTypes[i];
         if (searchBadge && badgeType != searchBadge)
             continue;
-        const data = badgesData.data[badgeType];
+        const data = badgesData[data][badgeType];
         for (let j = 0; j < data.length; j++) {
             const badgeData = data[j];
             if (badgeData.id === confirmID)

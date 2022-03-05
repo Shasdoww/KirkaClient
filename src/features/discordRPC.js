@@ -30,9 +30,7 @@ function initRPC(socket_, webContents) {
         if (!discordOpen)
             return;
 
-        const userID = config.get('userID');
-        if (!userID)
-            return;
+        const userID = config.get('userID', '000000');
 
         userBadges = checkBadge(userID);
         if (!userBadges)
@@ -58,7 +56,7 @@ function initRPC(socket_, webContents) {
             socket.send({ type: 3, data: gamecode });
         } else
             notPlaying(state);
-    }, 2500);
+    }, 2000);
 }
 
 function getGameState(url) {
