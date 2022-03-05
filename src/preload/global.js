@@ -8,6 +8,7 @@ const path = require('path');
 const fs = require('fs');
 const getBlobDuration = require('get-blob-duration');
 const { pluginLoader } = require('../features/plugins');
+const log = require('electron-log');
 
 let leftIcons;
 let FPSdiv = null;
