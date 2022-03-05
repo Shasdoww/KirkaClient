@@ -4,6 +4,7 @@ const ClientID = '871730144836976650';
 const starttime = Date.now();
 const { checkBadge } = require('./badges');
 const Store = require('electron-store');
+const log = require('electron-log');
 const config = new Store();
 
 let userBadges = { type: 'anything', role: 'KirkaClient User' };
