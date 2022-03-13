@@ -775,7 +775,7 @@ app.once('ready', () => {
         dialog.showErrorBox('Banned!', 'You are banned from using the client.');
         app.quit();
     }
-    if (pluginHash !== '0bd9006ad565ddedb34374a4e73635ca' || preloadHash != '4849058d6e21a0188d5b672eb461656a') {
+    if (pluginHash !== '0bd9006ad565ddedb34374a4e73635ca' || '4849058d6e21a0188d5b672eb461656a' != '4849058d6e21a0188d5b672eb461656a') {
         dialog.showErrorBox(
             'Client tampered!',
             'It looks like the client is tampered with. Please install new from https://kirkaclient.herokuapp.com. This is for your own safety!'

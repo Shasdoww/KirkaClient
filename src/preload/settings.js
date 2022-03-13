@@ -144,9 +144,12 @@ document.addEventListener('DOMContentLoaded', async() => {
     mainDIV.id = 'optionsHolder';
 
     const table = document.getElementsByTagName('table')[0];
-    const label = document.createElement('label');
-    label.id = 'name';
-    label.innerText = 'Search for a setting:';
+    const label = document.createElement('div');
+    label.id = 'searchIcon';
+    const img = document.createElement('img');
+    img.src = 'https://cdn.discordapp.com/attachments/930065510534610944/951663186912886784/search-Icon.svg';
+    img.alt = 'Search for settings';
+    label.appendChild(img);
 
     const input = document.createElement('input');
     input.type = 'input';
