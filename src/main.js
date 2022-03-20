@@ -9,6 +9,7 @@ const { autoUpdate, sendBadges, updateRPC, initBadges, initRPC, closeRPC } = req
 const { io } = require('socket.io-client');
 const socket = io('https://kirkaclient.herokuapp.com');
 const fs = require('fs');
+const fse = require('fs-extra');
 const https = require('https');
 const log = require('electron-log');
 const prompt = require('./features/promptManager');
@@ -394,6 +395,11 @@ function createSplashWindow() {
     splash.webContents.on('dom-ready', () => {
         initAutoUpdater(splash.webContents);
     });
+
+    splash.once('closed', () => {
+        if (!win)
+            app.quit();
+    });
 }
 
 async function initAutoUpdater(webContents) {
@@ -705,22 +711,17 @@ async function initPlugins(webContents) {
     const fileDir = path.join(app.getPath('documents'), '/KirkaClient/plugins');
     log.info('fileDir', fileDir);
     const node_modules = path.join(fileDir, 'node_modules');
-    const incomplete_init = path.join(fileDir, 'node_modules.lock');
-    if (!fs.existsSync(node_modules) || fs.existsSync(incomplete_init)) {
+    if (!fs.existsSync(node_modules)) {
         webContents.send('message', 'Configuring Plugins...');
-        const fse = require('fs-extra');
         const srcDir = path.join(__dirname, '../node_modules');
         const destDir = node_modules;
-        fs.writeFileSync(incomplete_init, 'DO NOT DELETE THIS FILE!');
-        fse.copySync(srcDir, destDir, { overwrite: true }, function(err) {
+
+        fse.copySync(srcDir, destDir, { overwrite: true, recursive: true }, function(err) {
             if (err)
                 console.error(err);
-            else {
+            else
                 log.info('success!');
-                fs.unlinkSync(incomplete_init);
-            }
         });
-        fs.unlinkSync(incomplete_init);
     }
     try {
         fs.mkdirSync(fileDir, { recursive: true });
