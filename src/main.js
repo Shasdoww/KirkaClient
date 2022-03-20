@@ -720,6 +720,7 @@ async function initPlugins(webContents) {
                 fs.unlinkSync(incomplete_init);
             }
         });
+        fs.unlinkSync(incomplete_init);
     }
     try {
         fs.mkdirSync(fileDir, { recursive: true });
