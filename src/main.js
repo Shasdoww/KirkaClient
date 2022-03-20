@@ -715,13 +715,7 @@ async function initPlugins(webContents) {
         webContents.send('message', 'Configuring Plugins...');
         const srcDir = path.join(__dirname, '../node_modules');
         const destDir = node_modules;
-
-        fse.copySync(srcDir, destDir, { overwrite: true, recursive: true }, function(err) {
-            if (err)
-                console.error(err);
-            else
-                log.info('success!');
-        });
+        fse.copySync(srcDir, destDir, { overwrite: true, recursive: true });
     }
     try {
         fs.mkdirSync(fileDir, { recursive: true });
