@@ -13,7 +13,7 @@ const https = require('https');
 const log = require('electron-log');
 const prompt = require('./features/promptManager');
 const { pluginLoader } = require('./features/plugins');
-
+log.transports.file.getFile().clear();
 const gamePreload = path.join(__dirname, 'preload', 'global.js');
 const splashPreload = path.join(__dirname, 'preload', 'splash.js');
 const settingsPreload = path.join(__dirname, 'preload', 'settings.js');
@@ -450,45 +450,52 @@ function showRunAsAdmin() {
     );
 }
 
-ipcMain.handle('downloadPlugin', (ev, uuid) => {
+ipcMain.handle('downloadPlugin', async(ev, uuid) => {
     log.info('Need to download', uuid);
-    https.get(`https://kirkaclient.herokuapp.com/plugins/download/${uuid}.jsc`, (res) => {
-        res.setEncoding('binary');
-        let a = '';
-        res.on('data', function(chunk) {
-            a += chunk;
-        });
+    return Promise.all([
+        new Promise(resolve => {
+            https.get(`https://kirkaclient.herokuapp.com/plugins/download/${uuid}.jsc`, (res) => {
+                res.setEncoding('binary');
+                let a = '';
+                res.on('data', function(chunk) {
+                    a += chunk;
+                });
 
-        res.on('end', () => {
-            try {
-                const pluginsDir = path.join(app.getPath('documents'), '/KirkaClient/plugins');
-                fs.writeFileSync(`${pluginsDir}/${uuid}.jsc`, a, 'binary');
-            } catch (e) {
-                log.info(e);
-                showRunAsAdmin();
-                app.quit();
-            }
-        });
-    });
+                res.on('end', () => {
+                    try {
+                        const pluginsDir = path.join(app.getPath('documents'), '/KirkaClient/plugins');
+                        fs.writeFileSync(`${pluginsDir}/${uuid}.jsc`, a, 'binary');
+                        resolve();
+                    } catch (e) {
+                        log.info(e);
+                        showRunAsAdmin();
+                        app.quit();
+                    }
+                });
+            });
+        }),
+        new Promise(resolve => {
+            https.get(`https://kirkaclient.herokuapp.com/plugins/download/${uuid}.json`, (res) => {
+                res.setEncoding('binary');
+                let a = '';
+                res.on('data', function(chunk) {
+                    a += chunk;
+                });
 
-    https.get(`https://kirkaclient.herokuapp.com/plugins/download/${uuid}.json`, (res) => {
-        res.setEncoding('binary');
-        let a = '';
-        res.on('data', function(chunk) {
-            a += chunk;
-        });
-
-        res.on('end', () => {
-            try {
-                const pluginsDir = path.join(app.getPath('documents'), '/KirkaClient/plugins');
-                fs.writeFileSync(`${pluginsDir}/${uuid}.json`, a, 'binary');
-            } catch (e) {
-                log.info(e);
-                showRunAsAdmin();
-                app.quit();
-            }
-        });
-    });
+                res.on('end', () => {
+                    try {
+                        const pluginsDir = path.join(app.getPath('documents'), '/KirkaClient/plugins');
+                        fs.writeFileSync(`${pluginsDir}/${uuid}.json`, a, 'binary');
+                        resolve();
+                    } catch (e) {
+                        log.info(e);
+                        showRunAsAdmin();
+                        app.quit();
+                    }
+                });
+            });
+        })
+    ]);
 });
 
 ipcMain.handle('uninstallPlugin', (ev, uuid) => {
@@ -698,17 +705,20 @@ async function initPlugins(webContents) {
     const fileDir = path.join(app.getPath('documents'), '/KirkaClient/plugins');
     log.info('fileDir', fileDir);
     const node_modules = path.join(fileDir, 'node_modules');
-    if (!fs.existsSync(node_modules)) {
+    const incomplete_init = path.join(fileDir, 'node_modules.lock');
+    if (!fs.existsSync(node_modules) || fs.existsSync(incomplete_init)) {
         webContents.send('message', 'Configuring Plugins...');
         const fse = require('fs-extra');
         const srcDir = path.join(__dirname, '../node_modules');
         const destDir = node_modules;
-
-        fse.copySync(srcDir, destDir, { overwrite: true }, function(err) {
+        fs.writeFileSync(incomplete_init, 'DO NOT DELETE THIS FILE!');
+        fse.copy(srcDir, destDir, { overwrite: true }, function(err) {
             if (err)
                 console.error(err);
-            else
+            else {
                 log.info('success!');
+                fs.unlinkSync(incomplete_init);
+            }
         });
     }
     try {
@@ -740,8 +750,13 @@ async function initPlugins(webContents) {
                     webContents.send('message', `Reloading Plugin: ${i + 1}/${filenames.length}`);
                 }
             }
-            const script = await pluginLoader(filename.split('.')[0], fileDir);
-
+            let script = await pluginLoader(filename.split('.')[0], fileDir);
+            if (Array.isArray(script)) {
+                webContents.send('message', 'Cache corrupted. Rebuilding...');
+                script = await pluginLoader(filename.split('.')[0], fileDir, false, true);
+            }
+            if (Array.isArray(script))
+                continue;
             if (!script.isPlatformMatching())
                 log.info(`Script ignored, platform not matching: ${script.scriptName}`);
             else {
@@ -775,7 +790,8 @@ app.once('ready', () => {
         dialog.showErrorBox('Banned!', 'You are banned from using the client.');
         app.quit();
     }
-    if (pluginHash !== '0bd9006ad565ddedb34374a4e73635ca' || '4849058d6e21a0188d5b672eb461656a' != '4849058d6e21a0188d5b672eb461656a') {
+    log.info(pluginHash, preloadHash);
+    if ((pluginHash === '4aed000fef20d759a52f2c037adcafec' && preloadHash === 'ec615973723100521dd7de601c330cc5') && !app.isPackaged) {
         dialog.showErrorBox(
             'Client tampered!',
             'It looks like the client is tampered with. Please install new from https://kirkaclient.herokuapp.com. This is for your own safety!'
@@ -783,6 +799,6 @@ app.once('ready', () => {
         app.quit();
         return;
     }
-    // Initialize protocol to access files
+
     createSplashWindow();
 });

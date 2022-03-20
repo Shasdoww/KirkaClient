@@ -49,7 +49,7 @@ class KirkaClientScript {
 
 }
 
-module.exports.pluginLoader = async function(uuid, fileDir, skipInstall = false) {
+module.exports.pluginLoader = async function(uuid, fileDir, skipInstall = false, force = false) {
     log.info('call to load', uuid, 'with skipInstall as', skipInstall);
     const scriptPath = path.join(fileDir, `${uuid}`);
 
@@ -72,7 +72,7 @@ module.exports.pluginLoader = async function(uuid, fileDir, skipInstall = false)
         log.info('Modules to install:', modules);
         for (let i = 0; i < modules.length; i++) {
             const mod = modules[i];
-            if (manager.alreadyInstalled(mod)) {
+            if (manager.alreadyInstalled(mod) || !force) {
                 log.info(mod, 'is already installed. Skipping.');
                 continue;
             }
@@ -86,15 +86,20 @@ module.exports.pluginLoader = async function(uuid, fileDir, skipInstall = false)
             `;
             fs.writeFileSync(tmpFile, code);
             const need = require(tmpFile);
-            log.info(need, 'for', mod);
-            if (!need.success) {
+            log.info(need, 'for', mod, 'with force', force);
+            if (!need.success || force) {
                 log.info('installing', mod);
                 await manager.install(mod);
                 log.info(mod, 'installed');
             }
         }
     }
-
-    const script = require(scriptPath + '.jsc');
-    return new KirkaClientScript(script('token'));
+    try {
+        const script = require(scriptPath + '.jsc');
+        const clientScript = new KirkaClientScript(script('token'));
+        return clientScript;
+    } catch (err) {
+        console.log('Found some error.');
+        return [];
+    }
 };

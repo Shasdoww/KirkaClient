@@ -240,6 +240,7 @@ function makeSettings(table) {
             label.className = 'textbox';
             option.password ? input.type = 'password' : input.type = 'input';
             input.innerText = '';
+            input.className = 'inputbox';
             input.id = option.id;
             option.placeholder ? input.placeholder = option.placeholder : '';
             input.value = option.val;

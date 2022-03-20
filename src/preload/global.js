@@ -351,31 +351,29 @@ function createHomePageSettings() {
 async function addButton() {
     const addbtn = document.createElement('button');
     addbtn.innerText = 'Join using URL';
-    addbtn.className = 'button play-btn animation';
-    addbtn.style.display = 'flex';
-    addbtn.style.alignSelf = 'center';
-    addbtn.style.fontSize = '1.4rem';
-    addbtn.style.border = 'none';
-    addbtn.style.borderRadius = '5px';
-    addbtn.style.padding = '5px';
+    addbtn.className = 'join-using-link text-2';
+    addbtn.style.float = 'right';
+    addbtn.style.fontWeight = '700';
+    addbtn.style.border = '4px solid #26335b';
+    addbtn.style.borderRadius = '6.4px';
+    addbtn.style.padding = '4px 8px';
     addbtn.style.cursor = 'pointer';
+    addbtn.style.marginBottom = '3px';
+    addbtn.style.color = 'white';
     addbtn.style.transition = 'background-color .3s';
-    addbtn.style.transition = 'color .3s';
     addbtn.style.transitionTimingFunction = 'linear';
     addbtn.onclick = () => {
         ipcRenderer.send('joinLink');
     };
     addbtn.onmouseover = () => {
-        addbtn.style.backgroundColor = 'white';
-        addbtn.style.color = 'black';
+        addbtn.style.backgroundColor = 'var(--secondary-2)';
     };
     addbtn.onmouseleave = () => {
-        addbtn.style.backgroundColor = '#ffb914';
-        addbtn.style.color = 'black';
+        addbtn.style.backgroundColor = '#3b4975';
     };
     addbtn.onmouseleave();
-    const play = document.getElementsByClassName('play')[0];
-    play.insertBefore(addbtn, play.firstChild);
+    const play = document.getElementsByClassName('select-region')[0];
+    play.after(addbtn);
 }
 
 function setRegion() {

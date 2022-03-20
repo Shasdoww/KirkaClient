@@ -283,6 +283,10 @@ ul li:hover ul {
   src: url("../fonts/arlrdbd.ttf");
 }
 
+.inputbox {
+  color: white !important;
+}
+
 #name {
   font-family: "somefont";
   border: none;
@@ -491,4 +495,19 @@ select option {
 }
 input[type='checkbox'] {
   display: none;
+}
+.collapsible {
+  display: flex;
+  flex-direction: row;
+  justify-content: flex-start;
+  align-items: center;
+  background-color: var(--collapse);
+  color: white;
+  cursor: pointer;
+  padding: 18px;
+  width: 100%;
+  border: none;
+  text-align: left;
+  outline: none;
+  font-size: 15px;
 }

@@ -5,6 +5,7 @@ const config = new Store();
 const fs = require('fs');
 const path = require('path');
 const https = require('https');
+const log = require('electron-log');
 
 async function autoUpdate(contents, updateData) {
     contents.send('tip');
@@ -18,13 +19,21 @@ async function autoUpdate(contents, updateData) {
     const latest = updateData.version;
     if (latest != version) {
         if (config.get('updateType', 'Auto download') == 'Ask for download') {
-            const options = {
-                buttons: ['Yes', 'No'],
-                message: 'Update Found! Download and install now?'
-            };
-            const response = await dialog.showMessageBox(options);
-            if (response.response === 1)
-                return false;
+            if (!updateData.force) {
+                const options = {
+                    buttons: ['Yes', 'No'],
+                    message: 'Update Found! Download and install now?'
+                };
+                const response = await dialog.showMessageBox(options);
+                if (response.response === 1)
+                    return false;
+            } else {
+                const options = {
+                    buttons: ['Ok'],
+                    message: 'Update Found! This update is marked as compulsary by the developer, thus will be installed anyways.'
+                };
+                await dialog.showMessageBox(options);
+            }
         }
 
         await downloadUpdate(contents, updateData);
@@ -40,41 +49,36 @@ async function downloadUpdate(contents, updateData) {
     const updateSize = updateData.size;
     const downloadDestination = path.join('./resources/app.asar');
     // const downloadDestination = path.join('./app.asar');
-    let myreq;
 
-    async function downloadFile() {
-        return new Promise((resolve) => {
-            myreq = https.get(updateUrl, (res) => {
-                res.setEncoding('binary');
+    return new Promise((resolve) => {
+        const myreq = https.get(updateUrl, (res) => {
+            res.setEncoding('binary');
 
-                let a = '';
-                res.on('data', function(chunk) {
-                    a += chunk;
-                    const percentage = Math.round(100 * a.length / updateSize);
-                    contents.send('message', `Downloading- ${percentage}% complete...`);
-                });
+            let a = '';
+            res.on('data', function(chunk) {
+                a += chunk;
+                const percentage = Math.round(100 * a.length / updateSize);
+                contents.send('message', `Downloading- ${percentage}% complete...`);
+            });
 
-                res.on('end', async() => {
-                    process.noAsar = true;
-                    try {
-                        fs.writeFileSync(downloadDestination, a, 'binary');
+            res.on('end', async() => {
+                process.noAsar = true;
+                try {
+                    fs.writeFile(downloadDestination, a, 'binary', (err) => {
+                        if (err)
+                            throw err;
                         resolve();
-                    } catch (e) {
-                        log.info(e);
-                        dialog.showErrorBox('Permission Error!',
-                            'Please start client as Administrator.\nThis can be done by Right Click > Run as Administrator.');
-                        app.quit();
-                    }
-                });
+                    });
+                } catch (e) {
+                    log.error(e);
+                    dialog.showErrorBox('Permission Error!',
+                        'Please start client as Administrator.\nThis can be done by Right Click > Run as Administrator.');
+                    app.quit();
+                }
             });
         });
-    }
-
-    try {
-        await downloadFile();
         myreq.end();
-    // eslint-disable-next-line no-empty
-    } catch (e) {}
+    });
 }
 
 module.exports.autoUpdate = autoUpdate;
