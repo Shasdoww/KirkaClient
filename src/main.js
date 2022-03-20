@@ -712,7 +712,7 @@ async function initPlugins(webContents) {
         const srcDir = path.join(__dirname, '../node_modules');
         const destDir = node_modules;
         fs.writeFileSync(incomplete_init, 'DO NOT DELETE THIS FILE!');
-        fse.copy(srcDir, destDir, { overwrite: true }, function(err) {
+        fse.copySync(srcDir, destDir, { overwrite: true }, function(err) {
             if (err)
                 console.error(err);
             else {
