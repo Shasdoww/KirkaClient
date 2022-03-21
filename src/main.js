@@ -711,12 +711,24 @@ async function initPlugins(webContents) {
     const fileDir = path.join(app.getPath('documents'), '/KirkaClient/plugins');
     log.info('fileDir', fileDir);
     const node_modules = path.join(fileDir, 'node_modules');
-    if (!fs.existsSync(node_modules)) {
+    try {
+        console.log('checking if', node_modules, 'exists');
+        const exists = (await fs.promises.lstat(node_modules)).isDirectory();
+        console.log('exists:', exists);
+        if (!exists)
+            throw 'Make';
+    } catch (err) {
+        // Make Dir and copy
+        console.log(err, 'making now.');
+        await fs.promises.mkdir(node_modules, { recursive: true });
+        console.log('made.');
         webContents.send('message', 'Configuring Plugins...');
         const srcDir = path.join(__dirname, '../node_modules');
-        const destDir = node_modules;
-        fse.copySync(srcDir, destDir, { overwrite: true, recursive: true });
+        console.log('copying from', srcDir, 'to', node_modules);
+        await fse.copy(srcDir, node_modules, { overwrite: true });
+        console.log('copying done');
     }
+    console.log('node_modules stuff done.');
     try {
         fs.mkdirSync(fileDir, { recursive: true });
     } catch (err) {
