@@ -712,23 +712,23 @@ async function initPlugins(webContents) {
     log.info('fileDir', fileDir);
     const node_modules = path.join(fileDir, 'node_modules');
     try {
-        console.log('checking if', node_modules, 'exists');
+        log.info('checking if', node_modules, 'exists');
         const exists = (await fs.promises.lstat(node_modules)).isDirectory();
-        console.log('exists:', exists);
+        log.info('exists:', exists);
         if (!exists)
             throw 'Make';
     } catch (err) {
         // Make Dir and copy
-        console.log(err, 'making now.');
+        log.info(err, 'making now.');
         await fs.promises.mkdir(node_modules, { recursive: true });
-        console.log('made.');
+        log.info('made.');
         webContents.send('message', 'Configuring Plugins...');
         const srcDir = path.join(__dirname, '../node_modules');
-        console.log('copying from', srcDir, 'to', node_modules);
+        log.info('copying from', srcDir, 'to', node_modules);
         await fse.copy(srcDir, node_modules, { overwrite: true });
-        console.log('copying done');
+        log.info('copying done');
     }
-    console.log('node_modules stuff done.');
+    log.info('node_modules stuff done.');
     try {
         fs.mkdirSync(fileDir, { recursive: true });
     } catch (err) {
