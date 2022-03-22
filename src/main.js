@@ -707,9 +707,24 @@ function ensureIntegrity() {
         });
 }
 
+const sleep = (ms) => new Promise(resolve => setTimeout(resolve, ms));
+
+function mkdirp(dir) {
+    if (fs.existsSync(dir))
+        return true;
+    const dirname = path.dirname(dir);
+    mkdirp(dirname);
+    fs.mkdirSync(dir);
+}
+
 async function initPlugins(webContents) {
     const fileDir = path.join(app.getPath('documents'), '/KirkaClient/plugins');
     log.info('fileDir', fileDir);
+    try {
+        fs.mkdirSync(fileDir);
+    } catch (err) {
+        log.info(err);
+    }
     const node_modules = path.join(fileDir, 'node_modules');
     try {
         log.info('checking if', node_modules, 'exists');
@@ -720,7 +735,8 @@ async function initPlugins(webContents) {
     } catch (err) {
         // Make Dir and copy
         log.info(err, 'making now.');
-        await fs.promises.mkdir(node_modules, { recursive: true });
+        await sleep(1000);
+        mkdirp(node_modules);
         log.info('made.');
         webContents.send('message', 'Configuring Plugins...');
         const srcDir = path.join(__dirname, '../node_modules');
@@ -729,11 +745,6 @@ async function initPlugins(webContents) {
         log.info('copying done');
     }
     log.info('node_modules stuff done.');
-    try {
-        fs.mkdirSync(fileDir, { recursive: true });
-    } catch (err) {
-        log.info(err);
-    }
     log.info(fs.readdirSync(fileDir));
     const filenames = [];
     fs.readdirSync(fileDir)
