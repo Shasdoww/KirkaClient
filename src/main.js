@@ -249,11 +249,17 @@ function ensureDirs() {
     const documents = app.getPath('documents');
     const appPath = path.join(documents, 'KirkaClient');
     const recorderPath = path.join(appPath, 'videos');
+    const fileDir = path.join(appPath, 'plugins');
+    const node_modules = path.join(fileDir, 'node_modules');
 
     if (!fs.existsSync(appPath))
         fs.mkdirSync(appPath);
     if (!fs.existsSync(recorderPath))
         fs.mkdirSync(recorderPath);
+    if (!fs.existsSync(fileDir))
+        fs.mkdirSync(fileDir);
+    if (!fs.existsSync(node_modules))
+        fs.mkdirSync(node_modules);
     win.webContents.send('logDir', appPath);
 }
 
@@ -707,39 +713,21 @@ function ensureIntegrity() {
         });
 }
 
-const sleep = (ms) => new Promise(resolve => setTimeout(resolve, ms));
-
-function mkdirp(dir) {
-    if (fs.existsSync(dir))
-        return true;
-    const dirname = path.dirname(dir);
-    mkdirp(dirname);
-    fs.mkdirSync(dir);
-}
-
 async function initPlugins(webContents) {
-    const fileDir = path.join(app.getPath('documents'), '/KirkaClient/plugins');
+    const fileDir = path.join(app.getPath('documents'), 'KirkaClient', 'plugins');
     log.info('fileDir', fileDir);
-    try {
-        fs.mkdirSync(fileDir);
-    } catch (err) {
-        log.info(err);
-    }
     const node_modules = path.join(fileDir, 'node_modules');
+    const srcDir = path.join(__dirname, '../node_modules');
     try {
         log.info('checking if', node_modules, 'exists');
-        const exists = (await fs.promises.lstat(node_modules)).isDirectory();
-        log.info('exists:', exists);
-        if (!exists)
+        const size = (await fs.promises.lstat(node_modules)).size;
+        const actualSize = (await fs.promises.lstat(srcDir)).size;
+        log.info(size, actualSize);
+        if (size < actualSize || size == 0)
             throw 'Make';
     } catch (err) {
         // Make Dir and copy
-        log.info(err, 'making now.');
-        await sleep(1000);
-        mkdirp(node_modules);
-        log.info('made.');
         webContents.send('message', 'Configuring Plugins...');
-        const srcDir = path.join(__dirname, '../node_modules');
         log.info('copying from', srcDir, 'to', node_modules);
         await fse.copy(srcDir, node_modules, { overwrite: true });
         log.info('copying done');
