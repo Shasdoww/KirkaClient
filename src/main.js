@@ -473,7 +473,7 @@ ipcMain.handle('downloadPlugin', async(ev, uuid) => {
 
                 res.on('end', () => {
                     try {
-                        const pluginsDir = path.join(app.getPath('documents'), '/KirkaClient/plugins');
+                        const pluginsDir = path.join(app.getPath('appData'), '/KirkaClient/plugins');
                         fs.writeFileSync(`${pluginsDir}/${uuid}.jsc`, a, 'binary');
                         resolve();
                     } catch (e) {
@@ -494,7 +494,7 @@ ipcMain.handle('downloadPlugin', async(ev, uuid) => {
 
                 res.on('end', () => {
                     try {
-                        const pluginsDir = path.join(app.getPath('documents'), '/KirkaClient/plugins');
+                        const pluginsDir = path.join(app.getPath('appData'), '/KirkaClient/plugins');
                         fs.writeFileSync(`${pluginsDir}/${uuid}.json`, a, 'binary');
                         resolve();
                     } catch (e) {
@@ -509,7 +509,7 @@ ipcMain.handle('downloadPlugin', async(ev, uuid) => {
 });
 
 ipcMain.handle('uninstallPlugin', (ev, uuid) => {
-    const fileDir = path.join(app.getPath('documents'), '/KirkaClient/plugins');
+    const fileDir = path.join(app.getPath('appData'), '/KirkaClient/plugins');
     log.info('Need to remove', uuid);
 
     if (!pluginIdentifier[uuid])
@@ -567,7 +567,7 @@ ipcMain.handle('allowedScripts', () => {
 });
 
 ipcMain.handle('scriptPath', () => {
-    return path.join(app.getPath('documents'), '/KirkaClient/plugins');
+    return path.join(app.getPath('appData'), '/KirkaClient/plugins');
 });
 
 ipcMain.handle('ensureIntegrity', () => {
@@ -592,7 +592,7 @@ function installUpdate(uuid) {
                 });
                 res.on('end', () => {
                     try {
-                        const pluginsDir = path.join(app.getPath('documents'), '/KirkaClient/plugins/', uuid + '.jsc');
+                        const pluginsDir = path.join(app.getPath('appData'), '/KirkaClient/plugins/', uuid + '.jsc');
                         fs.writeFileSync(pluginsDir, chunks, 'binary');
                     } catch (e) {
                         log.info(e);
@@ -618,7 +618,7 @@ function installUpdate(uuid) {
 
                 res.on('end', () => {
                     try {
-                        const pluginsDir = path.join(app.getPath('documents'), '/KirkaClient/plugins/', uuid + '.json');
+                        const pluginsDir = path.join(app.getPath('appData'), '/KirkaClient/plugins/', uuid + '.json');
                         fs.writeFileSync(pluginsDir, a, 'binary');
                     } catch (e) {
                         log.info(e);
@@ -683,7 +683,7 @@ function ensureScriptIntegrity(filePath, scriptUUID) {
 
 function ensureIntegrity() {
     allowedScripts.length = 0;
-    const fileDir = path.join(app.getPath('documents'), '/KirkaClient/plugins');
+    const fileDir = path.join(app.getPath('appData'), '/KirkaClient/plugins');
     try {
         fs.mkdirSync(fileDir, { recursive: true });
     // eslint-disable-next-line no-empty
@@ -712,24 +712,25 @@ function ensureIntegrity() {
 }
 
 async function initPlugins(webContents) {
-    const fileDir = path.join(app.getPath('documents'), 'KirkaClient', 'plugins');
+    const fileDir = path.join(app.getPath('appData'), 'KirkaClient', 'plugins');
     log.info('fileDir', fileDir);
     const node_modules = path.join(fileDir, 'node_modules');
     const srcDir = path.join(__dirname, '../node_modules');
+    const incomplete_init = path.join(node_modules, 'node_modules.lock');
     try {
         await fs.promises.mkdir(fileDir);
     } catch (err) {
         // DO nothing
     }
-    try {
+
+    if (!fs.existsSync(node_modules) || fs.existsSync(incomplete_init)) {
         await fs.promises.mkdir(node_modules, { recursive: true });
+        await fs.promises.writeFile(incomplete_init, 'DO NOT DELETE THIS!');
         webContents.send('message', 'Configuring Plugins...');
         log.info('copying from', srcDir, 'to', node_modules);
-        fse.copySync(srcDir, node_modules, { overwrite: true });
+        await fse.copy(srcDir, node_modules, { overwrite: true, recursive: true });
         log.info('copying done');
-    } catch (err) {
-        console.error(err);
-        // Make Dir and copy
+        await fs.promises.unlink(incomplete_init);
     }
     log.info('node_modules stuff done.');
     log.info(fs.readdirSync(fileDir));
