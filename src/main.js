@@ -728,7 +728,7 @@ async function initPlugins(webContents) {
         await fs.promises.writeFile(incomplete_init, 'DO NOT DELETE THIS!');
         webContents.send('message', 'Configuring Plugins...');
         log.info('copying from', srcDir, 'to', node_modules);
-        await fse.copy(srcDir, node_modules, { overwrite: true, recursive: true });
+        fse.copySync(srcDir, node_modules, { overwrite: true, recursive: true });
         log.info('copying done');
         await fs.promises.unlink(incomplete_init);
     }
