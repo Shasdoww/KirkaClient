@@ -29,7 +29,6 @@
     "v8-compile-cache": "^2.3.0"
   },
   "devDependencies": {
-    "electron": "9.4.4",
     "electron-builder": "22.10.5",
     "eslint": "^8.9.0",
     "yarn": "^1.22.17"

@@ -250,7 +250,7 @@ function ensureDirs() {
     const appPath = path.join(documents, 'KirkaClient');
     const recorderPath = path.join(appPath, 'videos');
     const fileDir = path.join(appPath, 'plugins');
-    const node_modules = path.join(fileDir, 'node_modules');
+    // const node_modules = path.join(fileDir, 'node_modules');
 
     if (!fs.existsSync(appPath))
         fs.mkdirSync(appPath);
@@ -258,8 +258,6 @@ function ensureDirs() {
         fs.mkdirSync(recorderPath);
     if (!fs.existsSync(fileDir))
         fs.mkdirSync(fileDir);
-    if (!fs.existsSync(node_modules))
-        fs.mkdirSync(node_modules);
     win.webContents.send('logDir', appPath);
 }
 
@@ -719,18 +717,19 @@ async function initPlugins(webContents) {
     const node_modules = path.join(fileDir, 'node_modules');
     const srcDir = path.join(__dirname, '../node_modules');
     try {
-        log.info('checking if', node_modules, 'exists');
-        const size = (await fs.promises.lstat(node_modules)).size;
-        const actualSize = (await fs.promises.lstat(srcDir)).size;
-        log.info(size, actualSize);
-        if (size < actualSize || size == 0)
-            throw 'Make';
+        await fs.promises.mkdir(fileDir);
     } catch (err) {
-        // Make Dir and copy
+        // DO nothing
+    }
+    try {
+        await fs.promises.mkdir(node_modules, { recursive: true });
         webContents.send('message', 'Configuring Plugins...');
         log.info('copying from', srcDir, 'to', node_modules);
-        await fse.copy(srcDir, node_modules, { overwrite: true });
+        fse.copySync(srcDir, node_modules, { overwrite: true });
         log.info('copying done');
+    } catch (err) {
+        console.error(err);
+        // Make Dir and copy
     }
     log.info('node_modules stuff done.');
     log.info(fs.readdirSync(fileDir));

@@ -48,3 +48,4 @@ files:
   - "!src/plugins/*.js"
   - "!src/plugins/*.jsc"
 # compression: store
+electronVersion: "17.2.0"
