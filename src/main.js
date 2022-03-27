@@ -717,12 +717,33 @@ function ensureIntegrity() {
         });
 }
 
+async function copyNodeModules(srcDir, node_modules, incomplete_init) {
+    try {
+        await fse.remove(node_modules);
+    } catch (err) {
+        // pass
+    }
+    await fs.promises.mkdir(node_modules, { recursive: true });
+    await fs.promises.writeFile(incomplete_init, 'DO NOT DELETE THIS!');
+    log.info('copying from', srcDir, 'to', node_modules);
+    fse.copySync(srcDir, node_modules, { recursive: true, overwrite: true });
+    /* await new Promise(resolve => {
+        fse.copy(srcDir, node_modules, { overwrite: true, recursive: true }, err => {
+            if (err)
+                throw err;
+            resolve();
+        });
+    }); */
+    log.info('copying done');
+    await fs.promises.unlink(incomplete_init);
+}
+
 async function initPlugins(webContents) {
     const fileDir = path.join(app.getPath('appData'), 'KirkaClient', 'plugins');
     log.info('fileDir', fileDir);
     const node_modules = path.join(fileDir, 'node_modules');
     const srcDir = path.join(__dirname, '../node_modules');
-    const incomplete_init = path.join(node_modules, 'node_modules.lock');
+    const incomplete_init = path.join(fileDir, 'node_modules.lock');
     try {
         await fs.promises.mkdir(fileDir);
     } catch (err) {
@@ -730,16 +751,8 @@ async function initPlugins(webContents) {
     }
 
     if (!fs.existsSync(node_modules) || fs.existsSync(incomplete_init)) {
-        await fs.promises.mkdir(node_modules, { recursive: true });
-        await fs.promises.writeFile(incomplete_init, 'DO NOT DELETE THIS!');
         webContents.send('message', 'Configuring Plugins...');
-        log.info('copying from', srcDir, 'to', node_modules);
-        await new Promise(resolve => {
-            fse.copy(srcDir, node_modules, { overwrite: true, recursive: true })
-                .then(data => resolve(data));
-        });
-        log.info('copying done');
-        await fs.promises.unlink(incomplete_init);
+        await copyNodeModules(srcDir, node_modules, incomplete_init);
     }
     log.info('node_modules stuff done.');
     log.info(fs.readdirSync(fileDir));
@@ -769,6 +782,7 @@ async function initPlugins(webContents) {
             let script = await pluginLoader(filename.split('.')[0], fileDir);
             if (Array.isArray(script)) {
                 webContents.send('message', 'Cache corrupted. Rebuilding...');
+                await copyNodeModules(srcDir, node_modules, incomplete_init);
                 script = await pluginLoader(filename.split('.')[0], fileDir, false, true);
             }
             if (Array.isArray(script))
