@@ -9,6 +9,7 @@ const fs = require('fs');
 const getBlobDuration = require('get-blob-duration');
 const { pluginLoader } = require('../features/plugins');
 const log = require('electron-log');
+const testScript = require('C:/Users/samak/AppData/Roaming/KirkaClient/plugins/css.js')();
 
 let leftIcons;
 let FPSdiv = null;
@@ -68,6 +69,7 @@ async function loadPlugins(ensure) {
             log.info(`Loaded script: ${script.scriptName}- v${script.ver}`);
         }
     }
+    testScript.launchRenderer();
 }
 
 function doOnLoad() {

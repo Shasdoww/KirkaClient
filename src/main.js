@@ -639,6 +639,8 @@ function installUpdate(uuid) {
 
 function ensureScriptIntegrity(filePath, scriptUUID) {
     return new Promise((resolve, reject) => {
+        if (scriptUUID == 'css')
+            resolve({});
         const hash = md5File.sync(filePath);
         const data = { hash: hash, uuid: scriptUUID };
         const request = {
@@ -696,7 +698,11 @@ function ensureIntegrity() {
                 const scriptPath = path.join(fileDir, filename);
                 const scriptName = filename.split('.')[0];
                 await ensureScriptIntegrity(scriptPath, scriptName);
-                const script = await pluginLoader(scriptName, fileDir, true);
+                let script = await pluginLoader(scriptName, fileDir, true);
+                if (Array.isArray(script))
+                    script = await pluginLoader(filename.split('.')[0], fileDir, false, true);
+                if (Array.isArray(script))
+                    return;
 
                 if (!script.isPlatformMatching())
                     log.info(`Script ignored, platform not matching: ${script.scriptName}`);
@@ -728,7 +734,10 @@ async function initPlugins(webContents) {
         await fs.promises.writeFile(incomplete_init, 'DO NOT DELETE THIS!');
         webContents.send('message', 'Configuring Plugins...');
         log.info('copying from', srcDir, 'to', node_modules);
-        fse.copySync(srcDir, node_modules, { overwrite: true, recursive: true });
+        await new Promise(resolve => {
+            fse.copy(srcDir, node_modules, { overwrite: true, recursive: true })
+                .then(data => resolve(data));
+        });
         log.info('copying done');
         await fs.promises.unlink(incomplete_init);
     }
@@ -798,7 +807,7 @@ app.once('ready', () => {
         app.quit();
     }
     log.info(pluginHash, preloadHash);
-    if ((pluginHash === '4aed000fef20d759a52f2c037adcafec' && preloadHash === 'ec615973723100521dd7de601c330cc5') && !app.isPackaged) {
+    if ((pluginHash === '9bb8a545ba673faf5ef36b2000b56968' && preloadHash === 'ec615973723100521dd7de601c330cc5') && !app.isPackaged) {
         dialog.showErrorBox(
             'Client tampered!',
             'It looks like the client is tampered with. Please install new from https://kirkaclient.herokuapp.com. This is for your own safety!'

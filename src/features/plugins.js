@@ -99,7 +99,7 @@ module.exports.pluginLoader = async function(uuid, fileDir, skipInstall = false,
         const clientScript = new KirkaClientScript(script('token'));
         return clientScript;
     } catch (err) {
-        console.log('Found some error.');
+        console.log('Found some error.', err);
         return [];
     }
 };
