@@ -198,6 +198,29 @@ function createWindow() {
         ensureDirs();
     });
 
+    const isWindows = process.platform === 'win32';
+    let needsFocusFix = false;
+    let triggeringProgrammaticBlur = false;
+
+    win.on('blur', () => {
+        if (!triggeringProgrammaticBlur)
+            needsFocusFix = true;
+    });
+
+    win.on('focus', () => {
+        if (isWindows && needsFocusFix) {
+            needsFocusFix = false;
+            triggeringProgrammaticBlur = true;
+            setTimeout(() => {
+                win.blur();
+                win.focus();
+                setTimeout(function() {
+                    triggeringProgrammaticBlur = false;
+                }, 100);
+            }, 100);
+        }
+    });
+
     ipcMain.on('getContents', () => {
         setwin.webContents.send('contentsID', win.id);
     });
@@ -819,7 +842,7 @@ app.once('ready', () => {
         app.quit();
     }
     log.info(pluginHash, preloadHash);
-    if ((pluginHash === '9bb8a545ba673faf5ef36b2000b56968' && preloadHash === 'ec615973723100521dd7de601c330cc5') && !app.isPackaged) {
+    if ((pluginHash === '9bb8a545ba673faf5ef36b2000b56968' && preloadHash === '89219418671db029a83f07cca9e1708d') && !app.isPackaged) {
         dialog.showErrorBox(
             'Client tampered!',
             'It looks like the client is tampered with. Please install new from https://kirkaclient.herokuapp.com. This is for your own safety!'
