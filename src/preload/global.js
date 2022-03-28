@@ -4,31 +4,14 @@ const { ipcRenderer, remote } = require('electron');
 const Store = require('electron-store');
 const config = new Store();
 // const fixwebm = require('../recorder/fix');
-const path = require('path');
-const fs = require('fs');
-const getBlobDuration = require('get-blob-duration');
 const { pluginLoader } = require('../features/plugins');
 const log = require('electron-log');
-const testScript = require('C:/Users/samak/AppData/Roaming/KirkaClient/plugins/css.js')();
 
 let leftIcons;
 let FPSdiv = null;
-let mediaRecorder = null;
-let filepath = '';
-let starttime;
-let pausetime;
-let pause;
-let totalPause = 0;
-let recordedChunks = [];
-let recording = false;
-let paused = false;
 let badgesData;
 let settings;
 let isChatFocus = false;
-let logDir;
-ipcRenderer.on('logDir', (e, val) => {
-    logDir = val;
-});
 let matchCache = {};
 let oldState;
 let homeBadgeLoop;
@@ -69,7 +52,6 @@ async function loadPlugins(ensure) {
             log.info(`Loaded script: ${script.scriptName}- v${script.ver}`);
         }
     }
-    testScript.launchRenderer();
 }
 
 function doOnLoad() {
@@ -532,15 +514,6 @@ function toggleChat() {
 
 window.addEventListener('keydown', function(event) {
     switch (event.key) {
-    case 'F1':
-        startRecording();
-        break;
-    case 'F2':
-        stopRecording(true);
-        break;
-    case 'F3':
-        stopRecording(false);
-        break;
     case 'Escape':
         addSettingsButton();
         break;
@@ -645,166 +618,6 @@ const hpObserver = new MutationObserver((data, observer) => {
         document.querySelector('#app > div.game-interface > div.desktop-game-interface > div.state > div.hp > div.hp-title.text-1').innerText = width;
     });
 });
-
-async function configMR() {
-    const clientWindow = remote.getCurrentWindow().getMediaSourceId();
-    const constraints = {
-        audio: {
-            mandatory: {
-                chromeMediaSource: 'desktop',
-                chromeMediaSourceId: clientWindow,
-            }
-        },
-        video: {
-            mandatory: {
-                chromeMediaSource: 'desktop',
-                chromeMediaSourceId: clientWindow,
-                minWidth: 1280,
-                maxWidth: 1920,
-                minHeight: 720,
-                maxHeight: 1080,
-                minFrameRate: 60
-            }
-        }
-    };
-    const options = {
-        videoBitsPerSecond: 3000000,
-        mimeType: 'video/webm; codecs=vp9'
-    };
-    const stream = await navigator.mediaDevices.getUserMedia(constraints);
-    mediaRecorder = new MediaRecorder(stream, options);
-    log.info('mR', mediaRecorder);
-    mediaRecorder.ondataavailable = (e) => { recordedChunks.push(e.data); };
-    mediaRecorder.onstop = handleStop;
-    mediaRecorder.onstart = () => {
-        log.info('started recording');
-        recording = true;
-    };
-    mediaRecorder.onpause = () => { paused = true; };
-    mediaRecorder.onresume = () => { paused = false; };
-    return mediaRecorder;
-}
-
-async function handleStop() {
-    recording = false;
-    if (starttime === undefined)
-        return;
-    const blob = new Blob(recordedChunks, {
-        type: 'video/mp4;'
-    });
-    log.info('handeling stop. starttime:', starttime, 'Date.now():', Date.now(), 'pause:', totalPause, 'duration', Date.now() - starttime - totalPause);
-    fixwebm(blob, Date.now() - starttime - totalPause, saveRecording);
-}
-
-async function startRecording() {
-    if (mediaRecorder === null) {
-        log.info('First Time: Configuring mR');
-        try {
-            const mR = await configMR();
-            log.info('Configurated!', mR);
-            mediaRecorder = mR;
-            startrec();
-        } catch (err) {
-            console.error(err);
-        }
-    } else if (recording) {
-        if (paused)
-            resumeRecording();
-        else
-            pauseRecording();
-    } else
-        startrec();
-}
-
-function pauseRecording() {
-    log.info('mR is paused!');
-    pausetime = Date.now() - starttime - totalPause;
-    try {
-        mediaRecorder.pause();
-        createBalloon('Recording Paused!');
-    } catch (e) {
-        console.error(e);
-    }
-    pause = Date.now();
-}
-
-function resumeRecording() {
-    log.info('mR is resumed!');
-    try {
-        mediaRecorder.resume();
-        createBalloon('Recording Resumed!');
-    } catch (e) {
-        console.error(e);
-    }
-    totalPause += Date.now() - pause;
-}
-
-let shouldSave = false;
-
-function stopRecording(save) {
-    if (!recording) {
-        createBalloon('No recording in progress!', 'error');
-        return;
-    }
-    if (mediaRecorder === undefined || mediaRecorder === null)
-        return;
-
-    if (save) {
-        const folderPath = path.join(logDir, 'videos');
-        log.info(folderPath);
-        if (!fs.existsSync(folderPath))
-            fs.mkdirSync(folderPath);
-        filepath = path.join(folderPath, `kirkaclient-${new Date(Date.now()).toDateString()}.mp4`);
-    }
-    shouldSave = save;
-    try {
-        if (paused)
-            mediaRecorder.resume();
-        mediaRecorder.stop();
-    } catch (e) {
-        console.error(e);
-    }
-}
-
-async function startrec() {
-    log.info('mR state:', mediaRecorder.state);
-    recordedChunks = [];
-    try {
-        mediaRecorder.start(500);
-    } catch (e) {
-        console.error(e);
-    }
-    createBalloon('Recording started!');
-    starttime = Date.now();
-    pause = 0;
-    totalPause = 0;
-    log.info('New mR state:', mediaRecorder.state);
-}
-
-function saveRecording(blob) {
-    log.info('In saveRecording');
-    getBlobDuration.default(blob).then(function(duration) {
-        log.info(duration + ' seconds');
-        if (isNaN(parseFloat(duration))) {
-            console.error('Broken duration detected, attempting fix...');
-            fixwebm(blob, 300000, saveRecording);
-        } else {
-            blob.arrayBuffer().then(buf => {
-                const buffer = Buffer.from(buf);
-                log.info('Filepath:', filepath);
-                if (filepath !== '')
-                    fs.writeFileSync(filepath, buffer);
-                if (shouldSave)
-                    createBalloon('Recording Saved!', 'success');
-                else
-                    createBalloon('Recording Cancelled', 'error');
-                log.info('Completed!');
-            });
-        }
-    }).catch(err => {
-        log.info(err);
-    });
-}
 
 ipcRenderer.on('twitch-msg', (event, userName, userColor, msg) => {
     genChatMsg(msg, userName, userColor);

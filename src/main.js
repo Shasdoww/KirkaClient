@@ -258,7 +258,7 @@ function ensureDirs() {
         fs.mkdirSync(recorderPath);
     if (!fs.existsSync(fileDir))
         fs.mkdirSync(fileDir);
-    win.webContents.send('logDir', appPath);
+    ipcMain.handle('logDir', () => { return appPath; });
 }
 
 function showChangeLogs() {
@@ -639,8 +639,6 @@ function installUpdate(uuid) {
 
 function ensureScriptIntegrity(filePath, scriptUUID) {
     return new Promise((resolve, reject) => {
-        if (scriptUUID == 'css')
-            resolve({});
         const hash = md5File.sync(filePath);
         const data = { hash: hash, uuid: scriptUUID };
         const request = {
