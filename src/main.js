@@ -198,29 +198,6 @@ function createWindow() {
         ensureDirs();
     });
 
-    const isWindows = process.platform === 'win32';
-    let needsFocusFix = false;
-    let triggeringProgrammaticBlur = false;
-
-    win.on('blur', () => {
-        if (!triggeringProgrammaticBlur)
-            needsFocusFix = true;
-    });
-
-    win.on('focus', () => {
-        if (isWindows && needsFocusFix) {
-            needsFocusFix = false;
-            triggeringProgrammaticBlur = true;
-            setTimeout(() => {
-                win.blur();
-                win.focus();
-                setTimeout(function() {
-                    triggeringProgrammaticBlur = false;
-                }, 100);
-            }, 100);
-        }
-    });
-
     ipcMain.on('getContents', () => {
         setwin.webContents.send('contentsID', win.id);
     });
@@ -367,6 +344,16 @@ function toggleDevTools() {
         isPassword: true
     });
 }
+
+ipcMain.handle('show-info', async(ev, title, details) => {
+    await dialog.showMessageBox({
+        title: title,
+        message: title,
+        detail: details,
+        type: 'info'
+    });
+    return 0;
+});
 
 ipcMain.on('prompt-return-value', (event, value) => {
     promptWindow.close();
