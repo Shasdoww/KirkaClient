@@ -2,14 +2,11 @@
 /* eslint-disable quotes */
 
 const fs = require('fs');
-const https = require('https');
 const log = require('electron-log');
-const { dialog } = require('electron');
-const md5File = require('md5-file');
 const path = require('path');
+const { v4: uuidv4 } = require('uuid');
 const { PluginManager } = require('live-plugin-manager');
 let manager;
-let tmpFile;
 require('bytenode');
 
 class KirkaClientScript {
@@ -59,38 +56,43 @@ module.exports.pluginLoader = async function(uuid, fileDir, skipInstall = false,
         });
     }
 
-    if (!tmpFile) {
-        tmpFile = path.join(fileDir, 'tmp.js');
-        fs.writeFileSync(tmpFile, '');
-    }
-
     if (!skipInstall) {
         const content = fs.readFileSync(scriptPath + '.json');
         const r = JSON.parse(content.toString());
         const modules = r.modules;
 
         log.info('Modules to install:', modules);
-        for (let i = 0; i < modules.length; i++) {
-            const mod = modules[i];
-            if (manager.alreadyInstalled(mod) || !force) {
+        for (const mod of modules) {
+            if (manager.alreadyInstalled(mod) && !force) {
                 log.info(mod, 'is already installed. Skipping.');
                 continue;
             }
-            const code = `const data = { success: true };
-            try {
-                require('${mod}');
-            } catch(err) {
-                data['success'] = false;
+            let need = {};
+            if (!force) {
+                log.info('Trying to check if', mod, 'is already installed via code.');
+                const code = `
+                const data = { success: true, path: '' };
+                try {
+                    require('${mod}');
+                    data['path'] = require.resolve('${mod}');
+                } catch(err) {
+                    data['success'] = false;
+                }
+                module.exports = data;
+                `;
+                log.info('Code to check:', code);
+                const fileName = `${uuidv4()}_${mod}_check.js`;
+                const filePath = path.join(fileDir, fileName);
+                log.info('Requiring filePath:', filePath);
+                await fs.promises.writeFile(filePath, code);
+                need = require(filePath);
+                await fs.promises.unlink(filePath);
+                log.info(need, 'for', mod, 'with force', force);
             }
-            module.exports = data;
-            `;
-            fs.writeFileSync(tmpFile, code);
-            const need = require(tmpFile);
-            log.info(need, 'for', mod, 'with force', force);
             if (!need.success || force) {
-                log.info('installing', mod);
+                log.info('Installing', mod);
                 await manager.install(mod);
-                log.info(mod, 'installed');
+                log.info(mod, 'installed successfully.');
             }
         }
     }
@@ -99,7 +101,7 @@ module.exports.pluginLoader = async function(uuid, fileDir, skipInstall = false,
         const clientScript = new KirkaClientScript(script('token'));
         return clientScript;
     } catch (err) {
-        console.log('Found some error.', err);
+        log.error('Found some error.', err);
         return [];
     }
 };

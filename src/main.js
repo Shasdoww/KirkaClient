@@ -725,16 +725,41 @@ function ensureIntegrity() {
         });
 }
 
+async function copyFolder(from, to) {
+    console.log(`[CF]: ${from} -> ${to}`);
+    try {
+        await fs.promises.mkdir(to);
+        console.log(`[CF]: ${to} created`);
+    } catch (err) {
+        console.log(err);
+        console.log(`[CF]: ${to} already exists`);
+        // EEXISTS
+    }
+    const files = await fs.promises.readdir(from);
+    for (const file of files) {
+        const fromPath = path.join(from, file);
+        const toPath = path.join(to, file);
+        const stat = await fs.promises.stat(fromPath);
+        if (stat.isDirectory()) {
+            // console.log(`[CF]: ${fromPath} is a directory`);
+            await copyFolder(fromPath, toPath);
+        } else {
+            // console.log(`[CF]: ${fromPath} is a file`);
+            await fs.promises.copyFile(fromPath, toPath);
+        }
+    }
+}
+
 async function copyNodeModules(srcDir, node_modules, incomplete_init) {
     try {
         await fse.remove(node_modules);
     } catch (err) {
-        // pass
+        console.log(err);
     }
     await fs.promises.mkdir(node_modules, { recursive: true });
     await fs.promises.writeFile(incomplete_init, 'DO NOT DELETE THIS!');
     log.info('copying from', srcDir, 'to', node_modules);
-    fse.copySync(srcDir, node_modules, { recursive: true, overwrite: true });
+    await copyFolder(srcDir, node_modules);
     /* await new Promise(resolve => {
         fse.copy(srcDir, node_modules, { overwrite: true, recursive: true }, err => {
             if (err)
@@ -829,7 +854,7 @@ app.once('ready', () => {
         app.quit();
     }
     log.info(pluginHash, preloadHash);
-    if ((pluginHash === '9bb8a545ba673faf5ef36b2000b56968' && preloadHash === '89219418671db029a83f07cca9e1708d') && !app.isPackaged) {
+    if ((pluginHash === '34f96990dbc87eb9c81adfeb0876d005' && preloadHash === '89219418671db029a83f07cca9e1708d') && !app.isPackaged) {
         dialog.showErrorBox(
             'Client tampered!',
             'It looks like the client is tampered with. Please install new from https://kirkaclient.herokuapp.com. This is for your own safety!'
