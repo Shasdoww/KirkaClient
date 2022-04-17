@@ -2,7 +2,6 @@ release-builds/
 node_modules/
 .vs/
 data/
-*.bat
 resources/
 dist/
 *.asar

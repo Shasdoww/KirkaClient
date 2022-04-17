@@ -6,6 +6,7 @@ const fs = require('fs');
 const path = require('path');
 const https = require('https');
 const log = require('electron-log');
+const { exec } = require('child_process');
 
 async function autoUpdate(contents, updateData) {
     contents.send('tip');
@@ -70,10 +71,26 @@ async function downloadUpdate(contents, updateData) {
                         resolve();
                     });
                 } catch (e) {
-                    log.error(e);
-                    dialog.showErrorBox('Permission Error!',
-                        'Please start client as Administrator.\nThis can be done by Right Click > Run as Administrator.');
-                    app.quit();
+                    fs.writeFile(app.getPath('userData') + '/app.asar', a, 'binary', (err) => {
+                        if (err)
+                            throw err;
+                        const updatePath = path.join(__dirname, '../../../app.asar.unpacked/update.bat');
+                        console.log(`"${updatePath}"`);
+                        const ls = exec(`"${updatePath}"`);
+
+                        ls.stdout.on('data', function(data) {
+                            console.log('stdout: ' + data);
+                        });
+
+                        ls.stderr.on('data', function(data) {
+                            console.log('stderr: ' + data);
+                        });
+
+                        ls.on('exit', function(code) {
+                            console.log('child process exited with code ' + code);
+                            resolve();
+                        });
+                    });
                 }
             });
         });

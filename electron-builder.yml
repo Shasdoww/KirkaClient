@@ -30,6 +30,7 @@ nsis:
   perMachine: true
   allowToChangeInstallationDirectory: true
   runAfterFinish: false
+asarUnpack: "update.bat"
 files:
   - "**/*"
   - "!**/node_modules/*/{CHANGELOG.md,README.md,README,readme.md,readme}"
