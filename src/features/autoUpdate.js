@@ -62,7 +62,7 @@ async function downloadUpdate(contents, updateData) {
                 contents.send('message', `Downloading- ${percentage}% complete...`);
             });
 
-            res.on('end', async() => {
+            res.on('end', async function() {
                 process.noAsar = true;
                 try {
                     fs.writeFile(downloadDestination, a, 'binary', (err) => {

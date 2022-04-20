@@ -156,7 +156,7 @@ async function loadScripts() {
     }
 }
 
-document.addEventListener('DOMContentLoaded', async() => {
+document.addEventListener('DOMContentLoaded', async function() {
     log.info('DOM Loaded');
     const check = document.getElementsByClassName('plugin-frame');
     if (check.length > 0) {

@@ -848,13 +848,25 @@ function rebootClient() {
     app.quit();
 }
 
-app.once('ready', () => {
+app.once('ready', async function() {
     if (fs.existsSync(abcFile)) {
         dialog.showErrorBox('Banned!', 'You are banned from using the client.');
         app.quit();
     }
+    if (!config.has('terms')) {
+        const res = await dialog.showMessageBox({
+            type: 'info',
+            title: 'Terms of Service',
+            message: 'By using this client, you agree to our terms and services.\nThey can be found at https://kirkaclient.herokuapp.com/terms',
+            buttons: ['I agree', 'I disagree'],
+        });
+        if (res.response == 1)
+            app.quit();
+        else
+            config.set('terms', true);
+    }
     log.info(pluginHash, preloadHash);
-    if ((pluginHash === '34f96990dbc87eb9c81adfeb0876d005' && preloadHash === '89219418671db029a83f07cca9e1708d') && !app.isPackaged) {
+    if ((pluginHash === '34f96990dbc87eb9c81adfeb0876d005' && preloadHash === '85272f4d6b02cf84006c7969c14c42a6') && !app.isPackaged) {
         dialog.showErrorBox(
             'Client tampered!',
             'It looks like the client is tampered with. Please install new from https://kirkaclient.herokuapp.com. This is for your own safety!'
