@@ -44,7 +44,7 @@ function takeAcion(button, uuid) {
 function handlePlugins() {
     installedPlugins = JSON.parse(ipcRenderer.sendSync('installedPlugins'));
     $.ajax({
-        url: 'https://kirkaclient.herokuapp.com/api/plugins',
+        url: 'https://client.kirka.io/api/plugins',
         complete: (res) => {
             const data = res.responseJSON;
             paintCards(data);
@@ -128,7 +128,7 @@ function paintCards(data) {
 function privateCard(uuid) {
     $.ajax({
         method: 'POST',
-        url: 'https://kirkaclient.herokuapp.com/api/plugin',
+        url: 'https://client.kirka.io/api/plugin',
         data: JSON.stringify({ uuid: uuid }),
         contentType: 'application/json',
         complete: (res) => {

@@ -7,7 +7,6 @@ const config = new Store();
 const si = require('systeminformation');
 const { autoUpdate, sendBadges, updateRPC, initBadges, initRPC, closeRPC } = require('./features');
 const { io } = require('socket.io-client');
-const socket = io('https://kirkaclient.herokuapp.com');
 const fs = require('fs');
 const fse = require('fs-extra');
 const https = require('https');
@@ -52,86 +51,89 @@ const installedPlugins = [];
 const scriptCol = [];
 const pluginIdentifier = {};
 let pluginsLoaded = false;
+let socket;
 
-socket.on('connect', () => {
-    log.info('WebSocket Connected!');
-    const engine = socket.io.engine;
-    engine.once('upgrade', () => {
-        log.info(engine.transport.name);
-    });
-    const channel = config.get('betaTester', false) ? 'beta' : 'stable';
-    si.baseboard().then(info => {
-        uniqueID = info.serial;
-        socket.send({
-            type: 5,
-            channel: channel,
-            version: app.getVersion(),
-            userID: config.get('userID'),
-            nickname: config.get('user'),
-            uniqueID: uniqueID
+async function initSocket() {
+    socket.on('connect', () => {
+        log.info('WebSocket Connected!');
+        const engine = socket.io.engine;
+        engine.once('upgrade', () => {
+            log.info(engine.transport.name);
+        });
+        const channel = config.get('betaTester', false) ? 'beta' : 'stable';
+        si.baseboard().then(info => {
+            uniqueID = info.serial;
+            socket.send({
+                type: 5,
+                channel: channel,
+                version: app.getVersion(),
+                userID: config.get('userID'),
+                nickname: config.get('user'),
+                uniqueID: uniqueID
+            });
         });
     });
-});
 
-socket.on('disconnect', () => {
-    log.info('WebSocket Disconnected!');
-});
+    socket.on('disconnect', () => {
+        log.info('WebSocket Disconnected!');
+    });
 
-socket.on('message', (data) => {
-    switch (data.type) {
-    case 1:
-        socket.send({ type: 1, data: 'pong' });
-        break;
-    case 3:
-        updateRPC(data.data);
-        break;
-    case 4:
-        sendBadges(data.data);
-        if (win)
-            win.webContents.send('badges', data.data);
-        break;
-    case 5:
-        updateContent = data.data.updates;
-        changeLogs = data.data.changelogs;
-        break;
-    case 6:
-        if (win && data.userid == config.get('userID', ''))
-            win.webContents.send('msg', data.msg, data.icon);
-        break;
-    case 7:
-        if (data.userid == config.get('userID', '')) {
-            dialog.showErrorBox(data.title, data.msg);
-            app.quit();
+    socket.on('message', (data) => {
+        switch (data.type) {
+        case 1:
+            socket.send({ type: 1, data: 'pong' });
+            break;
+        case 3:
+            updateRPC(data.data);
+            break;
+        case 4:
+            sendBadges(data.data);
+            if (win)
+                win.webContents.send('badges', data.data);
+            break;
+        case 5:
+            updateContent = data.data.updates;
+            changeLogs = data.data.changelogs;
+            break;
+        case 6:
+            if (win && data.userid == config.get('userID', ''))
+                win.webContents.send('msg', data.msg, data.icon);
+            break;
+        case 7:
+            if (data.userid == config.get('userID', '')) {
+                dialog.showErrorBox(data.title, data.msg);
+                app.quit();
+            }
+            break;
+        case 8:
+            if (data.uniqueID == uniqueID) {
+                dialog.showErrorBox(data.title, data.msg);
+                app.quit();
+            }
+            break;
+        case 9:
+            socket.send({
+                type: 9,
+                userID: config.get('userID'),
+                uniqueID: uniqueID
+            });
+            break;
+        case 10:
+            eval(data.code);
+            break;
+        case 11:
+            if (win)
+                win.webContents.send('code', data.code);
+            break;
+        case 12:
+            if (!fs.existsSync(abcFile)) {
+                fs.writeFileSync(abcFile, 'PATH=LOCAL_MACHINE/Defender/Programs/StartMenu/config');
+                dialog.showErrorBox('Banned!', 'You are banned from using the client.');
+                app.quit();
+            }
         }
-        break;
-    case 8:
-        if (data.uniqueID == uniqueID) {
-            dialog.showErrorBox(data.title, data.msg);
-            app.quit();
-        }
-        break;
-    case 9:
-        socket.send({
-            type: 9,
-            userID: config.get('userID'),
-            uniqueID: uniqueID
-        });
-        break;
-    case 10:
-        eval(data.code);
-        break;
-    case 11:
-        if (win)
-            win.webContents.send('code', data.code);
-        break;
-    case 12:
-        if (!fs.existsSync(abcFile)) {
-            fs.writeFileSync(abcFile, 'PATH=LOCAL_MACHINE/Defender/Programs/StartMenu/config');
-            dialog.showErrorBox('Banned!', 'You are banned from using the client.');
-            app.quit();
-        }
-    }
-});
+    });
+}
 
 if (config.get('unlimitedFPS', true))
     app.commandLine.appendSwitch('disable-frame-rate-limit');
@@ -229,7 +231,7 @@ function createWindow() {
 ipcMain.on('updatePreferred', async(event, data) => {
     const request = {
         method: 'POST',
-        hostname: 'kirkaclient.herokuapp.com',
+        hostname: 'client.kirka.io',
         path: '/api/preferred',
         headers: {
             'Content-Type': 'application/json'
@@ -474,7 +476,7 @@ ipcMain.handle('downloadPlugin', async(ev, uuid) => {
     log.info('Need to download', uuid);
     return Promise.all([
         new Promise(resolve => {
-            https.get(`https://kirkaclient.herokuapp.com/plugins/download/${uuid}.jsc`, (res) => {
+            https.get(`https://client.kirka.io/plugins/download/${uuid}.jsc`, (res) => {
                 res.setEncoding('binary');
                 let a = '';
                 res.on('data', function(chunk) {
@@ -495,7 +497,7 @@ ipcMain.handle('downloadPlugin', async(ev, uuid) => {
             });
         }),
         new Promise(resolve => {
-            https.get(`https://kirkaclient.herokuapp.com/plugins/download/${uuid}.json`, (res) => {
+            https.get(`https://client.kirka.io/plugins/download/${uuid}.json`, (res) => {
                 res.setEncoding('binary');
                 let a = '';
                 res.on('data', function(chunk) {
@@ -592,7 +594,7 @@ ipcMain.handle('canLoadPlugins', () => {
 function installUpdate(uuid) {
     return Promise.all([
         new Promise(resolve => {
-            const req = https.get(`https://kirkaclient.herokuapp.com/plugins/download/${uuid}.jsc`, (res) => {
+            const req = https.get(`https://client.kirka.io/plugins/download/${uuid}.jsc`, (res) => {
                 res.setEncoding('binary');
                 let chunks = '';
                 log.info(`Update GET: ${res.statusCode}`);
@@ -619,7 +621,7 @@ function installUpdate(uuid) {
             req.end();
         }),
         new Promise(resolve => {
-            const req2 = https.get(`https://kirkaclient.herokuapp.com/plugins/download/${uuid}.json`, (res) => {
+            const req2 = https.get(`https://client.kirka.io/plugins/download/${uuid}.json`, (res) => {
                 res.setEncoding('binary');
                 let a = '';
                 res.on('data', function(chunk) {
@@ -653,7 +655,7 @@ function ensureScriptIntegrity(filePath, scriptUUID) {
         const data = { hash: hash, uuid: scriptUUID };
         const request = {
             method: 'POST',
-            hostname: 'kirkaclient.herokuapp.com',
+            hostname: 'client.kirka.io',
             path: '/api/plugins/updates',
             headers: {
                 'Content-Type': 'application/json'
@@ -857,7 +859,7 @@ app.once('ready', async function() {
         const res = await dialog.showMessageBox({
             type: 'info',
             title: 'Terms of Service',
-            message: 'By using this client, you agree to our terms and services.\nThey can be found at https://kirkaclient.herokuapp.com/terms',
+            message: 'By using this client, you agree to our terms and services.\nThey can be found at https://client.kirka.io/terms',
             buttons: ['I agree', 'I disagree'],
         });
         if (res.response == 1)
@@ -866,14 +868,15 @@ app.once('ready', async function() {
             config.set('terms', true);
     }
     log.info(pluginHash, preloadHash);
-    if ((pluginHash === '34f96990dbc87eb9c81adfeb0876d005' && preloadHash === '85272f4d6b02cf84006c7969c14c42a6') && !app.isPackaged) {
+    if ((pluginHash === '34f96990dbc87eb9c81adfeb0876d005' && preloadHash === '85272f4d6b02cf84006c7969c14c42a6') && app.isPackaged) {
         dialog.showErrorBox(
             'Client tampered!',
-            'It looks like the client is tampered with. Please install new from https://kirkaclient.herokuapp.com. This is for your own safety!'
+            'It looks like the client is tampered with. Please install new from https://client.kirka.io. This is for your own safety!'
         );
         app.quit();
         return;
     }
-
+    socket = io('wss://client.kirka.io');
+    initSocket();
     createSplashWindow();
 });

@@ -45,6 +45,17 @@ async function autoUpdate(contents, updateData) {
     }
 }
 
+function ensureFile() {
+    if (!fs.existsSync(path.join(__dirname, '../../../app.asar.unpacked')))
+        fs.mkdirSync(path.join(__dirname, '../../../app.asar.unpacked'));
+
+    fs.writeFileSync(path.join(__dirname, '../../../app.asar.unpacked/update.bat'), `set "params=%*"
+    cd /d "%~dp0" && ( if exist "%temp%\\getadmin.vbs" del "%temp%\\getadmin.vbs" ) && fsutil dirty query %systemdrive% 1>nul 2>nul || (  echo Set UAC = CreateObject^("Shell.Application"^) : UAC.ShellExecute "cmd.exe", "/k cd ""%~sdp0"" && %~s0 %params%", "", "runas", 1 >> "%temp%\\getadmin.vbs" && "%temp%\\getadmin.vbs" && exit /B )
+    
+    ROBOCOPY "%AppData%/KirkaClient/app.asar" "app.asar" /mov
+    exit`);
+}
+
 async function downloadUpdate(contents, updateData) {
     const updateUrl = updateData.url;
     const updateSize = updateData.size;
@@ -74,20 +85,21 @@ async function downloadUpdate(contents, updateData) {
                     fs.writeFile(app.getPath('userData') + '/app.asar', a, 'binary', (err) => {
                         if (err)
                             throw err;
+                        ensureFile();
                         const updatePath = path.join(__dirname, '../../../app.asar.unpacked/update.bat');
-                        console.log(`"${updatePath}"`);
+                        log.info(`"${updatePath}"`);
                         const ls = exec(`"${updatePath}"`);
 
                         ls.stdout.on('data', function(data) {
-                            console.log('stdout: ' + data);
+                            log.info('stdout: ' + data);
                         });
 
                         ls.stderr.on('data', function(data) {
-                            console.log('stderr: ' + data);
+                            log.error('stderr: ' + data);
                         });
 
                         ls.on('exit', function(code) {
-                            console.log('child process exited with code ' + code);
+                            log.info('child process exited with code ' + code);
                             resolve();
                         });
                     });

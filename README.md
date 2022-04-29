@@ -18,7 +18,7 @@
 
 # Download
 
-You can download the client from our [website](https://kirkaclient.herokuapp.com/). Note: We only support Windows & Linux `x64` architecture only.
+You can download the client from our [website](https://client.kirka.io/). Note: We only support Windows & Linux `x64` architecture only.
 
 <br>
 

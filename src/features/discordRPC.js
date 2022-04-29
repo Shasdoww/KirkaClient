@@ -92,7 +92,7 @@ function notPlaying(state) {
         instance: true,
         startTimestamp: starttime,
         buttons: [
-            { label: 'Get KirkaClient', url: 'https://kirkaclient.herokuapp.com' }
+            { label: 'Get KirkaClient', url: 'https://client.kirka.io' }
         ]
     });
 }
@@ -132,14 +132,14 @@ function updateClient(data, type) {
     case 'game':
         updateData['buttons'] = [
             { label: 'Join Game', url: data.url },
-            { label: 'Get KirkaClient', url: 'https://kirkaclient.herokuapp.com' }
+            { label: 'Get KirkaClient', url: 'https://client.kirka.io' }
         ];
         updateData['details'] = `Playing ${data.mode}`;
         updateData['state'] = `${data.map} (${data.cap})`;
         break;
     case 'private':
         updateData['buttons'] = [
-            { label: 'Get KirkaClient', url: 'https://kirkaclient.herokuapp.com' }
+            { label: 'Get KirkaClient', url: 'https://client.kirka.io' }
         ];
         updateData['details'] = data.mode;
         break;
