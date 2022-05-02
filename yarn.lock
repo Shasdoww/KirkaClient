@@ -788,7 +788,7 @@
   dependencies:
     "jake" "^10.6.1"
 
-"electron-builder@22.10.5":
+"electron-builder@^22.10.5":
   "integrity" "sha512-0q/289UUJUhRou6lZKDz/wzK6WprIQ6VXMTmaI+w9qXvSNugPC9UA5s2zXInOkjZOvO/xKnjeyiavrVSHYF3tA=="
   "resolved" "https://registry.npmjs.org/electron-builder/-/electron-builder-22.10.5.tgz"
   "version" "22.10.5"

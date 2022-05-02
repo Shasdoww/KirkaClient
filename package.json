@@ -9,7 +9,7 @@
   "scripts": {
     "start": "electron .",
     "dev": "set ELECTRON_ENABLE_LOGGING=true && set DEV_MODE=true && electron .",
-    "dist": "electron-builder"
+    "dist": "electron-builder -w"
   },
   "author": "AwesomeSam",
   "license": "ISC",
@@ -30,7 +30,7 @@
   },
   "devDependencies": {
     "electron": "^9.4.4",
-    "electron-builder": "22.10.5",
+    "electron-builder": "^22.10.5",
     "eslint": "^8.9.0",
     "yarn": "^1.22.17"
   },
