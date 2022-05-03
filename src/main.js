@@ -540,27 +540,18 @@ async function installUpdate(pluginPath, uuid) {
     await downloadPlugin(uuid);
 }
 
-async function unzipFile(zip, folderName) {
-    const fileBuffer = fs.promises.readFile(zip);
+async function unzipFile(zip) {
+    const fileBuffer = await fs.promises.readFile(zip);
     const pluginPath = path.join(app.getPath('appData'), '/KirkaClient/plugins');
     const newZip = new JSZip();
 
-    const zipFile = await newZip.loadAsync(fileBuffer);
-    const plugin = zipFile.generateNodeStream({
-        streamFiles: true,
-        compression: 'DEFLATE',
-        compressionOptions: {
-            level: 9
-        }
-    });
-    log.info('Creating write stream @', path.join(pluginPath, folderName.replace('.zip', '')));
-    const writeStream = fs.createWriteStream(path.join(pluginPath, folderName.replace('.zip', '')));
-    plugin.pipe(writeStream);
-    log.info('piped');
-    await new Promise((resolve, reject) => {
-        plugin.on('end', resolve);
-        plugin.on('error', reject);
-    });
+    const contents = await newZip.loadAsync(fileBuffer);
+    for (const filename of Object.keys(contents.files)) {
+        const content = await newZip.file(filename).async('nodebuffer');
+        const dest = path.join(pluginPath, filename);
+        await fse.ensureDir(path.dirname(dest));
+        await fs.promises.writeFile(dest, content);
+    }
 }
 
 async function downloadPlugin(uuid) {
@@ -577,7 +568,7 @@ async function downloadPlugin(uuid) {
                 try {
                     const pluginsDir = path.join(app.getPath('appData'), '/KirkaClient/plugins/', filename);
                     await fs.promises.writeFile(pluginsDir, chunks, 'binary');
-                    await unzipFile(pluginsDir, filename);
+                    await unzipFile(pluginsDir);
                     await fse.remove(pluginsDir);
                     log.info(`Plugin ${filename} downloaded`);
                 } catch (e) {
