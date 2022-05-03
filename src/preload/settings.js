@@ -5,6 +5,8 @@ const allSettings = require('../features/customSettings');
 const { ipcRenderer } = require('electron');
 const { pluginLoader } = require('../features/plugins');
 const log = require('electron-log');
+const fs = require('fs');
+const path = require('path');
 let installedPlugins = {};
 
 ipcRenderer.on('make-settings', () => {
@@ -140,19 +142,42 @@ function privateCard(uuid) {
 
 const loadedScripts = [];
 
-function getKeyByValue(object, value) {
-    return Object.keys(object).find(key => object[key] === value);
+async function getDirectories(source) {
+    return (await fs.promises.readdir(source, { withFileTypes: true }))
+        .filter(dirent => dirent.isDirectory() && dirent.name !== 'node_modules')
+        .map(dirent => dirent.name);
 }
 
 async function loadScripts() {
     const scripts = JSON.parse(await ipcRenderer.invoke('allowedScripts'));
     const fileDir = await ipcRenderer.invoke('scriptPath');
     const uuids = Object.keys(scripts);
+    console.log(uuids);
+    const filenames = [];
+    const dirs = await getDirectories(fileDir);
 
-    for (let i = 0; i < uuids.length; i++) {
-        const scriptUUID = getKeyByValue(scripts, uuids[i]);
-        const script = await pluginLoader(scriptUUID, fileDir, true);
-        loadedScripts.push(script);
+    for (const dir of dirs) {
+        const packageFile = path.join(fileDir, dir, 'package.json');
+        if (fs.existsSync(packageFile)) {
+            const packageJson = JSON.parse(fs.readFileSync(packageFile));
+            if (uuids.includes(packageJson.uuid))
+                filenames.push([dir, packageJson]);
+        } else {
+            log.info('No package.json');
+            continue;
+        }
+    }
+    log.info('filenames', filenames);
+    for (const [dir, packageJson] of filenames) {
+        try {
+            const script = await pluginLoader(packageJson.uuid, dir, packageJson, true);
+            if (Array.isArray(script))
+                continue;
+
+            loadedScripts.push(script);
+        } catch (err) {
+            log.error(err);
+        }
     }
 }
 

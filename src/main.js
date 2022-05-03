@@ -9,8 +9,9 @@ const { autoUpdate, sendBadges, updateRPC, initBadges, initRPC, closeRPC } = req
 const { io } = require('socket.io-client');
 const fs = require('fs');
 const fse = require('fs-extra');
-const https = require('https');
+const https = require('http');
 const log = require('electron-log');
+const JSZip = require('jszip');
 const prompt = require('./features/promptManager');
 const { pluginLoader } = require('./features/plugins');
 log.transports.file.getFile().clear();
@@ -50,6 +51,7 @@ const allowedScripts = [];
 const installedPlugins = [];
 const scriptCol = [];
 const pluginIdentifier = {};
+const pluginIdentifier2 = {};
 let pluginsLoaded = false;
 let socket;
 
@@ -88,7 +90,7 @@ async function initSocket() {
             break;
         case 4:
             sendBadges(data.data);
-            if (win)
+            if (win && !win.destroyed)
                 win.webContents.send('badges', data.data);
             break;
         case 5:
@@ -465,72 +467,19 @@ ipcMain.on('reboot', () => {
     rebootClient();
 });
 
-function showRunAsAdmin() {
-    dialog.showErrorBox(
-        'Permission Error!',
-        'Please start client as Administrator.\nThis can be done by Right Click > Run as Administrator.'
-    );
-}
-
 ipcMain.handle('downloadPlugin', async(ev, uuid) => {
     log.info('Need to download', uuid);
-    return Promise.all([
-        new Promise(resolve => {
-            https.get(`https://client.kirka.io/plugins/download/${uuid}.jsc`, (res) => {
-                res.setEncoding('binary');
-                let a = '';
-                res.on('data', function(chunk) {
-                    a += chunk;
-                });
-
-                res.on('end', () => {
-                    try {
-                        const pluginsDir = path.join(app.getPath('appData'), '/KirkaClient/plugins');
-                        fs.writeFileSync(`${pluginsDir}/${uuid}.jsc`, a, 'binary');
-                        resolve();
-                    } catch (e) {
-                        log.info(e);
-                        showRunAsAdmin();
-                        app.quit();
-                    }
-                });
-            });
-        }),
-        new Promise(resolve => {
-            https.get(`https://client.kirka.io/plugins/download/${uuid}.json`, (res) => {
-                res.setEncoding('binary');
-                let a = '';
-                res.on('data', function(chunk) {
-                    a += chunk;
-                });
-
-                res.on('end', () => {
-                    try {
-                        const pluginsDir = path.join(app.getPath('appData'), '/KirkaClient/plugins');
-                        fs.writeFileSync(`${pluginsDir}/${uuid}.json`, a, 'binary');
-                        resolve();
-                    } catch (e) {
-                        log.info(e);
-                        showRunAsAdmin();
-                        app.quit();
-                    }
-                });
-            });
-        })
-    ]);
+    await downloadPlugin(uuid);
 });
 
-ipcMain.handle('uninstallPlugin', (ev, uuid) => {
-    const fileDir = path.join(app.getPath('appData'), '/KirkaClient/plugins');
+ipcMain.handle('uninstallPlugin', async(ev, uuid) => {
     log.info('Need to remove', uuid);
 
     if (!pluginIdentifier[uuid])
         return { success: false };
 
-    const scriptPath = path.join(fileDir, pluginIdentifier[uuid]);
-
-    fs.unlinkSync(scriptPath + '.jsc');
-    fs.unlinkSync(scriptPath + '.json');
+    const scriptPath = pluginIdentifier[uuid][1];
+    await fse.unlink(scriptPath);
     installedPlugins.splice(installedPlugins.indexOf(uuid), 1);
     return { success: true };
 });
@@ -557,21 +506,12 @@ function createSettings() {
 
     setwin.removeMenu();
     setwin.loadFile(path.join(__dirname, 'settings/settings.html'));
-    // setwin.webContents.openDevTools();
+    setwin.webContents.openDevTools();
     // setwin.setResizable(false)
 
     setwin.on('close', () => {
         setwin = null;
     });
-}
-
-
-function showUnauthScript(filename) {
-    log.info(
-        'Unauthorized Script Loaded.',
-        `You have attempted to load an unauthorized script named "${filename}".
-Remove it from the folder to prevent this dialog.`
-    );
 }
 
 ipcMain.handle('allowedScripts', () => {
@@ -591,62 +531,67 @@ ipcMain.handle('canLoadPlugins', () => {
     return pluginsLoaded;
 });
 
-function installUpdate(uuid) {
-    return Promise.all([
-        new Promise(resolve => {
-            const req = https.get(`https://client.kirka.io/plugins/download/${uuid}.jsc`, (res) => {
-                res.setEncoding('binary');
-                let chunks = '';
-                log.info(`Update GET: ${res.statusCode}`);
+async function installUpdate(pluginPath, uuid) {
+    try {
+        await fse.remove(pluginPath);
+    } catch (e) {
+        log.info(e);
+    }
+    await downloadPlugin(uuid);
+}
 
-                res.on('data', (chunk) => {
-                    chunks += chunk;
-                });
-                res.on('end', () => {
-                    try {
-                        const pluginsDir = path.join(app.getPath('appData'), '/KirkaClient/plugins/', uuid + '.jsc');
-                        fs.writeFileSync(pluginsDir, chunks, 'binary');
-                    } catch (e) {
-                        log.info(e);
-                        showRunAsAdmin();
-                        app.quit();
-                    } finally {
-                        resolve();
-                    }
-                });
-            });
-            req.on('error', error => {
-                log.error(`Update Error: ${error}`);
-            });
-            req.end();
-        }),
-        new Promise(resolve => {
-            const req2 = https.get(`https://client.kirka.io/plugins/download/${uuid}.json`, (res) => {
-                res.setEncoding('binary');
-                let a = '';
-                res.on('data', function(chunk) {
-                    a += chunk;
-                });
+async function unzipFile(zip, folderName) {
+    const fileBuffer = fs.promises.readFile(zip);
+    const pluginPath = path.join(app.getPath('appData'), '/KirkaClient/plugins');
+    const newZip = new JSZip();
 
-                res.on('end', () => {
-                    try {
-                        const pluginsDir = path.join(app.getPath('appData'), '/KirkaClient/plugins/', uuid + '.json');
-                        fs.writeFileSync(pluginsDir, a, 'binary');
-                    } catch (e) {
-                        log.info(e);
-                        showRunAsAdmin();
-                        app.quit();
-                    } finally {
-                        resolve();
-                    }
-                });
+    const zipFile = await newZip.loadAsync(fileBuffer);
+    const plugin = zipFile.generateNodeStream({
+        streamFiles: true,
+        compression: 'DEFLATE',
+        compressionOptions: {
+            level: 9
+        }
+    });
+    log.info('Creating write stream @', path.join(pluginPath, folderName.replace('.zip', '')));
+    const writeStream = fs.createWriteStream(path.join(pluginPath, folderName.replace('.zip', '')));
+    plugin.pipe(writeStream);
+    log.info('piped');
+    await new Promise((resolve, reject) => {
+        plugin.on('end', resolve);
+        plugin.on('error', reject);
+    });
+}
+
+async function downloadPlugin(uuid) {
+    await new Promise(resolve => {
+        const req = https.get(`http://127.0.0.1:5000/plugins/v2/download/${uuid}`, (res) => {
+            res.setEncoding('binary');
+            let chunks = '';
+            log.info(`Update GET: ${res.statusCode}`);
+            const filename = res.headers['filename'];
+            res.on('data', (chunk) => {
+                chunks += chunk;
             });
-            req2.on('error', error => {
-                log.error(`Update Error: ${error}`);
+            res.on('end', async() => {
+                try {
+                    const pluginsDir = path.join(app.getPath('appData'), '/KirkaClient/plugins/', filename);
+                    await fs.promises.writeFile(pluginsDir, chunks, 'binary');
+                    await unzipFile(pluginsDir, filename);
+                    await fse.remove(pluginsDir);
+                    log.info(`Plugin ${filename} downloaded`);
+                } catch (e) {
+                    log.error(e);
+                } finally {
+                    resolve();
+                }
             });
-            req2.end();
-        })
-    ]);
+        });
+        req.on('error', error => {
+            log.error(`Download Error: ${error}`);
+        });
+        req.end();
+    });
 }
 
 function ensureScriptIntegrity(filePath, scriptUUID) {
@@ -693,7 +638,8 @@ function ensureScriptIntegrity(filePath, scriptUUID) {
     });
 }
 
-function ensureIntegrity() {
+async function ensureIntegrity() {
+    const oldAllowed = allowedScripts;
     allowedScripts.length = 0;
     const fileDir = path.join(app.getPath('appData'), '/KirkaClient/plugins');
     try {
@@ -701,30 +647,16 @@ function ensureIntegrity() {
     // eslint-disable-next-line no-empty
     } catch (err) {}
 
-    fs.readdirSync(fileDir)
-        .filter(filename => path.extname(filename).toLowerCase() == '.jsc')
-        .forEach(async(filename) => {
-            try {
-                const scriptPath = path.join(fileDir, filename);
-                const scriptName = filename.split('.')[0];
-                await ensureScriptIntegrity(scriptPath, scriptName);
-                let script = await pluginLoader(scriptName, fileDir, true);
-                if (Array.isArray(script))
-                    script = await pluginLoader(filename.split('.')[0], fileDir, false, true);
-                if (Array.isArray(script))
-                    return;
-
-                if (!script.isPlatformMatching())
-                    log.info(`Script ignored, platform not matching: ${script.scriptName}`);
-                else {
-                    allowedScripts.push(scriptPath);
-                    log.info(`Ensured script: ${script.scriptName}- v${script.ver}`);
-                }
-            } catch (err) {
-                log.info(err);
-                showUnauthScript(filename);
-            }
-        });
+    for (const scriptPath in oldAllowed) {
+        try {
+            const scriptUUID = pluginIdentifier2[scriptPath];
+            await ensureScriptIntegrity(scriptPath, scriptUUID);
+            allowedScripts.push(scriptPath);
+            log.info(`Ensured script: ${scriptPath}`);
+        } catch (err) {
+            log.info(err);
+        }
+    }
 }
 
 async function copyFolder(from, to) {
@@ -773,6 +705,12 @@ async function copyNodeModules(srcDir, node_modules, incomplete_init) {
     await fs.promises.unlink(incomplete_init);
 }
 
+async function getDirectories(source) {
+    return (await fs.promises.readdir(source, { withFileTypes: true }))
+        .filter(dirent => dirent.isDirectory() && dirent.name !== 'node_modules')
+        .map(dirent => dirent.name);
+}
+
 async function initPlugins(webContents) {
     const fileDir = path.join(app.getPath('appData'), 'KirkaClient', 'plugins');
     log.info('fileDir', fileDir);
@@ -792,33 +730,46 @@ async function initPlugins(webContents) {
     log.info('node_modules stuff done.');
     log.info(fs.readdirSync(fileDir));
     const filenames = [];
-    fs.readdirSync(fileDir)
-        .filter(filename => path.extname(filename).toLowerCase() == '.jsc')
-        .forEach((filename) => {
-            filenames.push(filename);
-        });
+    // get all directories inside a direcotry
+    const dirs = await getDirectories(fileDir);
+    console.log(dirs);
 
-    for (let i = 0; i < filenames.length; i++) {
-        const filename = filenames[i];
-        log.info(filename);
+    for (const dir of dirs) {
+        log.info(dir);
+        const packageFile = path.join(fileDir, dir, 'package.json');
+        if (fs.existsSync(packageFile)) {
+            const packageJson = JSON.parse(fs.readFileSync(packageFile));
+            filenames.push([dir, packageJson]);
+        } else {
+            log.info('No package.json');
+            continue;
+        }
+    }
+    log.info('filenames', filenames);
+    let count = 1;
+    for (const [dir, packageJson] of filenames) {
         try {
-            webContents.send('message', `Loading Plugin: ${i + 1}/${filenames.length}`);
-            const scriptPath = path.join(fileDir, filename);
+            const pluginName = packageJson.name;
+            const pluginPath = path.join(fileDir, dir);
+            const scriptPath = path.join(pluginPath, packageJson.main);
+            const pluginUUID = packageJson.uuid;
+            const pluginVer = packageJson.version;
+
+            webContents.send('message', `Loading ${pluginName} v${pluginVer} (${count}/${filenames.length})`);
             log.info('scriptPath:', scriptPath);
-            const scriptName = filename.split('.')[0];
-            const data = await ensureScriptIntegrity(scriptPath, scriptName);
+            const data = await ensureScriptIntegrity(scriptPath, pluginUUID);
             if (data) {
                 if (data.update) {
                     webContents.send('message', 'Updating Plugin');
-                    await installUpdate(scriptName);
-                    webContents.send('message', `Reloading Plugin: ${i + 1}/${filenames.length}`);
+                    await installUpdate(pluginPath, pluginUUID);
+                    webContents.send('message', `Reloading Plugin: ${count + 1}/${filenames.length}`);
                 }
             }
-            let script = await pluginLoader(filename.split('.')[0], fileDir);
+            let script = await pluginLoader(pluginUUID, dir, packageJson);
             if (Array.isArray(script)) {
                 webContents.send('message', 'Cache corrupted. Rebuilding...');
                 await copyNodeModules(srcDir, node_modules, incomplete_init);
-                script = await pluginLoader(filename.split('.')[0], fileDir, false, true);
+                script = await pluginLoader(pluginUUID, dir, packageJson, false, true);
             }
             if (Array.isArray(script))
                 continue;
@@ -827,7 +778,8 @@ async function initPlugins(webContents) {
             else {
                 allowedScripts.push(scriptPath);
                 installedPlugins.push(script.scriptUUID);
-                pluginIdentifier[script.scriptUUID] = scriptName;
+                pluginIdentifier[script.scriptUUID] = [script.scriptName, pluginPath];
+                pluginIdentifier2[script.scriptName] = script.scriptUUID;
                 scriptCol.push(script);
                 try {
                     script.launchMain(win);
@@ -837,9 +789,9 @@ async function initPlugins(webContents) {
                 }
                 log.info(`Loaded script: ${script.scriptName}- v${script.ver}`);
             }
+            count += 1;
         } catch (err) {
             log.info(err);
-            showUnauthScript(filename);
         }
     }
     pluginsLoaded = true;

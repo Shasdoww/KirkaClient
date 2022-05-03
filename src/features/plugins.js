@@ -6,6 +6,7 @@ const log = require('electron-log');
 const path = require('path');
 const { v4: uuidv4 } = require('uuid');
 const { PluginManager } = require('live-plugin-manager');
+const { app, ipcRenderer } = require('electron');
 let manager;
 require('bytenode');
 
@@ -46,10 +47,14 @@ class KirkaClientScript {
 
 }
 
-module.exports.pluginLoader = async function(uuid, fileDir, skipInstall = false, force = false) {
+module.exports.pluginLoader = async function(uuid, dir, packageJSON, skipInstall = false, force = false) {
     log.info('call to load', uuid, 'with skipInstall as', skipInstall);
-    const scriptPath = path.join(fileDir, `${uuid}`);
-
+    let fileDir;
+    if (!app)
+        fileDir = await ipcRenderer.invoke('scriptPath');
+    else
+        fileDir = path.join(app.getPath('appData'), 'KirkaClient', 'plugins');
+    const scriptPath = path.join(fileDir, dir, packageJSON.main);
     if (!manager) {
         manager = new PluginManager({
             pluginsPath: path.join(fileDir, 'node_modules')
@@ -57,9 +62,7 @@ module.exports.pluginLoader = async function(uuid, fileDir, skipInstall = false,
     }
 
     if (!skipInstall) {
-        const content = fs.readFileSync(scriptPath + '.json');
-        const r = JSON.parse(content.toString());
-        const modules = r.modules;
+        const modules = packageJSON.modules;
 
         log.info('Modules to install:', modules);
         for (const mod of modules) {
@@ -97,7 +100,8 @@ module.exports.pluginLoader = async function(uuid, fileDir, skipInstall = false,
         }
     }
     try {
-        const script = require(scriptPath + '.jsc');
+        log.info('Trying to load', scriptPath);
+        const script = require(scriptPath);
         const clientScript = new KirkaClientScript(script('token'));
         return clientScript;
     } catch (err) {
