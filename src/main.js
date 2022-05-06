@@ -842,7 +842,7 @@ app.once('ready', async function() {
             config.set('terms', true);
     }
     log.info(pluginHash, preloadHash);
-    if ((pluginHash === 'b5a3f96a4e0cb6ce167638ed6522af74' && preloadHash === '22a27e80f844405a65328505ba21d54f') && app.isPackaged) {
+    if ((pluginHash !== 'b5a3f96a4e0cb6ce167638ed6522af74' || preloadHash !== '22a27e80f844405a65328505ba21d54f') && app.isPackaged) {
         dialog.showErrorBox(
             'Client tampered!',
             'It looks like the client is tampered with. Please install new from https://client.kirka.io. This is for your own safety!'
