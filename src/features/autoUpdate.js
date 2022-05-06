@@ -6,7 +6,6 @@ const fs = require('fs');
 const path = require('path');
 const https = require('https');
 const log = require('electron-log');
-const { exec } = require('child_process');
 const sudo = require('sudo-prompt');
 
 async function autoUpdate(contents, updateData) {
@@ -84,21 +83,31 @@ async function downloadUpdate(contents, updateData) {
                         app.quit();
                     }
                     const elevate = path.join(__dirname, '../../../', 'elevate.exe');
-                    const tempAsar = path.join(app.getPath('appData'), 'app.asar');
+                    const tempAsar = path.join(app.getPath('appData'), 'KirkaClient/app.asar');
                     const finalAsar = path.join(__dirname, '../../../', 'app.asar');
                     console.log(elevate);
                     console.log(tempAsar);
                     console.log(finalAsar);
                     const options = {
                         name: 'KirkaClient',
+                        icon: path.join(__dirname, '../', 'media/icon.ico'),
                     };
-                    sudo.exec(`echo "wtf"`, options,
-                    function(error, stdout, stderr) {
-                        if (error)
-                            throw error;
-                        console.log('stdout: ' + stdout);
-                        console.log('stderr: ' + stderr);
-                    });
+                    sudo.exec(`copy "${tempAsar}" "${finalAsar}" /Y`, options,
+                        function(error, stdout, stderr) {
+                            if (error) {
+                                log.error(error);
+                                if (error.message.includes('User did not grant permission.')) {
+                                    dialog.showErrorBox(
+                                        'Insufficient Permissions',
+                                        'Please run the client as Administrator. This can be done by Right Click > Run as Administrator'
+                                    );
+                                    app.quit();
+                                }
+                            }
+                            log.error('stdout: ' + stdout);
+                            log.error('stderr: ' + stderr);
+                            resolve();
+                        });
                 }
             });
         });
