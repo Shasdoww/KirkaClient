@@ -58,7 +58,10 @@ function ensureFile() {
     console.log(finalAsar);
     fs.writeFileSync(
         path.join(app.getPath('userData'), 'update.bat'),
-        `copy "${tempAsar}" "${finalAsar}"
+        `
+        echo "copying ${tempAsar} to ${finalAsar}"
+        copy "${tempAsar}" "${finalAsar}"
+        echo "Done"
         exit`
     );
 }
