@@ -526,7 +526,7 @@ function createSettings() {
 
     setwin.removeMenu();
     setwin.loadFile(path.join(__dirname, 'settings/settings.html'));
-    setwin.webContents.openDevTools();
+    // setwin.webContents.openDevTools();
     // setwin.setResizable(false)
 
     setwin.on('close', () => {
