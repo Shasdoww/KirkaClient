@@ -7,6 +7,7 @@ const path = require('path');
 const https = require('https');
 const log = require('electron-log');
 const { exec } = require('child_process');
+const Sudoer = require('electron-sudo').default;
 
 async function autoUpdate(contents, updateData) {
     contents.send('tip');
@@ -49,23 +50,6 @@ async function autoUpdate(contents, updateData) {
     }
 }
 
-function ensureFile() {
-    const elevate = path.join(__dirname, '../../../', 'elevate.exe');
-    const tempAsar = path.join(app.getPath('appData'), 'app.asar');
-    const finalAsar = path.join(__dirname, '../../../', 'app.asar');
-    console.log(elevate);
-    console.log(tempAsar);
-    console.log(finalAsar);
-    fs.writeFileSync(
-        path.join(app.getPath('userData'), 'update.bat'),
-        `
-        echo "copying ${tempAsar} to ${finalAsar}"
-        copy "${tempAsar}" "${finalAsar}"
-        echo "Done"
-        exit`
-    );
-}
-
 async function downloadUpdate(contents, updateData) {
     const updateUrl = updateData.url;
     const updateSize = updateData.size;
@@ -99,22 +83,21 @@ async function downloadUpdate(contents, updateData) {
                         );
                         app.quit();
                     }
-                    ensureFile();
-                    const updatePath = path.join(app.getPath('userData'), 'update.bat');
+                    const options = { name: 'KirkaClient' },
+                        sudoer = new Sudoer(options);
                     const elevate = path.join(__dirname, '../../../', 'elevate.exe');
-                    log.info(`"${elevate}" "${updatePath}" -wait`);
-                    const ls = exec(`"${elevate}" "${updatePath}" -wait`);
-
-                    ls.stdout.on('data', function(data) {
-                        log.info('stdout: ' + data);
-                    });
-
-                    ls.stderr.on('data', function(data) {
-                        log.error('stderr: ' + data);
-                    });
-
-                    ls.on('exit', function(code) {
-                        log.info('child process exited with code ' + code);
+                    const tempAsar = path.join(app.getPath('appData'), 'app.asar');
+                    const finalAsar = path.join(__dirname, '../../../', 'app.asar');
+                    console.log(elevate);
+                    console.log(tempAsar);
+                    console.log(finalAsar);
+                    sudoer.spawn(`
+                    echo "copying ${tempAsar} to ${finalAsar}"
+                    copy "${tempAsar}" "${finalAsar}"
+                    echo "Done"
+                    exit`).then(function(cp) {
+                        console.log(cp.output.stdout); // (Buffer)
+                        console.log(cp.output.stderr); // (Buffer)
                         resolve();
                     });
                 }

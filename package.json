@@ -19,6 +19,7 @@
     "electron-localshortcut": "^3.2.1",
     "electron-log": "^4.4.6",
     "electron-store": "^8.0.0",
+    "electron-sudo": "^4.0.12",
     "fs-extra": "^10.0.1",
     "get-blob-duration": "^1.2.0",
     "jszip": "^3.9.1",
