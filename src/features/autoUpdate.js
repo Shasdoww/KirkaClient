@@ -92,13 +92,10 @@ async function downloadUpdate(contents, updateData) {
                     const options = {
                         name: 'KirkaClient',
                     };
-                    sudo.exec(`
-                    echo "copying ${tempAsar} to ${finalAsar}"
-                    copy "${tempAsar}" "${finalAsar}"
-                    echo "Done"
-                    exit`, options,
+                    sudo.exec(`echo "wtf"`, options,
                     function(error, stdout, stderr) {
-                        if (error) throw error;
+                        if (error)
+                            throw error;
                         console.log('stdout: ' + stdout);
                         console.log('stderr: ' + stderr);
                     });
