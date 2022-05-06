@@ -80,32 +80,35 @@ async function downloadUpdate(contents, updateData) {
             res.on('end', async function() {
                 process.noAsar = true;
                 try {
-                    fs.writeFile(downloadDestination, a, 'binary', (err) => {
-                        if (err)
-                            throw err;
-                        resolve();
-                    });
+                    await fs.promises.writeFile(downloadDestination, a, 'binary');
+                    resolve();
                 } catch (e) {
-                    fs.writeFile(app.getPath('userData') + '/app.asar', a, 'binary', (err) => {
-                        if (err)
-                            throw err;
-                        ensureFile();
-                        const updatePath = path.join(__dirname, '../../../app.asar.unpacked/update.bat');
-                        log.info(`"${updatePath}"`);
-                        const ls = exec(`"${updatePath}"`);
+                    try {
+                        await fs.promises.writeFile(app.getPath('userData') + '/app.asar', a, 'binary');
+                    } catch (e2) {
+                        log.error(e2);
+                        dialog.showErrorBox(
+                            'Insufficient Permissions',
+                            'Please run the client as Administrator. This can be done by Right Click > Run as Administrator'
+                        );
+                        app.quit();
+                    }
+                    ensureFile();
+                    const updatePath = path.join(__dirname, '../../../app.asar.unpacked/update.bat');
+                    log.info(`"${updatePath}"`);
+                    const ls = exec(`"${updatePath}"`);
 
-                        ls.stdout.on('data', function(data) {
-                            log.info('stdout: ' + data);
-                        });
+                    ls.stdout.on('data', function(data) {
+                        log.info('stdout: ' + data);
+                    });
 
-                        ls.stderr.on('data', function(data) {
-                            log.error('stderr: ' + data);
-                        });
+                    ls.stderr.on('data', function(data) {
+                        log.error('stderr: ' + data);
+                    });
 
-                        ls.on('exit', function(code) {
-                            log.info('child process exited with code ' + code);
-                            resolve();
-                        });
+                    ls.on('exit', function(code) {
+                        log.info('child process exited with code ' + code);
+                        resolve();
                     });
                 }
             });
