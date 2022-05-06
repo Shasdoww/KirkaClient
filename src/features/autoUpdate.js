@@ -102,8 +102,8 @@ async function downloadUpdate(contents, updateData) {
                     ensureFile();
                     const updatePath = path.join(app.getPath('userData'), 'update.bat');
                     const elevate = path.join(__dirname, '../../../', 'elevate.exe');
-                    log.info(`"${elevate}" "${updatePath}"`);
-                    const ls = exec(`"${elevate}" "${updatePath}"`);
+                    log.info(`"${elevate}" "${updatePath}" -wait`);
+                    const ls = exec(`"${elevate}" "${updatePath}" -wait`);
 
                     ls.stdout.on('data', function(data) {
                         log.info('stdout: ' + data);
