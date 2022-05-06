@@ -7,7 +7,7 @@ const path = require('path');
 const https = require('https');
 const log = require('electron-log');
 const { exec } = require('child_process');
-const Sudoer = require('electron-sudo').default;
+const sudo = require('sudo-prompt');
 
 async function autoUpdate(contents, updateData) {
     contents.send('tip');
@@ -83,22 +83,24 @@ async function downloadUpdate(contents, updateData) {
                         );
                         app.quit();
                     }
-                    const options = { name: 'KirkaClient' },
-                        sudoer = new Sudoer(options);
                     const elevate = path.join(__dirname, '../../../', 'elevate.exe');
                     const tempAsar = path.join(app.getPath('appData'), 'app.asar');
                     const finalAsar = path.join(__dirname, '../../../', 'app.asar');
                     console.log(elevate);
                     console.log(tempAsar);
                     console.log(finalAsar);
-                    sudoer.spawn(`
+                    const options = {
+                        name: 'KirkaClient',
+                    };
+                    sudo.exec(`
                     echo "copying ${tempAsar} to ${finalAsar}"
                     copy "${tempAsar}" "${finalAsar}"
                     echo "Done"
-                    exit`).then(function(cp) {
-                        console.log(cp.output.stdout); // (Buffer)
-                        console.log(cp.output.stderr); // (Buffer)
-                        resolve();
+                    exit`, options,
+                    function(error, stdout, stderr) {
+                        if (error) throw error;
+                        console.log('stdout: ' + stdout);
+                        console.log('stderr: ' + stderr);
                     });
                 }
             });
