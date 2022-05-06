@@ -9,7 +9,7 @@ const { autoUpdate, sendBadges, updateRPC, initBadges, initRPC, closeRPC } = req
 const { io } = require('socket.io-client');
 const fs = require('fs');
 const fse = require('fs-extra');
-const https = require('http');
+const https = require('https');
 const log = require('electron-log');
 const JSZip = require('jszip');
 const prompt = require('./features/promptManager');
@@ -224,7 +224,6 @@ function createWindow() {
             win.setFullScreen(true);
 
         win.show();
-        win.webContents.send('initPlugins');
         if (config.get('update', true))
             showChangeLogs();
     }
@@ -319,6 +318,7 @@ function createShortcutKeys() {
     electronLocalshortcut.register(win, 'F5', () => contents.reload());
     electronLocalshortcut.register(win, 'Shift+F5', () => contents.reloadIgnoringCache());
     electronLocalshortcut.register(win, 'F6', () => joinByURL());
+    electronLocalshortcut.register(win, 'F8', () => win.loadURL('https://kirka.io/'));
     electronLocalshortcut.register(win, 'F11', () => win.setFullScreen(!win.isFullScreen()));
     electronLocalshortcut.register(win, 'F12', () => toggleDevTools());
     electronLocalshortcut.register(win, 'Control+Shift+I', () => toggleDevTools());
@@ -331,22 +331,42 @@ ipcMain.on('joinLink', joinByURL);
 function ensureDev(password) {
     if (!password)
         return;
-    dialog.showErrorBox('Incorrect Token', 'The token you entered is incorrect. Don\'t try to access things you aren\'t sure of.');
+    const options = {
+        method: 'POST',
+        hostname: 'client.kirka.io',
+        path: '/api/v2/token',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+    };
+    const req = https.request(options, res => {
+        res.on('data', d => {
+            const response = JSON.parse(d.toString());
+            if (response.success)
+                win.webContents.openDevTools();
+            else
+                dialog.showErrorBox('Incorrect Token', 'The token you entered is incorrect. Don\'t try to access things you aren\'t sure of.');
+        });
+    });
+    req.on('error', error => {
+        log.error(`Dev Error: ${error}`);
+    });
+    req.write(JSON.stringify({ token: password }));
+    req.end();
 }
 
 let promptWindow;
 
 function toggleDevTools() {
-    if (!app.isPackaged) {
-        win.webContents.openDevTools();
-        return;
-    }
-    promptWindow = prompt.sendPrompt({
-        title: 'Provide Authentication',
-        label: 'Enter developer token to connect to devTools:',
-        placeholder: 'Token here',
-        isPassword: true
-    });
+    if (config.get('devToken', '') === '') {
+        promptWindow = prompt.sendPrompt({
+            title: 'Provide Authentication',
+            label: 'Enter developer token to connect to devTools:',
+            placeholder: 'Token here',
+            isPassword: true
+        });
+    } else
+        ensureDev(config.get('devToken', ''));
 }
 
 ipcMain.handle('show-info', async(ev, title, details) => {
@@ -469,7 +489,7 @@ ipcMain.on('reboot', () => {
 
 ipcMain.handle('downloadPlugin', async(ev, uuid) => {
     log.info('Need to download', uuid);
-    await downloadPlugin(uuid);
+    return await downloadPlugin(uuid);
 });
 
 ipcMain.handle('uninstallPlugin', async(ev, uuid) => {
@@ -555,11 +575,13 @@ async function unzipFile(zip) {
 }
 
 async function downloadPlugin(uuid) {
-    await new Promise(resolve => {
-        const req = https.get(`http://127.0.0.1:5000/plugins/v2/download/${uuid}`, (res) => {
+    return await new Promise(resolve => {
+        const req = https.get(`https://client.kirka.io/api/v2/plugins/download/${uuid}?token=${encodeURIComponent(config.get('devToken'))}`, (res) => {
             res.setEncoding('binary');
             let chunks = '';
             log.info(`Update GET: ${res.statusCode}`);
+            if (res.statusCode !== 200)
+                return resolve(false);
             const filename = res.headers['filename'];
             res.on('data', (chunk) => {
                 chunks += chunk;
@@ -571,15 +593,16 @@ async function downloadPlugin(uuid) {
                     await unzipFile(pluginsDir);
                     await fse.remove(pluginsDir);
                     log.info(`Plugin ${filename} downloaded`);
+                    resolve(true);
                 } catch (e) {
                     log.error(e);
-                } finally {
-                    resolve();
+                    resolve(false);
                 }
             });
         });
         req.on('error', error => {
             log.error(`Download Error: ${error}`);
+            resolve(false);
         });
         req.end();
     });
@@ -587,12 +610,12 @@ async function downloadPlugin(uuid) {
 
 function ensureScriptIntegrity(filePath, scriptUUID) {
     return new Promise((resolve, reject) => {
-        const hash = md5File.sync(filePath);
+        const hash = md5File.sync(filePath + 'c');
         const data = { hash: hash, uuid: scriptUUID };
         const request = {
             method: 'POST',
             hostname: 'client.kirka.io',
-            path: '/api/plugins/updates',
+            path: '/api/v2/plugins/updates',
             headers: {
                 'Content-Type': 'application/json'
             },
@@ -602,9 +625,12 @@ function ensureScriptIntegrity(filePath, scriptUUID) {
             res.setEncoding('utf-8');
             let chunks = '';
             log.info(`POST: ${res.statusCode} with payload ${JSON.stringify(data)}`);
-            if (res.statusCode != 200)
-                reject();
-            else {
+            if (res.statusCode != 200) {
+                if (!app.isPackaged)
+                    resolve({ success: false });
+                else
+                    reject();
+            } else {
                 res.on('data', (chunk) => {
                     chunks += chunk;
                 });
@@ -676,6 +702,8 @@ async function copyFolder(from, to) {
 }
 
 async function copyNodeModules(srcDir, node_modules, incomplete_init) {
+    if (!app.isPackaged)
+        return;
     try {
         await fse.remove(node_modules);
     } catch (err) {
@@ -740,6 +768,7 @@ async function initPlugins(webContents) {
     let count = 1;
     for (const [dir, packageJson] of filenames) {
         try {
+            count += 1;
             const pluginName = packageJson.name;
             const pluginPath = path.join(fileDir, dir);
             const scriptPath = path.join(pluginPath, packageJson.main);
@@ -749,13 +778,15 @@ async function initPlugins(webContents) {
             webContents.send('message', `Loading ${pluginName} v${pluginVer} (${count}/${filenames.length})`);
             log.info('scriptPath:', scriptPath);
             const data = await ensureScriptIntegrity(scriptPath, pluginUUID);
+            log.debug(data);
             if (data) {
                 if (data.update) {
                     webContents.send('message', 'Updating Plugin');
                     await installUpdate(pluginPath, pluginUUID);
-                    webContents.send('message', `Reloading Plugin: ${count + 1}/${filenames.length}`);
+                    webContents.send('message', `Reloading Plugin: ${count}/${filenames.length}`);
                 }
             }
+            log.debug(packageJson);
             let script = await pluginLoader(pluginUUID, dir, packageJson);
             if (Array.isArray(script)) {
                 webContents.send('message', 'Cache corrupted. Rebuilding...');
@@ -773,6 +804,7 @@ async function initPlugins(webContents) {
                 pluginIdentifier2[script.scriptName] = script.scriptUUID;
                 scriptCol.push(script);
                 try {
+                    log.debug('[PLUGIN]:', script.scriptName, 'launching main');
                     script.launchMain(win);
                 } catch (err) {
                     log.info(err);
@@ -780,7 +812,6 @@ async function initPlugins(webContents) {
                 }
                 log.info(`Loaded script: ${script.scriptName}- v${script.ver}`);
             }
-            count += 1;
         } catch (err) {
             log.info(err);
         }
@@ -811,7 +842,7 @@ app.once('ready', async function() {
             config.set('terms', true);
     }
     log.info(pluginHash, preloadHash);
-    if ((pluginHash === '34f96990dbc87eb9c81adfeb0876d005' && preloadHash === '85272f4d6b02cf84006c7969c14c42a6') && app.isPackaged) {
+    if ((pluginHash === 'b5a3f96a4e0cb6ce167638ed6522af74' && preloadHash === '22a27e80f844405a65328505ba21d54f') && app.isPackaged) {
         dialog.showErrorBox(
             'Client tampered!',
             'It looks like the client is tampered with. Please install new from https://client.kirka.io. This is for your own safety!'

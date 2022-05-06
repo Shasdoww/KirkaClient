@@ -36,8 +36,6 @@ function getKeyByValue(object, value) {
     return Object.keys(object).find(key => object[key] === value);
 }
 
-ipcRenderer.on('initPlugins', () => loadPlugins(false));
-
 async function getDirectories(source) {
     return (await fs.promises.readdir(source, { withFileTypes: true }))
         .filter(dirent => dirent.isDirectory() && dirent.name !== 'node_modules')
@@ -583,7 +581,7 @@ async function homeBadge() {
             if (badge == undefined)
                 continue;
 
-            nickname.insertAdjacentHTML('beforeend', `<img data-v-e6e1daf8 clientbadge src="${badge.url}" height=20 title=${badge.role}>`);
+            nickname.insertAdjacentHTML('beforeend', `<img data-v-e6e1daf8 clientbadge src="${badge.url}" height=20 title="${badge.role}">`);
         }
     }, 1000);
 }
@@ -611,7 +609,7 @@ async function inGameBadge() {
             if (badge == undefined)
                 continue;
             element.style.display = 'flex';
-            element.insertAdjacentHTML('beforeend', `<img data-v-e6e1daf8 clientbadge src="${badge.url}" height=20 title=${badge.role} style="margin-left: 2px;">`);
+            element.insertAdjacentHTML('beforeend', `<img data-v-e6e1daf8 clientbadge src="${badge.url}" height=20 title="${badge.role}" style="margin-left: 2px;">`);
         }
     }, 1000);
 }

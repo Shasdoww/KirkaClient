@@ -50,6 +50,8 @@ function initRPC(socket_, webContents) {
                 'None': null
             }[userBadges['role']];
         }
+        if (userBadges.id)
+            userBadges.type = userBadges.id.toLowerCase();
         const gameURL = webContents.getURL();
         const state = getGameState(gameURL);
         if (state == 'game') {

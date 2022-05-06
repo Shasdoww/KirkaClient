@@ -141,5 +141,13 @@ module.exports = [
         type: 'checkbox',
         needsRestart: true,
         val: config.get('betaTester', false)
+    },
+    {
+        name: 'Developer Token',
+        id: 'devToken',
+        category: 'Developer Tools',
+        type: 'password',
+        needsRestart: false,
+        val: config.get('devToken', ''),
     }
 ];

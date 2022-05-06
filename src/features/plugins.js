@@ -83,14 +83,11 @@ module.exports.pluginLoader = async function(uuid, dir, packageJSON, skipInstall
                 }
                 module.exports = data;
                 `;
-                log.info('Code to check:', code);
                 const fileName = `${uuidv4()}_${mod}_check.js`;
                 const filePath = path.join(fileDir, fileName);
-                log.info('Requiring filePath:', filePath);
                 await fs.promises.writeFile(filePath, code);
                 need = require(filePath);
                 await fs.promises.unlink(filePath);
-                log.info(need, 'for', mod, 'with force', force);
             }
             if (!need.success || force) {
                 log.info('Installing', mod);

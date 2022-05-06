@@ -7,6 +7,8 @@ const { pluginLoader } = require('../features/plugins');
 const log = require('electron-log');
 const fs = require('fs');
 const path = require('path');
+const Store = require('electron-store');
+const config = new Store();
 let installedPlugins = {};
 
 ipcRenderer.on('make-settings', () => {
@@ -24,10 +26,13 @@ function uninstallPlugin(button, uuid) {
 
 function downloadPlugin(button, uuid) {
     setState(button, '--in-progress', 'Downloading...');
-    ipcRenderer.invoke('downloadPlugin', uuid).then(() => {
-        setState(button, '--done', 'Install Now?');
-        button.onclick = () => ipcRenderer.send('reboot');
-        installedPlugins = JSON.parse(ipcRenderer.sendSync('installedPlugins'));
+    ipcRenderer.invoke('downloadPlugin', uuid).then((success) => {
+        if (success) {
+            setState(button, '--done', 'Install Now?');
+            button.onclick = () => ipcRenderer.send('reboot');
+            installedPlugins = JSON.parse(ipcRenderer.sendSync('installedPlugins'));
+        } else
+            setState(button, '--error', 'Failed');
     });
 }
 
@@ -36,7 +41,7 @@ function setState(button, varName, text) {
     button.style.backgroundColor = `var(${varName})`;
 }
 
-function takeAcion(button, uuid) {
+function takeAction(button, uuid) {
     if (installedPlugins.includes(uuid))
         uninstallPlugin(button, uuid);
     else
@@ -46,7 +51,7 @@ function takeAcion(button, uuid) {
 function handlePlugins() {
     installedPlugins = JSON.parse(ipcRenderer.sendSync('installedPlugins'));
     $.ajax({
-        url: 'https://client.kirka.io/api/plugins',
+        url: `https://client.kirka.io/api/v2/plugins?token=${encodeURIComponent(config.get('devToken', ''))}`,
         complete: (res) => {
             const data = res.responseJSON;
             paintCards(data);
@@ -91,9 +96,9 @@ function paintCard(d) {
     bottomDiv.classList = 'card-text bottom';
     const dlCount = document.createElement('label');
     dlCount.className = 'util';
-    // dlCount.innerText = `${d.dls} Downloads`;
+    dlCount.innerText = `${d.dls} Downloads`;
     const dlBtn = document.createElement('button');
-    dlBtn.onclick = () => takeAcion(dlBtn, d.uuid);
+    dlBtn.onclick = () => takeAction(dlBtn, d.uuid);
 
     bottomDiv.appendChild(dlCount);
     bottomDiv.appendChild(dlBtn);
@@ -119,24 +124,6 @@ function paintCards(data) {
     data.forEach(d => {
         paintCard(d);
         done.push(d.uuid);
-    });
-    for (let i = 0; i < installedPlugins.length; i++) {
-        const pl = installedPlugins[i];
-        if (!done.includes(pl))
-            privateCard(pl);
-    }
-}
-
-function privateCard(uuid) {
-    $.ajax({
-        method: 'POST',
-        url: 'https://client.kirka.io/api/plugin',
-        data: JSON.stringify({ uuid: uuid }),
-        contentType: 'application/json',
-        complete: (res) => {
-            const data = res.responseJSON;
-            paintCard(data);
-        }
     });
 }
 

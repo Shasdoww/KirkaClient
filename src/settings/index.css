@@ -11,6 +11,7 @@
   --uninstall-hover: rgb(212, 96, 96);
   --in-progress: rgb(231, 196, 79);
   --done: rgb(79, 120, 231);
+  --error: rgb(231, 79, 79);
   --category: rgb(255, 237, 70);
   --off: rgb(79, 79, 79);
   --on: rgb(0, 245, 233);

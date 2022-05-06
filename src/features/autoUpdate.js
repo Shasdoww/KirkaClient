@@ -12,7 +12,11 @@ async function autoUpdate(contents, updateData) {
     contents.send('tip');
     const wait = ms => new Promise(resolve => setTimeout(resolve, ms));
     wait(2500).then(() => {
-        contents.send('tip');
+        try {
+            contents.send('tip');
+        } catch (err) {
+            // pass
+        }
     });
     contents.send('message', 'Checking for updates...');
     contents.send('version', `v${version}`);
