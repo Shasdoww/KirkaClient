@@ -499,7 +499,7 @@ ipcMain.handle('uninstallPlugin', async(ev, uuid) => {
         return { success: false };
 
     const scriptPath = pluginIdentifier[uuid][1];
-    await fse.unlink(scriptPath);
+    await fse.remove(scriptPath);
     installedPlugins.splice(installedPlugins.indexOf(uuid), 1);
     return { success: true };
 });
@@ -609,6 +609,8 @@ async function downloadPlugin(uuid) {
 }
 
 function ensureScriptIntegrity(filePath, scriptUUID) {
+    if (!app.isPackaged)
+        return { success: true };
     return new Promise((resolve, reject) => {
         const hash = md5File.sync(filePath + 'c');
         const data = { hash: hash, uuid: scriptUUID };
@@ -765,7 +767,7 @@ async function initPlugins(webContents) {
         }
     }
     log.info('filenames', filenames);
-    let count = 1;
+    let count = 0;
     for (const [dir, packageJson] of filenames) {
         try {
             count += 1;
