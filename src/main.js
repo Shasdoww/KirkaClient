@@ -137,7 +137,7 @@ async function initSocket() {
     });
 }
 
-if (config.get('unlimitedFPS', true))
+if (config.get('unlimitedFPS', false))
     app.commandLine.appendSwitch('disable-frame-rate-limit');
 
 
