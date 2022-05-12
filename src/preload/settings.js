@@ -72,6 +72,11 @@ function paintCard(d) {
     name.classList = 'card-label bold';
     name.innerText = `${d.name} v${d.ver}`;
 
+    const popup = document.createElement('div');
+    popup.className = 'popup';
+
+    const modalBtn = document.createElement('button');
+    modalBtn.id = 'modalBtn';
     const toolTip = document.createElement('div');
     toolTip.classList = 'tooltip help';
     const material = document.createElement('span');
@@ -80,13 +85,36 @@ function paintCard(d) {
     material.innerText = 'help';
     const desc = document.createElement('span');
     desc.classList = 'tooltiptext tooltip-top';
-    desc.innerText = d.desc;
+    desc.innerText = 'Click for more info';
     toolTip.appendChild(material);
     toolTip.appendChild(desc);
+    modalBtn.appendChild(toolTip);
+
+    const modal = document.createElement('div');
+    modal.id = 'modal';
+    modal.className = 'modal';
+    const modalContent = document.createElement('div');
+    modalContent.className = 'modal-content';
+    const close = document.createElement('span');
+    close.className = 'close';
+    close.innerHTML = '&times;';
+    const iframe = document.createElement('iframe');
+    iframe.src = `http://client.kirka.io/docs?uuid=${d.uuid}&token=${encodeURIComponent(config.get('devToken', ''))}`;
+    iframe.width = '895';
+    iframe.height = '500';
+    iframe.allowtransparency = 'true';
+    iframe.frameborder = '0';
+    iframe.sandbox = 'allow-popups allow-popups-to-escape-sandbox allow-same-origin allow-scripts';
+    modalContent.appendChild(close);
+    modalContent.appendChild(iframe);
+    modal.appendChild(modalContent);
+
+    popup.appendChild(modalBtn);
+    popup.appendChild(modal);
 
     topDiv.appendChild(fake);
     topDiv.appendChild(name);
-    topDiv.appendChild(toolTip);
+    topDiv.appendChild(popup);
 
     const image = document.createElement('div');
     image.style.backgroundImage = `url('${d.img}')`;
@@ -115,6 +143,12 @@ function paintCard(d) {
         dlBtn.innerText = 'Download';
         document.getElementsByClassName('frame-content')[0].appendChild(card);
     }
+    modalBtn.onclick = () => {
+        modal.style.display = 'block';
+    };
+    close.onclick = () => {
+        modal.style.display = 'none';
+    };
 }
 
 function paintCards(data) {
@@ -203,7 +237,7 @@ document.addEventListener('DOMContentLoaded', async function() {
     });
     mainDIV.appendChild(label);
     mainDIV.appendChild(input);
-    table.before(mainDIV);
+    document.getElementById('top-bar').appendChild(mainDIV);
     makeSettings(table);
 });
 

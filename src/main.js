@@ -177,8 +177,6 @@ function createWindow() {
     win.removeMenu();
     createShortcutKeys();
 
-    win.loadURL('https://kirka.io/');
-
     win.on('close', function(e) {
         if (CtrlW) {
             e.preventDefault();
@@ -194,8 +192,10 @@ function createWindow() {
     });
 
     const contents = win.webContents;
+    win.loadFile('splash/fake.html');
 
     win.once('ready-to-show', () => {
+        console.log('can show now');
         showWin();
         initRPC(socket, contents);
         initBadges(socket);
@@ -222,7 +222,7 @@ function createWindow() {
         splash.destroy();
         if (config.get('fullScreenStart', true))
             win.setFullScreen(true);
-
+        win.loadURL('https://kirka.io/');
         win.show();
         if (config.get('update', true))
             showChangeLogs();
@@ -510,8 +510,8 @@ ipcMain.on('installedPlugins', (ev) => {
 
 function createSettings() {
     setwin = new BrowserWindow({
-        width: 1360,
-        height: 768,
+        width: 1920,
+        height: 1080,
         show: true,
         frame: true,
         icon: icon,
@@ -526,7 +526,8 @@ function createSettings() {
 
     setwin.removeMenu();
     setwin.loadFile(path.join(__dirname, 'settings/settings.html'));
-    // setwin.webContents.openDevTools();
+    setwin.webContents.openDevTools();
+    setwin.maximize();
     // setwin.setResizable(false)
 
     setwin.on('close', () => {
@@ -715,13 +716,6 @@ async function copyNodeModules(srcDir, node_modules, incomplete_init) {
     await fs.promises.writeFile(incomplete_init, 'DO NOT DELETE THIS!');
     log.info('copying from', srcDir, 'to', node_modules);
     await copyFolder(srcDir, node_modules);
-    /* await new Promise(resolve => {
-        fse.copy(srcDir, node_modules, { overwrite: true, recursive: true }, err => {
-            if (err)
-                throw err;
-            resolve();
-        });
-    }); */
     log.info('copying done');
     await fs.promises.unlink(incomplete_init);
 }

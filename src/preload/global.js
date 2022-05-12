@@ -3,14 +3,11 @@
 const { ipcRenderer, remote } = require('electron');
 const Store = require('electron-store');
 const config = new Store();
-// const fixwebm = require('../recorder/fix');
 const { pluginLoader } = require('../features/plugins');
 const log = require('electron-log');
 const fs = require('fs');
 const path = require('path');
 
-let leftIcons;
-let FPSdiv = null;
 let badgesData;
 let settings;
 let isChatFocus = false;
@@ -19,9 +16,10 @@ let oldState;
 let homeBadgeLoop;
 let inGameBadgeLoop;
 let regionLoop;
-let pluginsLoadAllowed = false;
 
 window.addEventListener('DOMContentLoaded', (event) => {
+    if (document.getElementById('do-not-load'))
+        return;
     setInterval(() => {
         const newState = currentState();
         if (oldState != newState) {
@@ -31,10 +29,6 @@ window.addEventListener('DOMContentLoaded', (event) => {
         commaFormat();
     }, 1000);
 });
-
-function getKeyByValue(object, value) {
-    return Object.keys(object).find(key => object[key] === value);
-}
 
 async function getDirectories(source) {
     return (await fs.promises.readdir(source, { withFileTypes: true }))
@@ -62,7 +56,7 @@ async function loadPlugins(ensure) {
     log.info('filenames', filenames);
     for (const [dir, packageJson] of filenames) {
         try {
-            const script = await pluginLoader(packageJson.uuid, dir, packageJson);
+            const script = await pluginLoader(packageJson.uuid, dir, packageJson, true);
             if (Array.isArray(script))
                 continue;
 
@@ -429,7 +423,6 @@ async function setUsername() {
 }
 
 function resetVars() {
-    FPSdiv = null;
     settings = null;
     matchCache = {};
     if (homeBadgeLoop)

@@ -146,7 +146,8 @@ module.exports = [
         name: 'Developer Token',
         id: 'devToken',
         category: 'Developer Tools',
-        type: 'password',
+        type: 'input',
+        password: true,
         needsRestart: false,
         val: config.get('devToken', ''),
     }

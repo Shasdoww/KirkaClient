@@ -7,5 +7,4 @@ dist/
 *.asar
 version.*
 yarn-error.log
-src/plugins/*.js
-src/plugins/*.jsc
+.vscode
