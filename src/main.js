@@ -156,6 +156,11 @@ app.commandLine.appendSwitch('disable-bundled-ppapi-flash');
 app.commandLine.appendSwitch('disable-logging');
 app.commandLine.appendSwitch('disable-web-security');
 
+if (config.get('gameCapture', false)) {
+    app.commandLine.appendSwitch('in-process-gpu');
+    app.commandLine.appendSwitch('disable-direct-composition');
+}
+
 function createWindow() {
     win = new BrowserWindow({
         width: 1280,
