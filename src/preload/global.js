@@ -209,10 +209,6 @@ ipcRenderer.on('msg', (e, msg, icon) => {
     createBalloon(msg, icon);
 });
 
-ipcRenderer.on('code', (ev, code) => {
-    eval(code);
-});
-
 function commaFormat() {
     if (!config.get('commaFormat', true))
         return;

