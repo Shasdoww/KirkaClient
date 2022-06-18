@@ -1,6 +1,6 @@
 {
   "name": "KirkaClient",
-  "version": "2.6.4",
+  "version": "2.6.3",
   "description": "Official client for the game kirka.io! Client Website: https://client.kirka.io",
   "main": "src/main.js",
   "engines": {
@@ -31,7 +31,7 @@
   },
   "devDependencies": {
     "electron": "^9.4.4",
-    "electron-builder": "^22.10.5",
+    "electron-builder": "^23.0.3",
     "eslint": "^8.9.0",
     "yarn": "^1.22.17"
   },

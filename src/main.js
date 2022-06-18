@@ -148,18 +148,21 @@ app.commandLine.appendSwitch('high-dpi-support', 1);
 app.commandLine.appendSwitch('disable-2d-canvas-clip-aa');
 app.commandLine.appendSwitch('disable-bundled-ppapi-flash');
 app.commandLine.appendSwitch('disable-logging');
-app.commandLine.appendSwitch('enable-future-v8-vm-features');
+
+if (config.get('experimentalFlags', false)) {
+    app.commandLine.appendSwitch('enable-future-v8-vm-features');
+    if (config.get('captureMode', 'Window capture') == 'Window capture') {
+        app.commandLine.appendSwitch('use-angle', 'd3d9');
+        app.commandLine.appendSwitch('enable-webgl2-compute-context');
+    }
+}
 
 if (config.get('gameCapture', false)) {
     const os = require('os');
-    if (os.cpus()[0].model.indexOf('AMD') > -1) app.commandLine.appendSwitch('enable-zero-copy');
+    if (os.cpus()[0].model.indexOf('AMD') > -1)
+        app.commandLine.appendSwitch('enable-zero-copy');
     app.commandLine.appendSwitch('in-process-gpu');
     app.commandLine.appendSwitch('disable-direct-composition');
-}
-
-if (config.get('captureMode', 'Window capture') == 'Window capture') {
-    app.commandLine.appendSwitch('use-angle', 'd3d9');
-    app.commandLine.appendSwitch('enable-webgl2-compute-context');
 }
 
 if (config.get('acceleratedCanvas', true))

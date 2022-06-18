@@ -52,6 +52,14 @@ module.exports = [
         })
     },
     {
+        name: 'Enable Experimental Flags',
+        id: 'experimentalFlags',
+        category: 'Performance',
+        type: 'checkbox',
+        needsRestart: true,
+        val: config.get('experimentalFlags', false),
+    },
+    {
         name: 'Comma Format Numbers',
         id: 'commaFormat',
         category: 'Game',
