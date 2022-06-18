@@ -1,6 +1,6 @@
 /* eslint-disable prefer-const */
 /* eslint-disable no-unused-vars */
-const { ipcRenderer, remote } = require('electron');
+const { ipcRenderer } = require('electron');
 const Store = require('electron-store');
 const config = new Store();
 const { pluginLoader } = require('../features/plugins');
@@ -61,8 +61,7 @@ async function loadPlugins(ensure) {
                 continue;
 
             if (script.isLocationMatching(currentState())) {
-                const win = remote.getCurrentWindow();
-                script.launchRenderer(win);
+                script.launchRenderer();
                 log.info(`Loaded script: ${script.scriptName}- v${script.ver}`);
             }
         } catch (err) {

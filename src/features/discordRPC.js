@@ -75,6 +75,8 @@ function getGameState(url) {
         return 'clans';
     else if (url == 'https://kirka.io/hub/market')
         return 'market';
+    else if (url.includes('https://kirka.io/server'))
+        return 'servers';
 }
 
 function notPlaying(state) {
@@ -83,7 +85,8 @@ function notPlaying(state) {
         'store': 'Browsing Store',
         'leaderboard': 'Checking Leaderboards',
         'clans': 'Browsing Clans',
-        'market': 'Looking at market'
+        'market': 'Looking at Market',
+        'servers': 'Browsing Servers',
     };
     client.setActivity({
         state: message[state],

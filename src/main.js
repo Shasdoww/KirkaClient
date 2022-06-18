@@ -130,12 +130,13 @@ async function initSocket() {
     });
 }
 
-if (config.get('unlimitedFPS', false))
+if (config.get('unlimitedFPS', false)) {
     app.commandLine.appendSwitch('disable-frame-rate-limit');
+    app.commandLine.appendSwitch('disable-gpu-vsync');
+}
 
-
-app.commandLine.appendSwitch('disable-gpu-vsync');
 app.commandLine.appendSwitch('ignore-gpu-blacklist');
+app.commandLine.appendSwitch('ignore-gpu-blocklist');
 app.commandLine.appendSwitch('disable-breakpad');
 app.commandLine.appendSwitch('disable-print-preview');
 app.commandLine.appendSwitch('disable-metrics');
@@ -147,12 +148,22 @@ app.commandLine.appendSwitch('high-dpi-support', 1);
 app.commandLine.appendSwitch('disable-2d-canvas-clip-aa');
 app.commandLine.appendSwitch('disable-bundled-ppapi-flash');
 app.commandLine.appendSwitch('disable-logging');
-app.commandLine.appendSwitch('disable-web-security');
+app.commandLine.appendSwitch('enable-future-v8-vm-features');
 
 if (config.get('gameCapture', false)) {
+    const os = require('os');
+    if (os.cpus()[0].model.indexOf('AMD') > -1) app.commandLine.appendSwitch('enable-zero-copy');
     app.commandLine.appendSwitch('in-process-gpu');
     app.commandLine.appendSwitch('disable-direct-composition');
 }
+
+if (config.get('captureMode', 'Window capture') == 'Window capture') {
+    app.commandLine.appendSwitch('use-angle', 'd3d9');
+    app.commandLine.appendSwitch('enable-webgl2-compute-context');
+}
+
+if (config.get('acceleratedCanvas', true))
+    app.commandLine.appendSwitch('enable-accelerated-2d-canvas');
 
 function createWindow() {
     win = new BrowserWindow({
@@ -166,9 +177,6 @@ function createWindow() {
         icon: icon,
         webPreferences: {
             preload: gamePreload,
-            enableRemoteModule: true,
-            contextIsolation: false,
-            webSecurity: false,
             devTools: !app.isPackaged
         },
     });

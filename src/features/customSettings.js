@@ -26,6 +26,14 @@ module.exports = [
         val: config.get('unlimitedFPS', false),
     },
     {
+        name: 'Enable Accelerated Canvas',
+        id: 'acceleratedCanvas',
+        category: 'Performance',
+        type: 'checkbox',
+        needsRestart: true,
+        val: config.get('acceleratedCanvas', true),
+    },
+    {
         name: 'Enable Game Capture',
         id: 'gameCapture',
         category: 'Performance',

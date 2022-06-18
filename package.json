@@ -1,6 +1,6 @@
 {
   "name": "KirkaClient",
-  "version": "2.6.3",
+  "version": "2.6.4",
   "description": "Official client for the game kirka.io! Client Website: https://client.kirka.io",
   "main": "src/main.js",
   "engines": {
@@ -20,7 +20,6 @@
     "electron-log": "^4.4.6",
     "electron-store": "^8.0.0",
     "fs-extra": "^10.0.1",
-    "get-blob-duration": "^1.2.0",
     "jszip": "^3.9.1",
     "live-plugin-manager": "^0.17.1",
     "md5-file": "^5.0.0",
