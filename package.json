@@ -1,6 +1,6 @@
 {
   "name": "KirkaClient",
-  "version": "2.6.4",
+  "version": "2.6.5",
   "description": "Official client for the game kirka.io! Client Website: https://client.kirka.io",
   "main": "src/main.js",
   "engines": {

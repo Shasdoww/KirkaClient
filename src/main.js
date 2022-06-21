@@ -1,6 +1,6 @@
 require('v8-compile-cache');
 const path = require('path');
-const { app, BrowserWindow, clipboard, dialog, ipcMain } = require('electron');
+const { app, BrowserWindow, clipboard, dialog, ipcMain, protocol } = require('electron');
 const electronLocalshortcut = require('electron-localshortcut');
 const Store = require('electron-store');
 const config = new Store();
@@ -54,6 +54,11 @@ const pluginIdentifier = {};
 const pluginIdentifier2 = {};
 let pluginsLoaded = false;
 let socket;
+
+protocol.registerSchemesAsPrivileged([{
+    scheme: 'kirkaclient',
+    privileges: { secure: true, corsEnabled: true },
+}]);
 
 async function initSocket() {
     socket.on('connect', () => {
