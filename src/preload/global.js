@@ -16,6 +16,21 @@ let oldState;
 let homeBadgeLoop;
 let inGameBadgeLoop;
 let regionLoop;
+let scene;
+let scoped = false;
+const weaponCache = {
+    'MAC-10': 5,
+    'Weatie': 5,
+    'AR-9': 3,
+};
+
+window.addEventListener('mousedown', (e) => {
+    if (e.button === 2) scoped = true;
+});
+
+window.addEventListener('mouseup', (e) => {
+    if (e.button === 2) scoped = false;
+});
 
 window.addEventListener('DOMContentLoaded', (event) => {
     if (document.getElementById('do-not-load'))
@@ -36,6 +51,15 @@ async function getDirectories(source) {
         .map(dirent => dirent.name);
 }
 
+WeakMap.prototype.set = new Proxy(WeakMap.prototype.set, {
+    apply(target, thisArg, argArray) {
+        if (argArray[0] && argArray[0].type === 'Scene' && argArray[0].children[0].type === 'AmbientLight')
+            scene = argArray[0];
+
+        return Reflect.apply(...arguments);
+    }
+});
+
 async function loadPlugins(ensure) {
     if (ensure)
         await ipcRenderer.invoke('ensureIntegrity');
@@ -53,7 +77,7 @@ async function loadPlugins(ensure) {
             continue;
         }
     }
-    log.info('filenames', filenames);
+
     for (const [dir, packageJson] of filenames) {
         try {
             const script = await pluginLoader(packageJson.uuid, dir, packageJson, true);
@@ -164,7 +188,7 @@ function doOnLoad() {
 
     function setPromo() {
         promo = document.getElementsByClassName('info')[0];
-        if (promo === undefined) {
+        if (!promo) {
             setTimeout(setPromo, 1000);
             return;
         }
@@ -178,20 +202,20 @@ function doOnLoad() {
         promo = document.getElementsByClassName('left-interface')[0];
         promo.appendChild(div);
         createHomePageSettings();
-
-        if (config.get('removeDiscordBtn', false)) {
-            const elem = document.querySelector('#app > div.interface.text-2 > div.right-interface > div.settings-and-socicons > div.card-cont.soc-group');
-            if (elem)
-                elem.remove();
-        }
         addButton();
         regionLoop = setInterval(setRegion, 500);
-        homeBadge();
+        if (config.get('clientBadges'))
+            homeBadge();
         break;
     case 'game':
         addSettingsButton();
         setPromo();
-        inGameBadge();
+        if (config.get('clientBadges', true))
+            inGameBadge();
+        if (config.get('hideWeaponOnAds', false)) {
+            animationLoop();
+            fixCrosshair();
+        }
         break;
     }
 
@@ -420,6 +444,8 @@ async function setUsername() {
 function resetVars() {
     settings = null;
     matchCache = {};
+    scene = null;
+    scoped = false;
     if (homeBadgeLoop)
         clearInterval(homeBadgeLoop);
     if (inGameBadgeLoop)
@@ -711,4 +737,36 @@ function checkbadge(state, confID = 'ABX') {
             return getBadge('custom', confirmID);
         return getBadge(allPossible[0], confirmID);
     }
+}
+
+function animationLoop() {
+    window.requestAnimationFrame(animationLoop);
+    let weap;
+    try {
+        weap = document.getElementsByClassName('list-weapons')[0].children[0].children[0].innerText;
+    } catch (e) {
+        return;
+    }
+    const num = weaponCache[weap] || 4;
+    try {
+        const weaponModel = scene.entity._entityManager.mWnwM.systemManager._systems['0']._queries.player.entities['0']._components['35'].weapons[weap].model;
+        const armsMaterial = weaponModel.parent.children['0'].material;
+        const weaponMaterial = weaponModel.children[num].material;
+        armsMaterial.visible = !scoped;
+        weaponMaterial.visible = !scoped;
+    } catch (err) {
+        // pass
+    }
+}
+
+function fixCrosshair() {
+    const crosshairCont = document.getElementsByClassName('crosshair-cont')[0];
+    if (!crosshairCont) {
+        setTimeout(fixCrosshair, 100);
+        return;
+    }
+    const crosshair = crosshairCont.firstChild.cloneNode(true);
+    crosshair.style.visibility = 'visible';
+    crosshair.style.opacity = '1';
+    crosshairCont.replaceChild(crosshair, crosshairCont.firstChild);
 }

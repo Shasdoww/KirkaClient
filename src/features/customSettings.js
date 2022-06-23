@@ -60,6 +60,13 @@ module.exports = [
         val: config.get('experimentalFlags', false),
     },
     {
+        name: 'Hide weapon on ADS',
+        id: 'hideWeaponOnAds',
+        category: 'Game',
+        type: 'checkbox',
+        val: config.get('commaFormat', false),
+    },
+    {
         name: 'Comma Format Numbers',
         id: 'commaFormat',
         category: 'Game',
@@ -107,13 +114,6 @@ module.exports = [
         category: 'Game',
         type: 'checkbox',
         val: config.get('showHP', true),
-    },
-    {
-        name: 'Remove Discord button from HomePage',
-        id: 'removeDiscordBtn',
-        category: 'Game',
-        type: 'checkbox',
-        val: config.get('removeDiscordBtn', false),
     },
     {
         name: 'Prevent Ctrl+W from closing client',

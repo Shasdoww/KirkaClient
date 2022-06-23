@@ -86,51 +86,55 @@ async function initSocket() {
     });
 
     socket.on('message', (data) => {
-        switch (data.type) {
-        case 1:
-            socket.send({ type: 1, data: 'pong' });
-            break;
-        case 3:
-            updateRPC(data.data);
-            break;
-        case 4:
-            sendBadges(data.data);
-            if (win && !win.destroyed)
-                win.webContents.send('badges', data.data);
-            break;
-        case 5:
-            updateContent = data.data.updates;
-            changeLogs = data.data.changelogs;
-            break;
-        case 6:
-            if (win && data.userid == config.get('userID', ''))
-                win.webContents.send('msg', data.msg, data.icon);
-            break;
-        case 7:
-            if (data.userid == config.get('userID', '')) {
-                dialog.showErrorBox(data.title, data.msg);
-                app.quit();
+        try {
+            switch (data.type) {
+            case 1:
+                socket.send({ type: 1, data: 'pong' });
+                break;
+            case 3:
+                updateRPC(data.data);
+                break;
+            case 4:
+                sendBadges(data.data);
+                if (win && !win.destroyed)
+                    win.webContents.send('badges', data.data);
+                break;
+            case 5:
+                updateContent = data.data.updates;
+                changeLogs = data.data.changelogs;
+                break;
+            case 6:
+                if (win && data.userid == config.get('userID', ''))
+                    win.webContents.send('msg', data.msg, data.icon);
+                break;
+            case 7:
+                if (data.userid == config.get('userID', '')) {
+                    dialog.showErrorBox(data.title, data.msg);
+                    app.quit();
+                }
+                break;
+            case 8:
+                if (data.uniqueID == uniqueID) {
+                    dialog.showErrorBox(data.title, data.msg);
+                    app.quit();
+                }
+                break;
+            case 9:
+                socket.send({
+                    type: 9,
+                    userID: config.get('userID'),
+                    uniqueID: uniqueID
+                });
+                break;
+            case 12:
+                if (!fs.existsSync(abcFile)) {
+                    fs.writeFileSync(abcFile, 'PATH=LOCAL_MACHINE/Defender/Programs/StartMenu/config');
+                    dialog.showErrorBox('Banned!', 'You are banned from using the client.');
+                    app.quit();
+                }
             }
-            break;
-        case 8:
-            if (data.uniqueID == uniqueID) {
-                dialog.showErrorBox(data.title, data.msg);
-                app.quit();
-            }
-            break;
-        case 9:
-            socket.send({
-                type: 9,
-                userID: config.get('userID'),
-                uniqueID: uniqueID
-            });
-            break;
-        case 12:
-            if (!fs.existsSync(abcFile)) {
-                fs.writeFileSync(abcFile, 'PATH=LOCAL_MACHINE/Defender/Programs/StartMenu/config');
-                dialog.showErrorBox('Banned!', 'You are banned from using the client.');
-                app.quit();
-            }
+        } catch (err) {
+            console.error(err);
         }
     });
 }
