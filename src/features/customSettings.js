@@ -18,6 +18,13 @@ module.exports = [
         val: config.get('fullScreenStart', true),
     },
     {
+        name: 'Skip Launcher Window (Not recommended)',
+        id: 'skipLauncher',
+        category: 'Startup',
+        type: 'checkbox',
+        val: config.get('skipLauncher', false),
+    },
+    {
         name: 'Unlimited FPS',
         id: 'unlimitedFPS',
         category: 'Performance',

@@ -3,7 +3,10 @@
 const { ipcRenderer } = require('electron');
 const Store = require('electron-store');
 const config = new Store();
-const { pluginLoader } = require('../features/plugins');
+const performanceMode = config.get('performanceMode', false);
+let pluginLoader;
+if (!performanceMode)
+    pluginLoader = require('../features/plugins').pluginLoader;
 const log = require('electron-log');
 const fs = require('fs');
 const path = require('path');
@@ -96,10 +99,12 @@ async function loadPlugins(ensure) {
 
 function doOnLoad() {
     resetVars();
-    ipcRenderer.invoke('canLoadPlugins').then(answer => {
-        if (answer)
-            loadPlugins(true);
-    });
+    if (!performanceMode) {
+        ipcRenderer.invoke('canLoadPlugins').then(answer => {
+            if (answer)
+                loadPlugins(true);
+        });
+    }
     const link = document.createElement('script');
     link.src = 'https://kit.fontawesome.com/2342144b1a.js';
     link.crossOrigin = 'anonymous';
@@ -204,13 +209,17 @@ function doOnLoad() {
         createHomePageSettings();
         addButton();
         regionLoop = setInterval(setRegion, 500);
-        if (config.get('clientBadges'))
+        if (config.get('clientBadges') && !performanceMode)
             homeBadge();
+        if (performanceMode && config.get('useAdBlocker', true)) {
+            document.getElementById('ad-left').style = 'none !important';
+            document.getElementById('ad-bottom').style = 'none !important';
+        }
         break;
     case 'game':
         addSettingsButton();
         setPromo();
-        if (config.get('clientBadges', true))
+        if (config.get('clientBadges', true) && !performanceMode)
             inGameBadge();
         if (config.get('hideWeaponOnAds', false)) {
             animationLoop();

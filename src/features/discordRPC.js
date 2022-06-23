@@ -56,7 +56,7 @@ function initRPC(socket_, webContents) {
         const state = getGameState(gameURL);
         if (state == 'game') {
             const gamecode = gameURL.replace('https://kirka.io/games/', '');
-            socket.send({ type: 3, data: gamecode });
+            socket.send(JSON.stringify({ type: 3, data: gamecode }));
         } else
             notPlaying(state);
     }, 2000);

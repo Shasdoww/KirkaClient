@@ -22,6 +22,7 @@ class KirkaClientScript {
         this.sett = scriptData.sett;
         this.launchMain = scriptData.launchMain;
         this.launchRenderer = scriptData.launchRenderer;
+        this.exitMain = scriptData.exitMain;
 
         if (
             !this.scriptName ||

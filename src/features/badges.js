@@ -6,7 +6,7 @@ let badgesData;
 function initBadges(socket) {
     if (config.get('clientBadges', true)) {
         setInterval(() => {
-            socket.send({ type: 8 });
+            socket.send(JSON.stringify({ type: 8 }));
         }, 2000);
     }
 }

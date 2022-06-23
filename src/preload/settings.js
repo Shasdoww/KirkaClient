@@ -2,13 +2,17 @@
 /* eslint-disable no-case-declarations */
 
 const allSettings = require('../features/customSettings');
+const Store = require('electron-store');
+const config = new Store();
+const performanceMode = config.get('performanceMode', false) && !config.get('launcherMode', true);
 const { ipcRenderer } = require('electron');
-const { pluginLoader } = require('../features/plugins');
+console.log('pref mode:', performanceMode);
+let pluginLoader;
+if (!performanceMode)
+    pluginLoader = require('../features/plugins').pluginLoader;
 const log = require('electron-log');
 const fs = require('fs');
 const path = require('path');
-const Store = require('electron-store');
-const config = new Store();
 let installedPlugins = {};
 
 ipcRenderer.on('make-settings', () => {
@@ -49,6 +53,8 @@ function takeAction(button, uuid) {
 }
 
 function handlePlugins() {
+    if (performanceMode)
+        return;
     installedPlugins = JSON.parse(ipcRenderer.sendSync('installedPlugins'));
     $.ajax({
         url: `https://client.kirka.io/api/v2/plugins?token=${encodeURIComponent(config.get('devToken', ''))}`,
@@ -209,7 +215,8 @@ document.addEventListener('DOMContentLoaded', async function() {
         handlePlugins();
         return;
     }
-    await loadScripts();
+    if (!performanceMode)
+        await loadScripts();
     const mainDIV = document.createElement('div');
     mainDIV.id = 'optionsHolder';
 
@@ -250,6 +257,8 @@ function makeSettings(table) {
         if (!(option.name.toLowerCase().includes(searchFilter.toLowerCase()) || option.category.toLowerCase().includes(searchFilter.toLowerCase())))
             continue;
         if (doneCategories.includes(option.category))
+            continue;
+        if (option.category === 'Badges' && performanceMode)
             continue;
         const mainDiv = document.createElement('div');
         const category = document.createElement('label');

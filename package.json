@@ -19,15 +19,17 @@
     "electron-localshortcut": "^3.2.1",
     "electron-log": "^4.4.6",
     "electron-store": "^8.0.0",
+    "fast-folder-size": "^1.7.0",
     "fs-extra": "^10.0.1",
     "jszip": "^3.9.1",
     "live-plugin-manager": "^0.17.1",
     "md5-file": "^5.0.0",
-    "socket.io-client": "^4.4.0",
     "sudo-prompt": "^9.2.1",
     "systeminformation": "^5.10.7",
+    "utf-8-validate": "^5.0.9",
     "uuid": "^8.3.2",
-    "v8-compile-cache": "^2.3.0"
+    "v8-compile-cache": "^2.3.0",
+    "ws": "^8.8.0"
   },
   "devDependencies": {
     "electron": "^9.4.4",

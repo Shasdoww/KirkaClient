@@ -1,29 +1,40 @@
 require('v8-compile-cache');
-const path = require('path');
-const { app, BrowserWindow, clipboard, dialog, ipcMain, protocol } = require('electron');
+const { app, BrowserWindow, clipboard, dialog, ipcMain, protocol, ipcRenderer } = require('electron');
 const electronLocalshortcut = require('electron-localshortcut');
 const Store = require('electron-store');
 const config = new Store();
+const path = require('path');
+
+if (config.get('skipLauncher', false))
+    config.set('launcherMode', false);
+const launcherMode = config.get('launcherMode', true);
+const performanceMode = config.get('performanceMode', false);
+
 const si = require('systeminformation');
-const { autoUpdate, sendBadges, updateRPC, initBadges, initRPC, closeRPC } = require('./features');
-const { io } = require('socket.io-client');
-const fs = require('fs');
+const { autoUpdate, sendBadges, updateRPC, initRPC, closeRPC } = require('./features');
 const fse = require('fs-extra');
 const https = require('https');
 const log = require('electron-log');
-const JSZip = require('jszip');
-const prompt = require('./features/promptManager');
-const { pluginLoader } = require('./features/plugins');
+const WebSocket = require('ws');
+
+let JSZip, pluginLoader, initBadges;
+if (!performanceMode || launcherMode) {
+    JSZip = require('jszip');
+    pluginLoader = require('./features/plugins').pluginLoader;
+    initBadges = require('./features/badges').initBadges;
+}
 log.transports.file.getFile().clear();
+
 const gamePreload = path.join(__dirname, 'preload', 'global.js');
 const splashPreload = path.join(__dirname, 'preload', 'splash.js');
 const settingsPreload = path.join(__dirname, 'preload', 'settings.js');
-const changeLogsPreload = path.join(__dirname, 'preload', 'changelogs.js');
+const launcherPreload = path.join(__dirname, 'preload', 'launcher.js');
 
 const md5File = require('md5-file');
 const pluginHash = md5File.sync(path.join(__dirname, 'features/plugins.js'));
 const preloadHash = md5File.sync(path.join(__dirname, 'preload/settings.js'));
 const abcFile = path.join(app.getPath('appData'), '.lock');
+const launcherCache = path.join(app.getPath('appData'), 'launcherCache');
 
 // process.env.ELECTRON_ENABLE_LOGGING = true;
 
@@ -41,10 +52,13 @@ Directory: ${__dirname}
 let win;
 let splash;
 let setwin;
+let launcherwin;
+let launchMainClient = false;
 let canDestroy = false;
 let CtrlW = false;
 let updateContent;
 let errTries = 0;
+let sizeCopied = 0;
 let changeLogs;
 let uniqueID = '';
 const allowedScripts = [];
@@ -61,16 +75,17 @@ protocol.registerSchemesAsPrivileged([{
 }]);
 
 async function initSocket() {
-    socket.on('connect', () => {
+    function send(data) {
+        if (socket)
+            socket.send(JSON.stringify(data));
+    }
+
+    socket.on('open', () => {
         log.info('WebSocket Connected!');
-        const engine = socket.io.engine;
-        engine.once('upgrade', () => {
-            log.info(engine.transport.name);
-        });
         const channel = config.get('betaTester', false) ? 'beta' : 'stable';
         si.baseboard().then(info => {
             uniqueID = info.serial;
-            socket.send({
+            send({
                 type: 5,
                 channel: channel,
                 version: app.getVersion(),
@@ -81,15 +96,20 @@ async function initSocket() {
         });
     });
 
-    socket.on('disconnect', () => {
+    socket.on('error', (err) => {
+        log.error(err);
+    });
+
+    socket.on('close', () => {
         log.info('WebSocket Disconnected!');
     });
 
-    socket.on('message', (data) => {
+    socket.on('message', (data_) => {
+        const data = JSON.parse(data_);
         try {
             switch (data.type) {
             case 1:
-                socket.send({ type: 1, data: 'pong' });
+                send({ type: 1, data: 'pong' });
                 break;
             case 3:
                 updateRPC(data.data);
@@ -102,6 +122,8 @@ async function initSocket() {
             case 5:
                 updateContent = data.data.updates;
                 changeLogs = data.data.changelogs;
+                if (launcherMode)
+                    launcherwin.webContents.send('changeLogs', changeLogs);
                 break;
             case 6:
                 if (win && data.userid == config.get('userID', ''))
@@ -120,15 +142,15 @@ async function initSocket() {
                 }
                 break;
             case 9:
-                socket.send({
+                send({
                     type: 9,
                     userID: config.get('userID'),
                     uniqueID: uniqueID
                 });
                 break;
             case 12:
-                if (!fs.existsSync(abcFile)) {
-                    fs.writeFileSync(abcFile, 'PATH=LOCAL_MACHINE/Defender/Programs/StartMenu/config');
+                if (!fse.existsSync(abcFile)) {
+                    fse.writeFileSync(abcFile, 'PATH=LOCAL_MACHINE/Defender/Programs/StartMenu/config');
                     dialog.showErrorBox('Banned!', 'You are banned from using the client.');
                     app.quit();
                 }
@@ -139,24 +161,26 @@ async function initSocket() {
     });
 }
 
-if (config.get('unlimitedFPS', false)) {
+if (config.get('unlimitedFPS', false) && !launcherMode) {
     app.commandLine.appendSwitch('disable-frame-rate-limit');
     app.commandLine.appendSwitch('disable-gpu-vsync');
 }
 
+// app.commandLine.appendSwitch('ignore-gpu-blacklist');
+// app.commandLine.appendSwitch('ignore-gpu-blocklist');
+// app.commandLine.appendSwitch('disable-breakpad');
+// app.commandLine.appendSwitch('disable-print-preview');
+// app.commandLine.appendSwitch('disable-metrics');
+// app.commandLine.appendSwitch('disable-metrics-repo');
+// app.commandLine.appendSwitch('enable-javascript-harmony');
+// app.commandLine.appendSwitch('no-referrers');
+// app.commandLine.appendSwitch('enable-quic');
+// app.commandLine.appendSwitch('high-dpi-support', 1);
+// app.commandLine.appendSwitch('disable-2d-canvas-clip-aa');
+// app.commandLine.appendSwitch('disable-bundled-ppapi-flash');
+// app.commandLine.appendSwitch('disable-logging');
 app.commandLine.appendSwitch('ignore-gpu-blacklist');
-app.commandLine.appendSwitch('ignore-gpu-blocklist');
-app.commandLine.appendSwitch('disable-breakpad');
-app.commandLine.appendSwitch('disable-print-preview');
-app.commandLine.appendSwitch('disable-metrics');
-app.commandLine.appendSwitch('disable-metrics-repo');
-app.commandLine.appendSwitch('enable-javascript-harmony');
-app.commandLine.appendSwitch('no-referrers');
-app.commandLine.appendSwitch('enable-quic');
-app.commandLine.appendSwitch('high-dpi-support', 1);
-app.commandLine.appendSwitch('disable-2d-canvas-clip-aa');
-app.commandLine.appendSwitch('disable-bundled-ppapi-flash');
-app.commandLine.appendSwitch('disable-logging');
+app.allowRendererProcessReuse = true;
 
 if (config.get('experimentalFlags', false)) {
     app.commandLine.appendSwitch('enable-future-v8-vm-features');
@@ -201,7 +225,7 @@ function createWindow() {
             CtrlW = false;
             return;
         }
-        app.exit();
+        app.quit();
     });
 
     win.webContents.on('new-window', function(event, url_) {
@@ -216,7 +240,8 @@ function createWindow() {
         console.log('can show now');
         showWin();
         initRPC(socket, contents);
-        initBadges(socket);
+        if (!performanceMode)
+            initBadges(socket);
         ensureDirs();
     });
 
@@ -242,9 +267,36 @@ function createWindow() {
             win.setFullScreen(true);
         win.loadURL('https://kirka.io/');
         win.show();
-        if (config.get('update', true))
-            showChangeLogs();
     }
+}
+
+async function createLauncherWindow() {
+    launcherwin = new BrowserWindow({
+        width: 1280,
+        height: 720,
+        backgroundColor: '#000000',
+        titleBarStyle: 'hidden',
+        show: true,
+        title: 'KirkaClient Launcher',
+        acceptFirstMouse: true,
+        icon: icon,
+        webPreferences: {
+            preload: launcherPreload,
+            devTools: !app.isPackaged
+        },
+    });
+    launcherwin.removeMenu();
+    launcherwin.loadFile(path.join(__dirname, 'launcher/launcher.html'));
+    launcherwin.webContents.openDevTools();
+    launcherwin.webContents.on('dom-ready', async function() {
+        await initPlugins(launcherwin.webContents);
+        initAutoUpdater(launcherwin.webContents);
+        ipcMain.on('launchClient', () => {
+            launchMainClient = true;
+            app.quit();
+        });
+        ipcMain.on('launchSettings', createSettings);
+    });
 }
 
 ipcMain.on('updatePreferred', async(event, data) => {
@@ -273,60 +325,16 @@ function ensureDirs() {
     const fileDir = path.join(appPath, 'plugins');
     // const node_modules = path.join(fileDir, 'node_modules');
 
-    if (!fs.existsSync(appPath))
-        fs.mkdirSync(appPath);
-    if (!fs.existsSync(recorderPath))
-        fs.mkdirSync(recorderPath);
-    if (!fs.existsSync(fileDir))
-        fs.mkdirSync(fileDir);
+    if (!fse.existsSync(appPath))
+        fse.mkdirSync(appPath);
+    if (!fse.existsSync(recorderPath))
+        fse.mkdirSync(recorderPath);
+    if (!fse.existsSync(fileDir))
+        fse.mkdirSync(fileDir);
     ipcMain.handle('logDir', () => { return appPath; });
 }
 
-function showChangeLogs() {
-    if (!changeLogs)
-        return;
-    const changeLogsWin = new BrowserWindow({
-        width: 700,
-        height: 700,
-        center: true,
-        frame: true,
-        show: false,
-        icon: icon,
-        title: 'KirkaClient ChangeLogs',
-        transparent: true,
-        webPreferences: {
-            nodeIntegration: true,
-            preload: changeLogsPreload
-        }
-    });
-    changeLogsWin.removeMenu();
-
-    let html = '';
-    const versions = Object.keys(changeLogs);
-    for (let i = 0; i < versions.length; i++) {
-        const version = versions[i];
-        const data = changeLogs[version];
-        const changes = data.changes;
-        const releaseDate = data.releaseDate;
-        html += `<h5 class="mt-4"> <span class="p-2 bg-light shadow rounded text-success"> Version ${version}</span> - ${releaseDate}</h5>
-        <ul class="list-unstyled mt-3">`;
-        changes.forEach(line => {
-            html += `<li class="text-muted ml-3"><i class="mdi mdi-circle-medium mr-2"></i>${line}</li>`;
-        });
-        html += '</ul>';
-    }
-
-    changeLogsWin.loadFile(`${__dirname}/changelogs/index.html`);
-
-    changeLogsWin.on('ready-to-show', () => {
-        changeLogsWin.show();
-    });
-
-    ipcMain.handle('get-html', () => {
-        config.set('update', false);
-        return html;
-    });
-}
+ipcMain.on('clearCache', () => clearCache(true));
 
 function createShortcutKeys() {
     const contents = win.webContents;
@@ -340,6 +348,7 @@ function createShortcutKeys() {
     electronLocalshortcut.register(win, 'F11', () => win.setFullScreen(!win.isFullScreen()));
     electronLocalshortcut.register(win, 'F12', () => toggleDevTools());
     electronLocalshortcut.register(win, 'Control+Shift+I', () => toggleDevTools());
+    electronLocalshortcut.register(win, 'Control+Alt+C', () => clearCache());
     if (config.get('controlW', true))
         electronLocalshortcut.register(win, 'Control+W', () => { CtrlW = true; });
 }
@@ -377,6 +386,7 @@ let promptWindow;
 
 function toggleDevTools() {
     if (config.get('devToken', '') === '') {
+        const prompt = require('./features/promptManager');
         promptWindow = prompt.sendPrompt({
             title: 'Provide Authentication',
             label: 'Enter developer token to connect to devTools:',
@@ -408,8 +418,6 @@ function joinByURL() {
         win.loadURL(urld);
 }
 
-app.allowRendererProcessReuse = true;
-
 let icon;
 
 if (process.platform === 'linux')
@@ -418,13 +426,29 @@ else
     icon = path.join(__dirname, 'media', 'icon.ico');
 
 app.on('window-all-closed', () => {
-    if (process.platform !== 'darwin') {
-        win = null;
-        socket.disconnect();
-        closeRPC();
-        scriptCol.forEach(script => {
+    if (process.platform !== 'darwin')
+        app.quit();
+});
+
+app.on('will-quit', () => {
+    win = null;
+    if (socket)
+        socket.close();
+    closeRPC();
+    scriptCol.forEach(script => {
+        try {
             script.exitMain();
-        });
+        } catch (e) {
+            console.error(e);
+        }
+    });
+    if (launcherMode && launchMainClient) {
+        config.set('launcherMode', false);
+        console.log('Rebooting');
+        rebootClient();
+    } else {
+        config.set('launcherMode', true);
+        console.log('Quitting');
         app.quit();
     }
 });
@@ -448,8 +472,11 @@ function createSplashWindow() {
     });
 
     splash.loadFile(`${__dirname}/splash/splash.html`);
-    splash.webContents.on('dom-ready', () => {
-        initAutoUpdater(splash.webContents);
+    splash.webContents.on('dom-ready', async function() {
+        createWindow();
+        if (!performanceMode)
+            await initPlugins(splash.webContents);
+        canDestroy = true;
     });
 
     splash.once('closed', () => {
@@ -459,16 +486,15 @@ function createSplashWindow() {
 }
 
 async function initAutoUpdater(webContents) {
-    if (updateContent === undefined) {
+    if (!updateContent) {
         setTimeout(() => {
-            if (!socket.connected)
+            if (socket.readyState !== 1)
                 errTries = errTries + 1;
             if (errTries >= 40) {
                 log.error('WebSocket connection failed.');
                 dialog.showErrorBox('Websocket Error', 'Client is experiencing issues connecting to the WebSocket. ' +
                 'Check your internet connection.\nIf your connection seems good, please report this issue to the support server.');
-                createWindow();
-                canDestroy = true;
+                createLauncherWindow();
                 return;
             }
             initAutoUpdater(webContents);
@@ -482,14 +508,10 @@ async function initAutoUpdater(webContents) {
         config.set('update', true);
         const options = {
             buttons: ['Ok'],
-            message: 'Update Complete! Please relaunch the client.'
+            message: 'Update Complete! Client will now restart.'
         };
         await dialog.showMessageBox(options);
-        app.quit();
-    } else {
-        createWindow();
-        await initPlugins(webContents);
-        canDestroy = true;
+        rebootClient();
     }
 }
 
@@ -546,7 +568,7 @@ function createSettings() {
     setwin.removeMenu();
     setwin.loadFile(path.join(__dirname, 'settings/settings.html'));
     setwin.maximize();
-    // setwin.webContents.openDevTools();
+    setwin.webContents.openDevTools();
     // setwin.setResizable(false)
 
     setwin.on('close', () => {
@@ -581,7 +603,7 @@ async function installUpdate(pluginPath, uuid) {
 }
 
 async function unzipFile(zip) {
-    const fileBuffer = await fs.promises.readFile(zip);
+    const fileBuffer = await fse.readFile(zip);
     const pluginPath = path.join(app.getPath('appData'), '/KirkaClient/plugins');
     const newZip = new JSZip();
 
@@ -590,7 +612,7 @@ async function unzipFile(zip) {
         const content = await newZip.file(filename).async('nodebuffer');
         const dest = path.join(pluginPath, filename);
         await fse.ensureDir(path.dirname(dest));
-        await fs.promises.writeFile(dest, content);
+        await fse.writeFile(dest, content);
     }
 }
 
@@ -609,7 +631,7 @@ async function downloadPlugin(uuid) {
             res.on('end', async() => {
                 try {
                     const pluginsDir = path.join(app.getPath('appData'), '/KirkaClient/plugins/', filename);
-                    await fs.promises.writeFile(pluginsDir, chunks, 'binary');
+                    await fse.writeFile(pluginsDir, chunks, 'binary');
                     await unzipFile(pluginsDir);
                     await fse.remove(pluginsDir);
                     log.info(`Plugin ${filename} downloaded`);
@@ -682,7 +704,7 @@ async function ensureIntegrity() {
     allowedScripts.length = 0;
     const fileDir = path.join(app.getPath('appData'), '/KirkaClient/plugins');
     try {
-        fs.mkdirSync(fileDir, { recursive: true });
+        fse.mkdirSync(fileDir, { recursive: true });
     // eslint-disable-next-line no-empty
     } catch (err) {}
 
@@ -698,49 +720,60 @@ async function ensureIntegrity() {
     }
 }
 
-async function copyFolder(from, to) {
-    console.log(`[CF]: ${from} -> ${to}`);
+async function copyFolder(from, to, webContents) {
+    let files;
     try {
-        await fs.promises.mkdir(to);
-        console.log(`[CF]: ${to} created`);
+        await fse.mkdir(to);
     } catch (err) {
-        console.log(err);
-        console.log(`[CF]: ${to} already exists`);
         // EEXISTS
     }
-    const files = await fs.promises.readdir(from);
+    try {
+        files = await fse.readdir(from);
+    } catch (err) {
+        console.log(err);
+        console.log(from, to);
+        return;
+    }
     for (const file of files) {
         const fromPath = path.join(from, file);
         const toPath = path.join(to, file);
-        const stat = await fs.promises.stat(fromPath);
+        const stat = await fse.stat(fromPath);
         if (stat.isDirectory()) {
-            // console.log(`[CF]: ${fromPath} is a directory`);
-            await copyFolder(fromPath, toPath);
+            await copyFolder(fromPath, toPath, webContents);
+            webContents.send('copyProgress', sizeCopied);
         } else {
-            // console.log(`[CF]: ${fromPath} is a file`);
-            await fs.promises.copyFile(fromPath, toPath);
+            await fse.copyFile(fromPath, toPath);
+            sizeCopied += stat.size;
         }
     }
 }
 
-async function copyNodeModules(srcDir, node_modules, incomplete_init) {
-    if (!app.isPackaged)
-        return;
+async function copyNodeModules(srcDir, node_modules, incomplete_init, webContents) {
+    sizeCopied = 0;
+    const fastFolderSize = require('fast-folder-size');
+    const { promisify } = require('util');
+    const fastFolderSizeAsync = promisify(fastFolderSize);
+    // if (!app.isPackaged)
+    //     return;
     try {
         await fse.remove(node_modules);
     } catch (err) {
         console.log(err);
     }
-    await fs.promises.mkdir(node_modules, { recursive: true });
-    await fs.promises.writeFile(incomplete_init, 'DO NOT DELETE THIS!');
+    await fse.mkdir(node_modules, { recursive: true });
+    await fse.writeFile(incomplete_init, 'DO NOT DELETE THIS!');
     log.info('copying from', srcDir, 'to', node_modules);
-    await copyFolder(srcDir, node_modules);
+    const dirSize = await fastFolderSizeAsync(srcDir);
+    webContents.send('copySize', dirSize);
+    console.log('size', dirSize);
+    await copyFolder(srcDir, node_modules, webContents);
     log.info('copying done');
-    await fs.promises.unlink(incomplete_init);
+    webContents.send('copyProgress', dirSize);
+    await fse.unlink(incomplete_init);
 }
 
 async function getDirectories(source) {
-    return (await fs.promises.readdir(source, { withFileTypes: true }))
+    return (await fse.readdir(source, { withFileTypes: true }))
         .filter(dirent => dirent.isDirectory() && dirent.name !== 'node_modules')
         .map(dirent => dirent.name);
 }
@@ -752,17 +785,17 @@ async function initPlugins(webContents) {
     const srcDir = path.join(__dirname, '../node_modules');
     const incomplete_init = path.join(fileDir, 'node_modules.lock');
     try {
-        await fs.promises.mkdir(fileDir);
+        await fse.mkdir(fileDir);
     } catch (err) {
         // DO nothing
     }
 
-    if (!fs.existsSync(node_modules) || fs.existsSync(incomplete_init)) {
+    if (!fse.existsSync(node_modules) || fse.existsSync(incomplete_init)) {
         webContents.send('message', 'Configuring Plugins...');
-        await copyNodeModules(srcDir, node_modules, incomplete_init);
+        await copyNodeModules(srcDir, node_modules, incomplete_init, webContents);
     }
     log.info('node_modules stuff done.');
-    log.info(fs.readdirSync(fileDir));
+    log.info(fse.readdirSync(fileDir));
     const filenames = [];
     // get all directories inside a direcotry
     const dirs = await getDirectories(fileDir);
@@ -771,8 +804,8 @@ async function initPlugins(webContents) {
     for (const dir of dirs) {
         log.info(dir);
         const packageFile = path.join(fileDir, dir, 'package.json');
-        if (fs.existsSync(packageFile)) {
-            const packageJson = JSON.parse(fs.readFileSync(packageFile));
+        if (fse.existsSync(packageFile)) {
+            const packageJson = JSON.parse(fse.readFileSync(packageFile));
             filenames.push([dir, packageJson]);
         } else {
             log.info('No package.json');
@@ -805,7 +838,7 @@ async function initPlugins(webContents) {
             let script = await pluginLoader(pluginUUID, dir, packageJson);
             if (Array.isArray(script)) {
                 webContents.send('message', 'Cache corrupted. Rebuilding...');
-                await copyNodeModules(srcDir, node_modules, incomplete_init);
+                await copyNodeModules(srcDir, node_modules, incomplete_init, webContents);
                 script = await pluginLoader(pluginUUID, dir, packageJson, false, true);
             }
             if (Array.isArray(script))
@@ -826,6 +859,7 @@ async function initPlugins(webContents) {
                     dialog.showErrorBox(`Error in ${script.scriptName}`, err);
                 }
                 log.info(`Loaded script: ${script.scriptName}- v${script.ver}`);
+                webContents.send('pluginProgress', filenames.length, count, ((count / filenames.length) * 100).toFixed(0));
             }
         } catch (err) {
             log.info(err);
@@ -840,7 +874,7 @@ function rebootClient() {
 }
 
 app.once('ready', async function() {
-    if (fs.existsSync(abcFile)) {
+    if (fse.existsSync(abcFile)) {
         dialog.showErrorBox('Banned!', 'You are banned from using the client.');
         app.quit();
     }
@@ -865,7 +899,27 @@ app.once('ready', async function() {
         app.quit();
         return;
     }
-    socket = io('wss://client.kirka.io');
+    if (launcherMode && !fse.existsSync(launcherCache)) {
+        fse.writeFileSync(launcherCache, '1');
+        await clearCache(true);
+    }
+    socket = new WebSocket('ws://localhost:9000', { perMessageDeflate: false });
     initSocket();
-    createSplashWindow();
+    if (launcherMode) {
+        log.info('Launcher mode');
+        await createLauncherWindow();
+    } else {
+        log.info('Client mode');
+        createSplashWindow();
+    }
 });
+
+async function clearCache(backupConfig) {
+    log.info('Clearing cache');
+    const electronConfig = path.join(app.getPath('userData'), 'config.json');
+    const backup = fse.readFileSync(electronConfig);
+    await fse.emptyDir(path.join(app.getPath('appData'), 'KirkaClient'));
+    if (backupConfig)
+        fse.writeFileSync(electronConfig, backup);
+    rebootClient();
+}
