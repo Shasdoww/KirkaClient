@@ -1,5 +1,5 @@
 require('v8-compile-cache');
-const { app, BrowserWindow, clipboard, dialog, ipcMain, protocol, ipcRenderer } = require('electron');
+const { app, BrowserWindow, clipboard, dialog, ipcMain, protocol } = require('electron');
 const electronLocalshortcut = require('electron-localshortcut');
 const Store = require('electron-store');
 const config = new Store();
@@ -473,6 +473,8 @@ function createSplashWindow() {
 
     splash.loadFile(`${__dirname}/splash/splash.html`);
     splash.webContents.on('dom-ready', async function() {
+        if (config.get('skipLauncher', false))
+            await initAutoUpdater(splash.webContents);
         createWindow();
         if (!performanceMode)
             await initPlugins(splash.webContents);

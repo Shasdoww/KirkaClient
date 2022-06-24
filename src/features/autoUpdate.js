@@ -64,6 +64,7 @@ async function downloadUpdate(contents, updateData) {
                 a += chunk;
                 const percentage = Math.round(100 * a.length / updateSize);
                 contents.send('message', `Downloading- ${percentage}% complete...`);
+                contents.send('progress', percentage);
             });
 
             res.on('end', async function() {
@@ -80,6 +81,7 @@ async function downloadUpdate(contents, updateData) {
                             'Insufficient Permissions',
                             'Please run the client as Administrator. This can be done by Right Click > Run as Administrator'
                         );
+                        contents.send('warning', 'Insufficient Permissions');
                         app.quit();
                     }
                     const elevate = path.join(__dirname, '../../../', 'elevate.exe');
@@ -89,7 +91,7 @@ async function downloadUpdate(contents, updateData) {
                     console.log(tempAsar);
                     console.log(finalAsar);
                     const options = {
-                        name: 'KirkaClient',
+                        name: 'kirkaclient',
                         icon: path.join(__dirname, '../', 'media/icon.ico'),
                     };
                     sudo.exec(`copy "${tempAsar}" "${finalAsar}" /Y`, options,

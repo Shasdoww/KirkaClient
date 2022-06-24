@@ -91,3 +91,12 @@ ipcRenderer.on('pluginProgress', (ev, count, loaded, progress) => {
     }
 });
 
+ipcRenderer.on('progress', (ev, progress) => {
+    document.getElementById('progress-text').innerText = 'Downloading Update...';
+    document.getElementById('progress-bar').style.width = `${progress}%`;
+    document.getElementById('progress-amount').innerText = `${progress}%`;
+});
+
+ipcRenderer.on('warning', (ev, text) => {
+    document.getElementById('progress-warning').innerText = text;
+});
