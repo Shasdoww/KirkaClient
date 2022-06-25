@@ -496,7 +496,7 @@ async function initAutoUpdater(webContents) {
                 log.error('WebSocket connection failed.');
                 dialog.showErrorBox('Websocket Error', 'Client is experiencing issues connecting to the WebSocket. ' +
                 'Check your internet connection.\nIf your connection seems good, please report this issue to the support server.');
-                createLauncherWindow();
+                // createLauncherWindow();
                 return;
             }
             initAutoUpdater(webContents);
@@ -893,7 +893,7 @@ app.once('ready', async function() {
             config.set('terms', true);
     }
     log.info(pluginHash, preloadHash);
-    if ((pluginHash !== 'b5a3f96a4e0cb6ce167638ed6522af74' || preloadHash !== 'bd463528633ac3162d04fbba3f271839') && app.isPackaged) {
+    if ((pluginHash !== 'a816980fe23b9d07d87a42902f0ad5c2' || preloadHash !== 'c88de521996bc4e08f7ec318a0dc4ddc') && app.isPackaged) {
         dialog.showErrorBox(
             'Client tampered!',
             'It looks like the client is tampered with. Please install new from https://client.kirka.io. This is for your own safety!'
@@ -905,8 +905,8 @@ app.once('ready', async function() {
         fse.writeFileSync(launcherCache, '1');
         await clearCache(true);
     }
-    socket = new WebSocket('ws://localhost:9000', { perMessageDeflate: false });
-    initSocket();
+    socket = new WebSocket('wss://client.kirka.io/ws', { perMessageDeflate: false });
+    await initSocket();
     if (launcherMode) {
         log.info('Launcher mode');
         await createLauncherWindow();
