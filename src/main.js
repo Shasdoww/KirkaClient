@@ -722,6 +722,8 @@ async function ensureIntegrity() {
     }
 }
 
+const fs = require('fs');
+
 async function copyFolder(from, to, webContents) {
     let files;
     try {
@@ -730,7 +732,7 @@ async function copyFolder(from, to, webContents) {
         // EEXISTS
     }
     try {
-        files = await fse.readdir(from);
+        files = await fs.promises.readdir(from);
     } catch (err) {
         console.log(err);
         console.log(from, to);
@@ -742,8 +744,13 @@ async function copyFolder(from, to, webContents) {
         const stat = await fse.stat(fromPath);
         if (stat.isDirectory())
             await copyFolder(fromPath, toPath, webContents);
-        else
-            await fse.copyFile(fromPath, toPath);
+        else {
+            try {
+                await fse.copyFile(fromPath, toPath);
+            } catch (err) {
+                console.log(err);
+            }
+        }
     }
 }
 
