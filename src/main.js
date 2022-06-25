@@ -13,6 +13,7 @@ const performanceMode = config.get('performanceMode', false);
 const si = require('systeminformation');
 const { autoUpdate, sendBadges, updateRPC, initRPC, closeRPC } = require('./features');
 const fse = require('fs-extra');
+const fs = require('fs');
 const https = require('https');
 const log = require('electron-log');
 const WebSocket = require('ws');
@@ -58,7 +59,6 @@ let canDestroy = false;
 let CtrlW = false;
 let updateContent;
 let errTries = 0;
-let sizeCopied = 0;
 let changeLogs;
 let uniqueID = '';
 const allowedScripts = [];
@@ -74,10 +74,25 @@ protocol.registerSchemesAsPrivileged([{
     privileges: { secure: true, corsEnabled: true },
 }]);
 
+const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms * 1000));
+
 async function initSocket() {
+    try {
+        socket = new WebSocket('ws://localhost:9000/ws', { perMessageDeflate: false });
+    } catch (err) {
+        console.error(err);
+        await retryConnection();
+    }
+
     function send(data) {
         if (socket)
             socket.send(JSON.stringify(data));
+    }
+
+    async function retryConnection() {
+        await sleep(5);
+        log.info('Retrying to connect to socket');
+        await initSocket();
     }
 
     socket.on('open', () => {
@@ -100,8 +115,9 @@ async function initSocket() {
         log.error(err);
     });
 
-    socket.on('close', () => {
+    socket.on('close', async function() {
         log.info('WebSocket Disconnected!');
+        await retryConnection();
     });
 
     socket.on('message', (data_) => {
@@ -433,7 +449,7 @@ app.on('window-all-closed', () => {
 app.on('will-quit', () => {
     win = null;
     if (socket)
-        socket.close();
+        socket.close(1000, `Quitting app. Mode: ${launcherMode ? 'launcher' : 'client'}`);
     closeRPC();
     scriptCol.forEach(script => {
         try {
@@ -722,8 +738,6 @@ async function ensureIntegrity() {
     }
 }
 
-const fs = require('fs');
-
 async function copyFolder(from, to, webContents) {
     let files;
     try {
@@ -755,7 +769,6 @@ async function copyFolder(from, to, webContents) {
 }
 
 async function copyNodeModules(srcDir, node_modules, incomplete_init, webContents) {
-    sizeCopied = 0;
     // if (!app.isPackaged)
     //     return;
     try {
@@ -906,7 +919,6 @@ app.once('ready', async function() {
         fse.writeFileSync(launcherCache, '1');
         await clearCache(true);
     }
-    socket = new WebSocket('wss://client.kirka.io/ws', { perMessageDeflate: false });
     await initSocket();
     if (launcherMode) {
         log.info('Launcher mode');

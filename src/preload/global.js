@@ -209,7 +209,7 @@ function doOnLoad() {
         createHomePageSettings();
         addButton();
         regionLoop = setInterval(setRegion, 500);
-        if (config.get('clientBadges') && !performanceMode)
+        if (config.get('clientBadges', true) && !performanceMode)
             homeBadge();
         if (performanceMode && config.get('useAdBlocker', true)) {
             document.getElementById('ad-left').style = 'none !important';
@@ -221,10 +221,8 @@ function doOnLoad() {
         setPromo();
         if (config.get('clientBadges', true) && !performanceMode)
             inGameBadge();
-        if (config.get('hideWeaponOnAds', false)) {
+        if (config.get('hideWeaponOnAds', false))
             animationLoop();
-            fixCrosshair();
-        }
         break;
     }
 
@@ -721,7 +719,8 @@ function getBadge(type, confirmID) {
 function checkbadge(state, confID = 'ABX') {
     if (!badgesData)
         return;
-
+    if (Object.keys(badgesData).length === 0)
+        return;
     const confirmID = (state === 'home') ? config.get('userID') : confID;
     const preferred = badgesData['pref'][confirmID];
     let searchBadge = null;
@@ -750,6 +749,9 @@ function checkbadge(state, confID = 'ABX') {
 
 function animationLoop() {
     window.requestAnimationFrame(animationLoop);
+    const crosshair = document.getElementById('crosshair-static');
+    if (crosshair && config.get('hideWeaponOnAds', false))
+        crosshair.style = 'visibility: visible !important; opacity: 1 !important; display: block !important;';
     let weap;
     try {
         weap = document.getElementsByClassName('list-weapons')[0].children[0].children[0].innerText;
@@ -766,16 +768,4 @@ function animationLoop() {
     } catch (err) {
         // pass
     }
-}
-
-function fixCrosshair() {
-    const crosshairCont = document.getElementsByClassName('crosshair-cont')[0];
-    if (!crosshairCont) {
-        setTimeout(fixCrosshair, 100);
-        return;
-    }
-    const crosshair = crosshairCont.firstChild.cloneNode(true);
-    crosshair.style.visibility = 'visible';
-    crosshair.style.opacity = '1';
-    crosshairCont.replaceChild(crosshair, crosshairCont.firstChild);
 }
