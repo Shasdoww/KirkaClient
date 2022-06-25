@@ -1,10 +1,6 @@
 const { ipcRenderer, shell } = require('electron');
 const config = new (require('electron-store'))();
 
-let copySize = 0;
-let copiedSize = 0;
-let updateLoop = null;
-
 ipcRenderer.on('changeLogs', (event, changeLogs) => {
     makeChangeLogs(changeLogs);
 });
@@ -57,25 +53,14 @@ function openExternal(url) {
     shell.openExternal(`https://${url}`);
 }
 
-ipcRenderer.on('copySize', (ev, size) => {
+ipcRenderer.on('copying', () => {
     document.getElementById('progress-text').innerText = 'Configuring Plugins...';
-    copySize = size;
-    console.log(`copySize: ${copySize}`);
-    updateLoop = setInterval(() => {
-        const progress = ((copiedSize / copySize) * 100).toFixed(2);
-        document.getElementById('progress-bar').style.width = `${progress}%`;
-        document.getElementById('progress-amount').innerText = `${progress}%`;
-    }, 50);
 });
 
-ipcRenderer.on('copyProgress', (ev, sizeCopied) => {
-    copiedSize = sizeCopied;
-    if (copiedSize === copySize) {
-        document.getElementById('progress-text').innerText = 'Copying complete. Loading files...';
-        document.getElementById('progress-bar').style.width = '0%';
-        document.getElementById('progress-amount').innerText = '0%';
-        clearInterval(updateLoop);
-    }
+ipcRenderer.on('copyProgress', () => {
+    document.getElementById('progress-text').innerText = 'Copying complete.';
+    document.getElementById('progress-bar').style.width = '0%';
+    document.getElementById('progress-amount').innerText = '';
 });
 
 ipcRenderer.on('pluginProgress', (ev, count, loaded, progress) => {

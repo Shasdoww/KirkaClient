@@ -740,21 +740,15 @@ async function copyFolder(from, to, webContents) {
         const fromPath = path.join(from, file);
         const toPath = path.join(to, file);
         const stat = await fse.stat(fromPath);
-        if (stat.isDirectory()) {
+        if (stat.isDirectory())
             await copyFolder(fromPath, toPath, webContents);
-            webContents.send('copyProgress', sizeCopied);
-        } else {
+        else
             await fse.copyFile(fromPath, toPath);
-            sizeCopied += stat.size;
-        }
     }
 }
 
 async function copyNodeModules(srcDir, node_modules, incomplete_init, webContents) {
     sizeCopied = 0;
-    const fastFolderSize = require('fast-folder-size');
-    const { promisify } = require('util');
-    const fastFolderSizeAsync = promisify(fastFolderSize);
     // if (!app.isPackaged)
     //     return;
     try {
@@ -765,12 +759,10 @@ async function copyNodeModules(srcDir, node_modules, incomplete_init, webContent
     await fse.mkdir(node_modules, { recursive: true });
     await fse.writeFile(incomplete_init, 'DO NOT DELETE THIS!');
     log.info('copying from', srcDir, 'to', node_modules);
-    const dirSize = await fastFolderSizeAsync(srcDir);
-    webContents.send('copySize', dirSize);
-    console.log('size', dirSize);
+    webContents.send('copying');
     await copyFolder(srcDir, node_modules, webContents);
     log.info('copying done');
-    webContents.send('copyProgress', dirSize);
+    webContents.send('copyProgress');
     await fse.unlink(incomplete_init);
 }
 
@@ -789,7 +781,7 @@ async function initPlugins(webContents) {
     try {
         await fse.mkdir(fileDir);
     } catch (err) {
-        // DO nothing
+        console.log(err);
     }
 
     if (!fse.existsSync(node_modules) || fse.existsSync(incomplete_init)) {
@@ -815,6 +807,8 @@ async function initPlugins(webContents) {
         }
     }
     log.info('filenames', filenames);
+    if (filenames.length === 0)
+        webContents.send('pluginProgress', 0, 0, 0);
     let count = 0;
     for (const [dir, packageJson] of filenames) {
         try {
