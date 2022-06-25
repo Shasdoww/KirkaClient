@@ -78,7 +78,7 @@ const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms * 1000));
 
 async function initSocket() {
     try {
-        socket = new WebSocket('ws://localhost:9000/ws', { perMessageDeflate: false });
+        socket = new WebSocket('wss://client.kirka.io/ws', { perMessageDeflate: false });
     } catch (err) {
         console.error(err);
         await retryConnection();
