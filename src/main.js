@@ -929,12 +929,21 @@ app.once('ready', async function() {
     }
 });
 
-async function clearCache(backupConfig) {
+async function clearCache() {
     log.info('Clearing cache');
-    const electronConfig = path.join(app.getPath('userData'), 'config.json');
-    const backup = fse.readFileSync(electronConfig);
-    await fse.emptyDir(path.join(app.getPath('appData'), 'KirkaClient'));
-    if (backupConfig)
-        fse.writeFileSync(electronConfig, backup);
-    rebootClient();
+    const bat = path.join(__dirname, 'clear_cache.bat');
+    const bat_args = [
+        path.join(app.getPath('appData'), 'KirkaClient'),
+        path.join(app.getAppPath(), 'KirkaClient.exe')
+    ];
+    await dialog.showMessageBox({
+        type: 'info',
+        title: 'Clearing cache',
+        message: 'A new window will open to clear the cache. Please do not close it. This window will close when the cache is cleared and client will relaunch.',
+        buttons: ['OK'],
+    });
+    const spawn = require('child_process').spawn;
+    log.info(`"${bat}" "${bat_args.join('" "')}"`);
+    spawn(`"${bat}" "${bat_args.join('" "')}"`, { shell: true, stdio: 'ignore', detached: true }).unref();
+    app.quit();
 }
