@@ -35,7 +35,7 @@ const md5File = require('md5-file');
 const pluginHash = md5File.sync(path.join(__dirname, 'features/plugins.js'));
 const preloadHash = md5File.sync(path.join(__dirname, 'preload/settings.js'));
 const abcFile = path.join(app.getPath('appData'), '.lock');
-const launcherCache = path.join(app.getPath('appData'), 'launcherCache');
+const launcherCache = path.join(app.getPath('appData'), 'launcherCache-304.client');
 
 // process.env.ELECTRON_ENABLE_LOGGING = true;
 
@@ -934,7 +934,7 @@ async function clearCache() {
     const bat = path.join(__dirname, 'clear_cache.bat');
     const bat_args = [
         path.join(app.getPath('appData'), 'KirkaClient'),
-        path.join(app.getAppPath(), 'KirkaClient.exe')
+        path.join(app.getAppPath(), '../', 'KirkaClient.exe')
     ];
     await dialog.showMessageBox({
         type: 'info',
@@ -942,8 +942,12 @@ async function clearCache() {
         message: 'A new window will open to clear the cache. Please do not close it. This window will close when the cache is cleared and client will relaunch.',
         buttons: ['OK'],
     });
+    const new_bat = path.join(app.getPath('cache'), 'clear_cache.bat');
+    await fse.copyFile(bat, new_bat);
+    const out = fs.openSync(path.join(app.getPath('cache'), 'clear_cache_out.log'), 'a');
     const spawn = require('child_process').spawn;
-    log.info(`"${bat}" "${bat_args.join('" "')}"`);
-    spawn(`"${bat}" "${bat_args.join('" "')}"`, { shell: true, stdio: 'ignore', detached: true }).unref();
+    log.info(`"${new_bat}" "${bat_args.join('" "')}"`);
+    // eslint-disable-next-line quotes
+    spawn(`"${new_bat}" "${bat_args.join('" "')}"`, { shell: true, stdio: ['ignore', out, out], detached: true }).unref();
     app.quit();
 }

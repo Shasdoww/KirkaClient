@@ -71,8 +71,8 @@ ipcRenderer.on('pluginProgress', (ev, count, loaded, progress) => {
 
     if (count === loaded) {
         document.getElementById('progress-text').innerText = 'Launcher Ready!';
-        document.getElementById('progress-bar').style.width = '0%';
-        document.getElementById('progress-amount').innerText = '';
+        document.getElementById('progress-bar').style.width = '100%';
+        document.getElementById('progress-amount').innerText = '100%';
     }
 });
 
