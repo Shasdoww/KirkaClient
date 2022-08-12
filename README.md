@@ -1,6 +1,6 @@
 # KirkaClient
 
-### KirkaClient is an Electron-based Custom Client for [Kirka.io](https://kirka.io/) which focuses on providing custom features to users. To name a few - Discord Rich Presence, Badges, Twitch Integration, Custom CSS etc.
+### KirkaClient is an Electron-based Custom Client for [Kirka.io](https://kirka.io/) which focuses on providing custom features to users. To name a few - Discord Rich Presence, Badges, Twitch Integration, Custom CSS, Live CSS Editor, Screen Recorder etc.
 <br>
 
 # What all features are in it?
@@ -9,10 +9,11 @@
 
 - Unlimited FPS
 - An Auto-Updater to install new updates of client quickly and without any trouble.
-- Custom in-game badges
-- Custom client settings to customise scope image, size, twitch etc.
-- Discord Rich-Presence to flex :p
-- Twitch Integration for various custom commands while streaming.
+- Custom in-game badges.
+- Performance Mode.
+- Custom client settings.
+- Discord Rich-Presence.
+- Variety of Plugins which are just one-click install.
 
 <br>
 
@@ -22,14 +23,6 @@ You can download the client from our [website](https://client.kirka.io/). Note: 
 
 <br>
 
-# Building the client
-
-`npm run build`
-
-<br>
-
 # Support
 
-To support in development via code and/or funds, please join our discord server [here](https://discord.gg/bD9JNv6GFS).
-
-![Discord Banner 4](https://discordapp.com/api/guilds/868890520468983819/widget.png?style=banner4)
+To support in development via code, please join our official server [here](https://discord.gg/kirka) or support server [here](https://discord.gg/bD9JNv6GFS).
