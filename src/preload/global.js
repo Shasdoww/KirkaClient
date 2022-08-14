@@ -747,6 +747,7 @@ function checkbadge(state, confID = 'ABX') {
     }
 }
 
+// Taken from 42infi/better-kirka-client
 function animationLoop() {
     window.requestAnimationFrame(animationLoop);
     const crosshair = document.getElementById('crosshair-static');
